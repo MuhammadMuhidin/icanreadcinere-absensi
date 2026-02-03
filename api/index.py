@@ -300,3 +300,19 @@ def upload():
         return redirect("/upload")
 
     return render_template("upload.html")
+
+@app.route("/__r2_test")
+def r2_test():
+    try:
+        r2 = get_r2()
+        r2.head_bucket(Bucket=R2_BUCKET)
+        return "R2 CONNECTED", 200
+    except Exception as e:
+        return f"R2 ERROR: {str(e)}", 500
+
+@app.route("/__r2_read_test")
+def r2_read_test():
+    return {
+        "news": r2_read_text("content/news.txt"),
+        "cuti": r2_read_text("data/cuti.csv")[:200]
+    }
