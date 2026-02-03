@@ -74,8 +74,20 @@
     <input type="hidden" name="aksi" id="aksi">
     <input type="hidden" name="notes" id="notes">
     <input type="hidden" name="mood" id="mood">
-    <button type="button" class="checkin" onclick="submitGPS('Check In')"><img src="{{url_for('static', filename='checkin.png')}}" class="btn-checkinout">Check In</button>
-    <button type="button" class="checkout" onclick="submitGPS('Check Out')"><img src="{{url_for('static', filename='checkout.png')}}" class="btn-checkinout">Check Out</button>
+    <button type="button" class="checkin" onclick="submitGPS('Check In')">
+  <span class="btn-content">
+    <img src="{{url_for('static', filename='checkin.png')}}" class="btn-checkinout">
+    <span>Check In</span>
+  </span>
+</button>
+
+<button type="button" class="checkout" onclick="submitGPS('Check Out')">
+  <span class="btn-content">
+    <img src="{{url_for('static', filename='checkout.png')}}" class="btn-checkinout">
+    <span>Check Out</span>
+  </span>
+</button>
+
   </form>
 
   <input type="file" id="uploadPhoto" accept="image/*" style="display:none;" onchange="uploadFotoProfil(this)">
