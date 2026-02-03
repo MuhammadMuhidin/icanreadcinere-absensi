@@ -95,13 +95,12 @@ form {
 .btn-checkinout{
   height: 1.8rem;
   width: auto;
-  margin: 5px;
+  /*margin: 5px;*/
 }
 
 button.checkin,
 button.checkout {
   flex: 1;            /* tombol sama lebar */
-  padding: 0.7rem;
   font-size: 1.3rem;
   width: 85px;
   height: 85px;
@@ -113,7 +112,10 @@ button.checkout {
   font-weight: 600;
   letter-spacing: 0.03em;
   transition: background-color 0.25s ease, box-shadow 0.25s ease;
-  display: inline-flex;
+  /*display: inline-flex;
+    padding: 0.7rem;*/
+  padding: 0;
+  display: flex;
   align-items: center;
   justify-content: center;
 }
