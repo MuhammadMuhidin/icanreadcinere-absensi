@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Absence GPS</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+  <link rel="stylesheet" href="static/css/absence.css">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+</head>
+<body>
+<div class="half-circle"></div>
+<div class="background-overlay"></div>
+
+<!-- Dark mode toggle button -->
+<button id="darkModeToggle" class="dark-mode-toggle">🌙</button>
+
+<div style="position: fixed; top: 10px; left: 10px; z-index: 999;">
+<a href="/upload">
+  <img src="{{ url_for('static', filename='Hastag.png') }}" alt="Logo" style="height: 40px; width: auto;">
+</a>
+</div>
+
+<h2>Hi, <span id="greeting"></span><br><strong>{{ title }}. {{ nama }} 👋</strong></h2>
+
+    <div class="profile-container">
+      <div class="aura-ring">
+        <div class="profile-wrapper">
+          <img src="https://pub-d744add1a3e147a19a6c8898ba7b6dd2.r2.dev/profiles/{{ nama }}.jpg"
+            alt="Foto Profil" class="profile-pic" onclick="document.getElementById('uploadPhoto').click()">>
+        </div>
+        <span class="status-dot" id="statusDot"></span>
+      </div>
+    </div>
+
+  {% if date %}
+  <table style="width:100%; color:white; border-collapse:collapse; margin-bottom:20px; border-spacing:10px;">
+    <tr>
+      <td>📅 <strong>Last Absence</strong></td>
+      <td><strong> {{ date }} <strong></td>
+    </tr>
+    <tr>
+      <td>⏰ Check In</td>
+      <td>
+        {% if checkin %}
+          {{ checkin }}
+        {% else %}
+          You Haven't Check In
+        {% endif %}
+      </td>
+    </tr>
+    <tr>
+      <td>🏁 Check Out</td>
+      <td>
+        {% if checkout %}
+          {{ checkout }}
+        {% else %}
+          You Haven't Check Out
+        {% endif %}
+      </td>
+    </tr>
+  </table>
+  <div class="news-box news-hb">
+    <div class="news-title">📰 Latest News</div>
+    <div class="news-content">{{ news }}</div>
+  </div>
+{% else %}
+  <p style="text-align:center;">Belum ada data absen.</p>
+{% endif %}
+
+  <form method="POST">
+    <input type="hidden" name="latitude" id="latitude">
+    <input type="hidden" name="longitude" id="longitude">
+    <input type="hidden" name="aksi" id="aksi">
+    <input type="hidden" name="notes" id="notes">
+    <input type="hidden" name="mood" id="mood">
+    <button type="button" class="checkin" onclick="submitGPS('Check In')"><img src="{{url_for('static', filename='checkin.png')}}" class="btn-checkinout">Check In</button>
+    <button type="button" class="checkout" onclick="submitGPS('Check Out')"><img src="{{url_for('static', filename='checkout.png')}}" class="btn-checkinout">Check Out</button>
+  </form>
+
+  <input type="file" id="uploadPhoto" accept="image/*" style="display:none;" onchange="uploadFotoProfil(this)">
+
+  <!-- Loader -->
+  <div class="loading-overlay" id="loading">
+    <div class="loading-spinner"></div>
+    <div class="loading-text"></div>
+  </div>
+
+<script>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        Swal.fire({
+          icon: "{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}",
+          title: "{{ msg }}",
+          position: 'center',
+          showConfirmButton: false,
+          timer: 5000,
+          width: '75%',
+          customClass: {
+            popup: 'my-swal-popup'
+          },
+          didOpen: () => {
+            {% if category == 'success' %}
+              confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+              });
+            {% endif %}
+          }
+        });
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</script>
+
+  <script>
+  function submitGPS(aksiValue) {
+    Swal.fire({
+        title: `${aksiValue} now?`,
+        html: `
+          <div style="text-align:left; font-size:16px;">
+            <label for="inputNotes" style="font-weight:bold; margin-bottom:6px; display:block;">📝 Add a note (optional)</label>
+            <textarea id="inputNotes" class="swal2-textarea" placeholder="Write your note here..." style="width:90%; height:80px; font-size:14px; overflow-y: auto;"></textarea>
+
+            <div style="margin-top:20px;">
+              <label style="font-weight:bold; display:block; margin-bottom:10px;">How are you feeling today?</label>
+              <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-around;">
+                <label style="display: flex; align-items: center; gap: 6px;">
+                  <input type="radio" name="mood" value="Happy">
+                  <span style="font-size: 20px;">😊</span> <span style="font-size: 14px;">Happy</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px;">
+                  <input type="radio" name="mood" value="Neutral" checked>
+                  <span style="font-size: 20px;">😐</span> <span style="font-size: 14px;">Neutral</span>
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px;">
+                  <input type="radio" name="mood" value="Sad">
+                  <span style="font-size: 20px;">😢</span> <span style="font-size: 14px;">Sad</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        `,
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'Cancel',
+        preConfirm: () => {
+          const notes = document.getElementById('inputNotes').value.trim();
+          const moodEl = document.querySelector('input[name="mood"]:checked');
+          const mood = moodEl ? moodEl.value : "😐 Neutral";
+
+          document.getElementById("notes").value = notes;
+          document.getElementById("mood").value = mood;
+
+         return true;
+        }
+      }).then((result) => {
+        if (!result.isConfirmed) return;
+
+      const loading = document.getElementById("loading");
+      loading.style.display = "flex";
+      loading.querySelector("div:last-child").innerHTML =
+      aksiValue === 'Check In'
+        ? '🤖 Duncan is preparing <br>your Check In, please wait..'
+        : '🤖 Duncan is confirming <br>your Check Out, please wait...';
+
+      let submitted = false;
+
+      if (navigator.geolocation) {
+        const watchId = navigator.geolocation.watchPosition(function(pos) {
+            if (!submitted) {
+              document.getElementById("latitude").value = pos.coords.latitude;
+              document.getElementById("longitude").value = pos.coords.longitude;
+              document.getElementById("aksi").value = aksiValue;
+              document.forms[0].submit();
+              submitted = true;       // supaya gak submit lagi
+              navigator.geolocation.clearWatch(watchId); // hentikan watch
+            }
+        }, function(err) {
+          loading.style.display = "none";
+          Swal.fire("❌ Failed get your location!", err.message, "error");
+        },
+        {
+        enableHighAccuracy: true, // Pakai GPS + Wi-Fi untuk akurasi tinggi
+        timeout: 20000,           // Tunggu maksimal 20 detik
+        maximumAge: 0             // Jangan pakai cache koordinat lama
+      });
+      } else {
+        loading.style.display = "none";
+        Swal.fire("❌ Error", "Browser not supported GPS.", "error");
+      }
+    });
+  }
+
+  setTimeout(() => {
+    const popup = document.getElementById("popup");
+    if (popup) {
+      popup.style.opacity = "0";
+    }
+  }, 3000);
+</script>
+
+  <!-- Script Dark Mode -->
+  <script>
+    const toggle = document.getElementById("darkModeToggle");
+
+    // Apply saved preference
+    if (localStorage.getItem("darkMode") === "enabled") {
+      document.body.classList.add("dark-mode");
+      toggle.textContent = "☀️";
+    }
+
+    // Toggle behavior
+    toggle.addEventListener("click", () => {
+      document.body.classList.toggle("dark-mode");
+      const isDark = document.body.classList.contains("dark-mode");
+
+      localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
+      toggle.textContent = isDark ? "☀️" : "🌙";
+    });
+  </script>
+
+<script>
+const btn = document.querySelector('.dark-mode-toggle');
+
+function shakeWithParticles() {
+  // Tambahkan class shake
+  btn.classList.add('shake');
+
+  // Buat beberapa partikel
+  for (let i = 0; i < 10; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    document.body.appendChild(particle);
+
+    // Posisi awal partikel di tengah tombol
+    const rect = btn.getBoundingClientRect();
+    particle.style.left = rect.left + rect.width / 2 + 'px';
+    particle.style.top = rect.top + rect.height / 2 + 'px';
+
+    // Gerakan acak keluar
+    const angle = Math.random() * 2 * Math.PI;
+    const distance = 30 + Math.random() * 20;
+    particle.style.setProperty('--x', `${Math.cos(angle) * distance}px`);
+    particle.style.setProperty('--y', `${Math.sin(angle) * distance}px`);
+
+    // Hapus partikel setelah animasi selesai
+    setTimeout(() => particle.remove(), 600);
+  }
+
+  // Hapus shake class
+  setTimeout(() => btn.classList.remove('shake'), 500);
+}
+
+// Jalankan tiap 5 detik
+setInterval(shakeWithParticles, 5000);
+</script>
+
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+
+<script>
+    const hour = new Date().getHours();
+    let greet = "";
+
+    if (hour < 12) {
+      greet = "Good morning!";
+    } else if (hour < 18) {
+      greet = "Good afternoon!";
+    } else if (hour < 21) {
+      greet = "Good evening!";
+    } else {
+      greet = "Good night!";
+    }
+
+    document.getElementById("greeting").textContent = greet;
+ </script>
+
+<script>
+  const serverDate = "{{ date }}";
+
+  const checkinRaw = "{{ checkin }}";
+  const checkoutRaw = "{{ checkout }}";
+
+  const checkin = (checkinRaw && checkinRaw !== "None") ? checkinRaw.trim() : "";
+  const checkout = (checkoutRaw && checkoutRaw !== "None") ? checkoutRaw.trim() : "";
+
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+
+  const dot = document.getElementById("statusDot");
+
+  if (serverDate !== todayStr || checkin === "") {
+    dot.classList.add("unchecked");   // abu
+  } else if (checkin !== "" && checkout === "") {
+    dot.classList.add("checked");     // hijau
+  } else if (checkout !== "") {
+    dot.classList.add("checkedout");  // biru + centang
+  }
+</script>
+
+<script>
+function uploadFotoProfil(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const fd = new FormData();
+  fd.append('file', file);
+
+  fetch('/change_photo', { method: 'POST', body: fd })
+    .then(res => {
+      const img = document.querySelector('.profile-pic');
+      img.src = img.src.split('?')[0] + '?v=' + Date.now(); // bypass cache
+
+      if (res.status === 200) {
+        Swal.fire("✅ Success", "Profile photo updated!", "success");
+      } else {
+        Swal.fire("❌ Error", "Upload failed!", "error");
+      }
+    })
+    .catch(() => Swal.fire("❌ Error", "Upload gagal", "error"));
+}
+</script>
+</body>
+</html>
