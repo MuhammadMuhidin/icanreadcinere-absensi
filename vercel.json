@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/index.py": {
-      "runtime": "@vercel/python@1.9.0"
+      "runtime": "@vercel/python@3.13"
     }
   },
   "routes": [
