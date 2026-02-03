@@ -482,9 +482,3 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 .status-dot.checkedout::after {
   content: "✔";
 }
-
-button.checkin img,
-button.checkout img {
-  vertical-align: middle;
-  margin-top: -2px;
-}
