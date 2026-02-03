@@ -314,5 +314,5 @@ def r2_test():
 def r2_read_test():
     return {
         "news": r2_read_text("content/news.txt"),
-        "cuti": r2_read_text("data/cuti.csv")[:200]
+        "riwayat absen": r2_read_text("data/log_absen.csv")[:200]
     }
