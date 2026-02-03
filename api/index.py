@@ -309,10 +309,3 @@ def r2_test():
         return "R2 CONNECTED", 200
     except Exception as e:
         return f"R2 ERROR: {str(e)}", 500
-
-@app.route("/__r2_read_test")
-def r2_read_test():
-    return {
-        "news": r2_read_text("content/news.txt"),
-        "riwayat absen": r2_read_text("data/log_absen.csv")[:200]
-    }
