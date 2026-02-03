@@ -167,6 +167,7 @@ def login():
         pw = request.form.get("password")
 
         if userid in USERS and USERS[userid]["password"] == pw:
+            session.permanent = True
             session["userid"] = userid
             session["title"] = USERS[userid]["title"]
             return redirect("/absence")
@@ -177,6 +178,14 @@ def login():
         return redirect("/absence")
 
     return render_template("login.html", news=get_news())
+
+@app.after_request
+def add_no_cache_headers(response):
+    if request.endpoint == 'login':
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
 
 @app.route("/absence", methods=["GET", "POST"])
 def absence():
