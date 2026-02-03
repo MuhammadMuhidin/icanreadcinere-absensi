@@ -95,7 +95,7 @@ form {
 .btn-checkinout{
   height: 1.8rem;
   width: auto;
-  /*margin: 5px;*/
+  margin: 3px;
 }
 
 button.checkin,
