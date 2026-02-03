@@ -246,3 +246,57 @@ def change_photo():
         ContentType="image/jpeg"
     )
     return Response(status=200)
+
+@app.route("/upload", methods=["GET", "POST"])
+def upload():
+    # hanya admin tertentu
+    if session.get("userid") not in ["Mita", "Hanny"]:
+        return redirect("/")
+
+    if request.method == "POST":
+        file = request.files.get("file")
+        password = request.form.get("password")
+        jenis = request.form.get("jenis")
+
+        if password != "nbpwd31":
+            flash("Wrong password!", "error")
+            return redirect("/upload")
+
+        if not file or jenis not in ["banner", "cuti"]:
+            flash("Invalid upload type!", "error")
+            return redirect("/upload")
+
+        # tentukan target R2 key
+        if jenis == "banner":
+            if not file.filename.endswith(".txt"):
+                flash("Banner must be .txt file", "error")
+                return redirect("/upload")
+            r2_key = "content/news.txt"
+            content_type = "text/plain"
+
+        elif jenis == "cuti":
+            if session.get("userid") != "Hanny":
+                flash("You are not allowed to upload leave files!", "error")
+                return redirect("/upload")
+            if not file.filename.endswith(".csv"):
+                flash("Cuti must be .csv file", "error")
+                return redirect("/upload")
+            r2_key = "data/cuti.csv"
+            content_type = "text/csv"
+
+        try:
+            r2 = get_r2()
+            r2.put_object(
+                Bucket=R2_BUCKET,
+                Key=r2_key,
+                Body=file.read(),
+                ContentType=content_type
+            )
+            flash(f"Upload {jenis.upper()} success!", "success")
+
+        except Exception as e:
+            flash("Upload failed!", "error")
+
+        return redirect("/upload")
+
+    return render_template("upload.html")
