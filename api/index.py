@@ -93,6 +93,29 @@ def jarak_meter(lat1, lon1, lat2, lon2):
 # =====================
 # DATA FUNCTIONS
 # =====================
+def check_late(checkin_time):
+    if isinstance(checkin_time, str):
+        checkin_time = datetime.strptime(checkin_time, "%H:%M:%S").time()
+
+    tz = pytz.timezone("Asia/Jakarta")
+    today = datetime.now(tz).date()
+    hari_ini = today.weekday()
+
+    if hari_ini == 5:  # 0=Senin, 1=Selasa, 2=Rabu, 3=Kamis, 4=Jumat, 5=Sabtu, 6=Minggu
+        batas_telat = datetime.strptime("09:00:00", "%H:%M:%S").time()
+    else:
+        batas_telat = datetime.strptime("10:10:00", "%H:%M:%S").time()
+
+    if checkin_time > batas_telat:
+        late_time = datetime.combine(today, checkin_time) - datetime.combine(today, batas_telat)
+
+        hh = late_time.seconds // 3600
+        mm = (late_time.seconds % 3600) // 60
+        ss = late_time.seconds % 60
+        return f"{hh:02}:{mm:02}:{ss:02}"
+
+    return "On time!"
+
 def get_news():
     content = r2_read_text("content/news.txt").strip()
     return content or "Welcome to Attendance System"
@@ -194,6 +217,7 @@ def absence():
 
     user = session["userid"]
     date, checkin, checkout = get_latest_absen_for_user(user)
+    late_status = ''
 
     if request.method == "POST":
         aksi = request.form.get("aksi")
@@ -213,10 +237,15 @@ def absence():
             flash("Too far from office", "error")
             return redirect("/absence")
 
+        if aksi.lower() == "check in":
+            now = datetime.now(pytz.timezone("Asia/Jakarta")).time()
+            late_status = check_late(now)
+
         try:
             requests.post(GAS_URL, json={
                 "nama": user,
                 "aksi": aksi,
+                "late_status": late_status,
                 "mood": request.form.get("mood"),
                 "notes": request.form.get("notes")
             }, timeout=5)
