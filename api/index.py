@@ -58,7 +58,7 @@ def get_r2():
         )
     return _r2
 
-R2_BUCKET = os.environ.get("absence", "")
+R2_BUCKET = "absence"
 
 # =====================
 # R2 HELPERS
