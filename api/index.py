@@ -149,13 +149,21 @@ def get_news():
     return "Welcome to Attendance System"
 
 def get_sisa_cuti(userid):
-    data = r2_read_text("data/cuti.csv")
-    if not data:
-        return "leave file not found"
+    try:
+        sb = get_supabase()
+        res = (
+            sb.table("balance_dev")
+            .select("sisa")
+            .eq("nama", userid)
+            .limit(1)
+            .execute()
+        )
 
-    for nama, sisa in csv.reader(data.splitlines()):
-        if nama.lower() == userid.lower():
-            return sisa
+        if res.data:
+            return res.data[0]["sisa"]
+
+    except Exception as e:
+        print("GET CUTI ERROR:", e)
 
     return "no leave balance, contact your supervisor"
 
@@ -285,7 +293,8 @@ def absence():
         try:
             sb = get_supabase()
             res = sb.table("full_absence_dev").insert({
-                "nama": user, "aksi": aksi,
+                "nama": user,
+                "aksi": aksi,
                 "late_status": late_status,
                 "mood": request.form.get("mood"),
                 "notes": request.form.get("notes")
