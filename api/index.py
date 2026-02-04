@@ -379,30 +379,36 @@ def upload():
 
     return render_template("upload.html")
 
-@app.route("/__r2_test")
-def r2_test():
+@app.route("/checkdb")
+def checkdb():
+    result = {
+        "r2": None,
+        "supabase": None,
+    }
+
+    # === TEST R2 ===
     try:
         r2 = get_r2()
         r2.head_bucket(Bucket=R2_BUCKET)
-        return "R2 CONNECTED", 200
+        result["r2"] = "CONNECTED"
     except Exception as e:
-        return f"R2 ERROR: {str(e)}", 500
+        result["r2"] = f"ERROR: {str(e)}"
 
-@app.route("/__sp_test")
-def sp_test():
+    # === TEST SUPABASE ===
     try:
         sb = get_supabase()
-
-        res = (
-            sb.table("news")
-            .select("*")
-            .execute()
-        )
+        res = sb.table("news_dev").select("id").limit(1).execute()
 
         if not res.data:
-            return "SUPABASE CONNECTED, NEWS EMPTY", 200
-
-        return f"SUPABASE CONNECTED, NEWS: {res.data[0]['content']}", 200
-
+            result["supabase"] = "CONNECTED (no data)"
+        else:
+            result["supabase"] = "CONNECTED (with data)"
     except Exception as e:
-        return f"SUPABASE ERROR: {str(e)}", 500
+        result["supabase"] = f"ERROR: {str(e)}"
+
+    # === FINAL RESPONSE ===
+    status_code = 200
+    if "ERROR" in result["r2"] or "ERROR" in result["supabase"]:
+        status_code = 500
+
+    return result, status_code
