@@ -186,7 +186,7 @@ def sudah_absen_hari_ini(nama, aksi):
 
 def simpan_log_absen(nama, aksi):
     sb = get_supabase()
-    sb.table("log_absen").insert({
+    sb.table("log_absen_dev").insert({
         "nama": nama,
         "aksi": aksi,
         "tanggal": now.strftime("%Y-%m-%d"),
@@ -196,7 +196,7 @@ def simpan_log_absen(nama, aksi):
 def get_latest_absen_for_user(username):
     sb = get_supabase()
     res = (
-        sb.table("log_absen")
+        sb.table("log_absen_dev")
         .select("tanggal, aksi, waktu")
         .eq("nama", username)
         .order("tanggal", desc=True)
