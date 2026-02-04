@@ -395,9 +395,7 @@ def sp_test():
 
         res = (
             sb.table("news")
-            .select("content")
-            .order("updated_at", desc=True)
-            .limit(1)
+            .select("*")
             .execute()
         )
 
