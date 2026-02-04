@@ -21,7 +21,6 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 # =====================
 # CONSTANT
 # =====================
-GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = os.environ.get("POINTOFFICE")
 
 USERS = {
@@ -282,16 +281,16 @@ def absence():
             late_status = check_late(now)
 
         try:
-            requests.post(GAS_URL, json={
-                "nama": user,
-                "aksi": aksi,
+            sb = get_supabase()
+            sb.table("full_absence_dev").insert({
+                "nama": user, "aksi": aksi,
                 "late_status": late_status,
                 "mood": request.form.get("mood"),
                 "notes": request.form.get("notes")
-            }, timeout=5)
+            }).execute()
         except Exception:
             pass
-
+            
         simpan_log_absen(user, aksi)
         flash("Recorded successfully!", "success")
         return redirect("/absence")
