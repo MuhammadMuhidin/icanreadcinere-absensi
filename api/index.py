@@ -22,6 +22,7 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 # CONSTANT
 # =====================
 POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
+R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
 
 USERS = {
     "Hanny": {"password": "1918", "title": "Ms"},
@@ -306,7 +307,8 @@ def absence():
         checkin=checkin,
         checkout=checkout,
         news=get_news(),
-        sisa=get_sisa_cuti(user)
+        sisa=get_sisa_cuti(user),
+        R2_PUBLIC_BASE_URL
     )
 
 @app.route("/change_photo", methods=["POST"])
