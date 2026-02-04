@@ -387,3 +387,13 @@ def r2_test():
         return "R2 CONNECTED", 200
     except Exception as e:
         return f"R2 ERROR: {str(e)}", 500
+
+@app.route("/__sp_test")
+def sp_test():
+    try:
+        sb = get_supabase()
+        # query paling ringan untuk cek koneksi
+        sb.table("news").select("id").limit(1).execute()
+        return "SUPABASE CONNECTED", 200
+    except Exception as e:
+        return f"SUPABASE ERROR: {str(e)}", 500
