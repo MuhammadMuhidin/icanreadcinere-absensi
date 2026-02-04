@@ -43,9 +43,9 @@ _r2 = None
 def get_r2():
     global _r2
     if _r2 is None:
-        endpoint = "https://e260707eb00b860602a70e80b0ee9b40.r2.cloudflarestorage.com"
-        key = "07bbe94e4664dd295ad47ceb6fb457c1"
-        secret = "e0ea80811220069cffafb5c4200fb46cd3b9577a88176c5560172135902c1c5d"
+        endpoint = os.environ.get("R2_ENDPOINT")
+        key = os.environ.get("R2_KEY")
+        secret = os.environ.get("R2_SECRET")
 
         if not endpoint or not key or not secret:
             raise RuntimeError("R2 credentials not set")
