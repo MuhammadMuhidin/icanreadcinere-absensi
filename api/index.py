@@ -340,12 +340,10 @@ def change_photo():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
-    # hanya admin tertentu
     if session.get("userid") not in ["Mita", "Hanny"]:
         return redirect("/")
 
     if request.method == "POST":
-        file = request.files.get("file")
         password = request.form.get("password")
         jenis = request.form.get("jenis")
 
@@ -353,40 +351,48 @@ def upload():
             flash("Wrong password!", "error")
             return redirect("/upload")
 
-        if not file or jenis not in ["banner", "cuti"]:
-            flash("Invalid upload type!", "error")
-            return redirect("/upload")
-
-        # tentukan target R2 key
-        if jenis == "banner":
-            if not file.filename.endswith(".txt"):
-                flash("Banner must be .txt file", "error")
-                return redirect("/upload")
-            r2_key = "content/news.txt"
-            content_type = "text/plain"
-
-        elif jenis == "cuti":
-            if session.get("userid") != "Hanny":
-                flash("You are not allowed to upload leave files!", "error")
-                return redirect("/upload")
-            if not file.filename.endswith(".csv"):
-                flash("Cuti must be .csv file", "error")
-                return redirect("/upload")
-            r2_key = "data/cuti.csv"
-            content_type = "text/csv"
+        sb = get_supabase()
 
         try:
-            r2 = get_r2()
-            r2.put_object(
-                Bucket=R2_BUCKET,
-                Key=r2_key,
-                Body=file.read(),
-                ContentType=content_type
-            )
-            flash(f"Upload {jenis.upper()} success!", "success")
+            # === BANNER / NEWS ===
+            if jenis == "banner":
+                content = request.form.get("content", "").strip()
+                if not content:
+                    flash("Content cannot be empty", "error")
+                    return redirect("/upload")
+
+                sb.table("news_dev").insert({
+                    "content": content
+                }).execute()
+
+                flash("News updated successfully", "success")
+
+            # === CUTI ===
+            elif jenis == "cuti":
+                if session.get("userid") != "Hanny":
+                    flash("You are not allowed", "error")
+                    return redirect("/upload")
+
+                nama = request.form.get("nama")
+                sisa = request.form.get("sisa")
+
+                if not nama or sisa is None:
+                    flash("Nama dan sisa wajib diisi", "error")
+                    return redirect("/upload")
+
+                sb.table("balance_dev").insert({
+                    "nama": nama,
+                    "sisa": sisa
+                }).execute()
+
+                flash("Leave balance saved", "success")
+
+            else:
+                flash("Invalid type", "error")
 
         except Exception as e:
-            flash("Upload failed!", "error")
+            print("UPLOAD ERROR:", e)
+            flash("Operation failed", "error")
 
         return redirect("/upload")
 
