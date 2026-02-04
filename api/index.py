@@ -45,7 +45,7 @@ def get_supabase():
      global _sb
      if _sb is None:
          url = os.environ.get("SUPABASE_URL")
-         key = os.environ.get("SUPABASE_KEY")
+         key = os.environ.get("SUPABASE_ROLE_KEY")
          if not url or not key:
              raise RuntimeError("Supabase credentials not set")
          _sb = create_client(url, key)
