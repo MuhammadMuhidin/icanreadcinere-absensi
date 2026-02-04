@@ -380,14 +380,23 @@ def upload():
                     flash("Nama dan sisa wajib diisi", "error")
                     return redirect("/upload")
 
-                    sb.table("balance_dev") \
-                    .update({"sisa": sisa}) \
-                    .eq("nama", nama) \
-                    .execute()
-                    
-                    flash("Leave balance saved", "success")
-            else:
-                flash("Invalid type", "error")
+                try:
+                    sisa = int(sisa)
+                except ValueError:
+                    flash("Sisa cuti harus berupa angka", "error")
+                    return redirect("/upload")
+
+                res = (
+                        sb.table("balance_dev")
+                        .update({"sisa": sisa})
+                        .eq("nama", nama)
+                        .execute()
+                    )
+                
+                    if not res.data:
+                        flash(f"Name '{nama}' not found!", "error")
+                    else:
+                        flash("Leave balance updated", "success")
 
         except Exception as e:
             print("UPLOAD ERROR:", e)
