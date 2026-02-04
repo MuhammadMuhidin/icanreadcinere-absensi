@@ -392,8 +392,19 @@ def r2_test():
 def sp_test():
     try:
         sb = get_supabase()
-        # query paling ringan untuk cek koneksi
-        sb.table("news").select("id").limit(1).execute()
-        return "SUPABASE CONNECTED", 200
+
+        res = (
+            sb.table("news")
+            .select("content")
+            .order("updated_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+
+        if not res.data:
+            return "SUPABASE CONNECTED, NEWS EMPTY", 200
+
+        return f"SUPABASE CONNECTED, NEWS: {res.data[0]['content']}", 200
+
     except Exception as e:
         return f"SUPABASE ERROR: {str(e)}", 500
