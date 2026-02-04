@@ -289,8 +289,10 @@ def absence():
                 "mood": request.form.get("mood"),
                 "notes": request.form.get("notes")
             }).execute()
-        except Exception:
-            pass
+            print("INSERT OK:", res)
+        except Exception as e:
+            print("INSERT ERROR:", e)
+            raise
             
         simpan_log_absen(user, aksi)
         flash("Recorded successfully!", "success")
