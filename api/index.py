@@ -58,7 +58,7 @@ def get_r2():
         )
     return _r2
 
-R2_BUCKET = {{ env.R2_BUCKET }}
+R2_BUCKET = os.environ.get{{env.R2_BUCKET}}
 
 # =====================
 # R2 HELPERS
