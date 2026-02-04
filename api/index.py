@@ -380,13 +380,12 @@ def upload():
                     flash("Nama dan sisa wajib diisi", "error")
                     return redirect("/upload")
 
-                sb.table("balance_dev").insert({
-                    "nama": nama,
-                    "sisa": sisa
-                }).execute()
-
-                flash("Leave balance saved", "success")
-
+                    sb.table("balance_dev") \
+                    .update({"sisa": sisa}) \
+                    .eq("nama", nama) \
+                    .execute()
+                    
+                    flash("Leave balance saved", "success")
             else:
                 flash("Invalid type", "error")
 
@@ -416,7 +415,7 @@ def checkdb():
     # === TEST SUPABASE ===
     try:
         sb = get_supabase()
-        res = sb.table("news_dev").select("id").limit(1).execute()
+        res = table("news_dev").select("id").limit(1).execute()
 
         if not res.data:
             result["supabase"] = "CONNECTED (no data)"
