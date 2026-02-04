@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, flash, session, Response
 from math import radians, cos, sin, sqrt, atan2
 from collections import defaultdict
+from supabase import create_client
 from datetime import datetime
 from io import StringIO
 import os, requests, csv, pytz, json, boto3
@@ -34,6 +35,21 @@ USERS = {
 }
 
 TZ = pytz.timezone("Asia/Jakarta")
+
+# =====================
+# SUPABASE (LAZY INIT)
+# =====================
+_sb = None
+
+def get_supabase():
+     global _sb
+     if _sb is None:
+         url = os.environ.get("SUPABASE_URL")
+         key = os.environ.get("SUPABASE_SERVICE_ROLE")
+         if not url or not key:
+             raise RuntimeError("Supabase credentials not set")
+         _sb = create_client(url, key)
+     return _sb
 
 # =====================
 # R2 (LAZY INIT)
@@ -117,8 +133,20 @@ def check_late(checkin_time):
     return "On time!"
 
 def get_news():
-    content = r2_read_text("content/news.txt").strip()
-    return content or "Welcome to Attendance System"
+    try:
+        sb = get_supabase()
+        res = (
+            sb.table("news")
+            .select("content")
+            .order("updated_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if res.data:
+            return res.data[0]["content"]
+    except Exception:
+        pass
+    return "Welcome to Attendance System"
 
 def get_sisa_cuti(userid):
     data = r2_read_text("data/cuti.csv")
@@ -132,53 +160,65 @@ def get_sisa_cuti(userid):
     return "no leave balance, contact your supervisor"
 
 def load_log():
-    data = r2_read_text("data/log_absen.csv")
-    return list(csv.DictReader(data.splitlines())) if data else []
+    try:
+        sb = get_supabase()
+        res = sb.table("log_absen").select("*").execute()
+        return res.data or []
+    except Exception:
+        return []
 
 def save_log(rows):
-    buf = StringIO()
-    writer = csv.DictWriter(buf, fieldnames=["nama", "aksi", "tanggal", "waktu"])
-    writer.writeheader()
-    writer.writerows(rows)
-    r2_write_text("data/log_absen.csv", buf.getvalue(), "text/csv")
+    pass
 
 def sudah_absen_hari_ini(nama, aksi):
     today = datetime.now(TZ).strftime("%Y-%m-%d")
-    return any(
-        r["nama"] == nama and r["aksi"] == aksi and r["tanggal"] == today
-        for r in load_log()
+    sb = get_supabase()
+    res = (
+        sb.table("log_absen")
+        .select("id")
+        .eq("nama", nama)
+        .eq("aksi", aksi)
+        .eq("tanggal", today)
+        .limit(1)
+        .execute()
     )
+    return bool(res.data)
 
 def simpan_log_absen(nama, aksi):
-    now = datetime.now(TZ)
-    rows = load_log()
-    rows.append({
+    sb = get_supabase()
+    sb.table("log_absen").insert({
         "nama": nama,
         "aksi": aksi,
         "tanggal": now.strftime("%Y-%m-%d"),
-        "waktu": now.strftime("%H:%M:%S")
-    })
-    save_log(rows)
+        "waktu": now.strftime("%H:%M:%S"),
+    }).execute()
 
 def get_latest_absen_for_user(username):
-    rows = [r for r in load_log() if r["nama"].lower() == username.lower()]
-    if not rows:
-        return None, None, None
+sb = get_supabase()
+res = (
+    sb.table("log_absen")
+    .select("tanggal, aksi, waktu")
+    .eq("nama", username)
+    .order("tanggal", desc=True)
+    .order("waktu", desc=True)
+    .execute()
+)
 
-    grouped = defaultdict(list)
-    for r in rows:
-        grouped[r["tanggal"]].append(r)
+if not res.data:
+    return None, None, None
 
-    latest = max(grouped.keys())
-    checkin = checkout = None
+latest_date = res.data[0]["tanggal"]
+checkin = checkout = None
 
-    for r in grouped[latest]:
-        if r["aksi"].lower() == "check in":
-            checkin = r["waktu"]
-        elif r["aksi"].lower() == "check out":
-            checkout = r["waktu"]
+for r in res.data:
+    if r["tanggal"] != latest_date:
+        break
+    if r["aksi"].lower() == "check in":
+        checkin = r["waktu"]
+    elif r["aksi"].lower() == "check out":
+        checkout = r["waktu"]
 
-    return latest, checkin, checkout
+return latest_date, checkin, checkout
 
 # =====================
 # ROUTES
