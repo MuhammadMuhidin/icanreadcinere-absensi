@@ -184,6 +184,7 @@ def sudah_absen_hari_ini(nama, aksi):
     return bool(res.data)
 
 def simpan_log_absen(nama, aksi):
+    now = datetime.now(TZ)
     sb = get_supabase()
     sb.table("log_absen_dev").insert({
         "nama": nama,
