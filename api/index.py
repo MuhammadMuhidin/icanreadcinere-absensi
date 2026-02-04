@@ -22,7 +22,7 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 # CONSTANT
 # =====================
 GAS_URL = os.environ.get("GAS_URL")
-POINTOFFICE = (-6.323856, 106.784517)
+POINTOFFICE = os.environ.get("POINTOFFICE")
 
 USERS = {
     "Hanny": {"password": "1918", "title": "Ms"},
