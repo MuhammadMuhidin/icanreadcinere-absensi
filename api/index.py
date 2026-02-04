@@ -21,7 +21,7 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 # =====================
 # CONSTANT
 # =====================
-POINTOFFICE = os.environ.get("POINTOFFICE")
+POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 
 USERS = {
     "Hanny": {"password": "1918", "title": "Ms"},
@@ -271,8 +271,8 @@ def absence():
         if sudah_absen_hari_ini(user, aksi):
             flash("Already done today", "error")
             return redirect("/absence")
-
-        if jarak_meter(lat, lon, *POINTOFFICE) > 150:
+        
+        if jarak_meter(lat_user, lon_user, POINTOFFICE[0], POINTOFFICE[1]) > 150:
             flash("Too far from office", "error")
             return redirect("/absence")
 
