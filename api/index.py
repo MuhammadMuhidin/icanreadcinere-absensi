@@ -308,7 +308,7 @@ def absence():
         checkout=checkout,
         news=get_news(),
         sisa=get_sisa_cuti(user),
-        R2_PUBLIC_BASE_URL
+        R2_PUBLIC_BASE_URL=R2_PUBLIC_BASE_URL
     )
 
 @app.route("/change_photo", methods=["POST"])
