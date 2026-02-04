@@ -194,31 +194,31 @@ def simpan_log_absen(nama, aksi):
     }).execute()
 
 def get_latest_absen_for_user(username):
-sb = get_supabase()
-res = (
-    sb.table("log_absen")
-    .select("tanggal, aksi, waktu")
-    .eq("nama", username)
-    .order("tanggal", desc=True)
-    .order("waktu", desc=True)
-    .execute()
-)
+    sb = get_supabase()
+    res = (
+        sb.table("log_absen")
+        .select("tanggal, aksi, waktu")
+        .eq("nama", username)
+        .order("tanggal", desc=True)
+        .order("waktu", desc=True)
+        .execute()
+    )
 
-if not res.data:
-    return None, None, None
+    if not res.data:
+        return None, None, None
 
-latest_date = res.data[0]["tanggal"]
-checkin = checkout = None
+    latest_date = res.data[0]["tanggal"]
+    checkin = checkout = None
 
-for r in res.data:
-    if r["tanggal"] != latest_date:
-        break
-    if r["aksi"].lower() == "check in":
-        checkin = r["waktu"]
-    elif r["aksi"].lower() == "check out":
-        checkout = r["waktu"]
+    for r in res.data:
+        if r["tanggal"] != latest_date:
+            break
+        if r["aksi"].lower() == "check in":
+            checkin = r["waktu"]
+        elif r["aksi"].lower() == "check out":
+            checkout = r["waktu"]
 
-return latest_date, checkin, checkout
+    return latest_date, checkin, checkout
 
 # =====================
 # ROUTES
