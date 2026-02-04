@@ -283,7 +283,7 @@ def absence():
 
         try:
             sb = get_supabase()
-            sb.table("full_absence_dev").insert({
+            res = sb.table("full_absence_dev").insert({
                 "nama": user, "aksi": aksi,
                 "late_status": late_status,
                 "mood": request.form.get("mood"),
