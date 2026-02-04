@@ -20,7 +20,7 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 # =====================
 # CONSTANT
 # =====================
-GAS_URL = "https://script.google.com/macros/s/AKfycby3q46el12n-cENbDxoed6o8qjftkVUa_pg5seEEYXjK2riDnASilrWIZ6NLS8YDJG99w/exec"
+GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = (-6.323856, 106.784517)
 
 USERS = {
