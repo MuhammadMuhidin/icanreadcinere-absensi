@@ -136,7 +136,7 @@ def get_news():
     try:
         sb = get_supabase()
         res = (
-            sb.table("news")
+            sb.table("news_dev")
             .select("content")
             .order("updated_at", desc=True)
             .limit(1)
@@ -162,7 +162,7 @@ def get_sisa_cuti(userid):
 def load_log():
     try:
         sb = get_supabase()
-        res = sb.table("log_absen").select("*").execute()
+        res = sb.table("log_absen_dev").select("*").execute()
         return res.data or []
     except Exception:
         return []
@@ -174,7 +174,7 @@ def sudah_absen_hari_ini(nama, aksi):
     today = datetime.now(TZ).strftime("%Y-%m-%d")
     sb = get_supabase()
     res = (
-        sb.table("log_absen")
+        sb.table("log_absen_dev")
         .select("id")
         .eq("nama", nama)
         .eq("aksi", aksi)
