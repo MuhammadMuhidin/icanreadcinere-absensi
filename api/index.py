@@ -272,7 +272,7 @@ def absence():
             flash("Already done today", "error")
             return redirect("/absence")
         
-        if jarak_meter(lat_user, lon_user, POINTOFFICE[0], POINTOFFICE[1]) > 150:
+        if jarak_meter(lat, lon, POINTOFFICE[0], POINTOFFICE[1]) > 150:
             flash("Too far from office", "error")
             return redirect("/absence")
 
