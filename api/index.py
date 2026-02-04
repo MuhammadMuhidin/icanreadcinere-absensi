@@ -380,12 +380,6 @@ def upload():
                     flash("Nama dan sisa wajib diisi", "error")
                     return redirect("/upload")
 
-                try:
-                    sisa = int(sisa)
-                except ValueError:
-                    flash("Sisa cuti harus berupa angka", "error")
-                    return redirect("/upload")
-
                 res = (
                         sb.table("balance_dev")
                         .update({"sisa": sisa})
