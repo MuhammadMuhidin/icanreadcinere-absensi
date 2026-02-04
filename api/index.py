@@ -393,10 +393,10 @@ def upload():
                         .execute()
                     )
                 
-                    if not res.data:
-                        flash(f"Name '{nama}' not found!", "error")
-                    else:
-                        flash("Leave balance updated", "success")
+                if not res.data:
+                    flash(f"Name '{nama}' not found!", "error")
+                else:
+                    flash("Leave balance updated", "success")
 
         except Exception as e:
             print("UPLOAD ERROR:", e)
