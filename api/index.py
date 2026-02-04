@@ -379,7 +379,7 @@ def upload():
 
     return render_template("upload.html")
 
-@app.route("/checkdb")
+@app.route("/__checkdb")
 def checkdb():
     result = {
         "r2": None,
