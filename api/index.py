@@ -515,9 +515,13 @@ def decision_leave(leave_id):
 
     data = request.json
     action = data.get("action")
+    reason = data.get("reason", "").strip()
 
     if action not in ("APPROVE", "REJECT"):
         return {"error": "invalid action"}, 400
+
+    if action == "REJECT" and not reason:
+        return {"error": "reason required"}, 400
 
     sb = get_supabase()
 
@@ -560,9 +564,16 @@ def decision_leave(leave_id):
             .eq("nama", nama) \
             .execute()
 
+        update_data = {"status": "ACCEPT", "reason": None}
+    else:  # DECLINE
+        update_data = {
+            "status": "REJECT",
+            "reason": reason
+        }
+
     # 3️⃣ Update status leave
     sb.table("paid_leave_dev") \
-        .update({"status": action}) \
+        .update(update_data) \
         .eq("id", leave_id) \
         .eq("status", "WAIT") \
         .execute()
