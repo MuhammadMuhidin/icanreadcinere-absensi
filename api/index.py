@@ -259,7 +259,6 @@ def login():
             session.permanent = True
             session["userid"] = userid
             session["title"] = USERS[userid]["title"]
-            session["phone"] = USERS[userid]["phone"]
             return redirect("/absence")
 
         flash("Incorrect userid or password", "error")
@@ -566,7 +565,7 @@ def decision_leave(leave_id):
         
         user_data = USERS.get(nama)
         phone = user_data.get("phone") if user_data else None
-        leave_date = leave.data.get("leave_date")
+        leave_date = leave.data["leave_date"]
         if phone:
             wa_msg = f"🎉 Yay! Your request for leave on {leave_date} has been approved!"
             send_wa(phone, wa_msg)
