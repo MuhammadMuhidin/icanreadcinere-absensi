@@ -547,7 +547,7 @@ def decision_leave(leave_id):
     # 1️⃣ Ambil data leave (nama & status)
     leave = (
         sb.table("paid_leave_dev")
-        .select("name, status")
+        .select("name, status, leave_date")
         .eq("id", leave_id)
         .single()
         .execute()
