@@ -328,8 +328,8 @@ function decision(id, action) {
       : "Are you sure?",
     icon: "question",
     showCancelButton: true,
-    confirmButtonText: isApprove ? "Approve" : "Confirm",
-    cancelButtonText: "CANCELED",
+    confirmButtonText: isApprove ? "Yes" : "Confirm",
+    cancelButtonText: "No",
     confirmButtonColor: "#16a34a"
   }).then((result) => {
     if (!result.isConfirmed) return;
@@ -426,7 +426,7 @@ function renderTable(data) {
 
   function rejectWithReason(id) {
   Swal.fire({
-    title: "Reject Leave Request",
+    title: "Reject Leave Request?",
     input: "textarea",
     inputLabel: "Reason for rejection",
     inputPlaceholder: "Write the reason here...",
@@ -434,9 +434,9 @@ function renderTable(data) {
       rows: 4
     },
     showCancelButton: true,
-    confirmButtonText: "REJECTED",
+    confirmButtonText: "Yes",
     confirmButtonColor: "#dc2626",
-    cancelButtonText: "CANCELED",
+    cancelButtonText: "No",
     preConfirm: (value) => {
       if (!value || !value.trim()) {
         Swal.showValidationMessage("Reason is required");
