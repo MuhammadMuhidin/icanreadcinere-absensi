@@ -295,7 +295,7 @@ function submitLeave() {
 
 function cancelLeave(id) {
   Swal.fire({
-    title: "Cancel Leave Request?",
+    title: "Cancel this request?",
     text: "This action cannot be undone.",
     icon: "warning",
     showCancelButton: true,
@@ -322,14 +322,14 @@ function decision(id, action) {
   const isApprove = action === "APPROVED";
 
   Swal.fire({
-    title: isApprove ? "Approve Leave Request?" : "Confirm Action",
+    title: isApprove ? "Approve this request?" : "Confirm Action",
     text: isApprove
       ? "This will approve the leave and deduct balance."
       : "Are you sure?",
     icon: "question",
     showCancelButton: true,
-    confirmButtonText: isApprove ? "Yes" : "Confirm",
-    cancelButtonText: "No",
+    confirmButtonText: isApprove ? "Yes, approve it" : "Confirm",
+    cancelButtonText: "Back",
     confirmButtonColor: "#16a34a"
   }).then((result) => {
     if (!result.isConfirmed) return;
@@ -426,17 +426,17 @@ function renderTable(data) {
 
   function rejectWithReason(id) {
   Swal.fire({
-    title: "Reject Leave Request?",
+    title: "Reject this request?",
     input: "textarea",
-    inputLabel: "Reason for rejection",
+    inputLabel: "what's the reason:",
     inputPlaceholder: "Write the reason here...",
     inputAttributes: {
       rows: 4
     },
     showCancelButton: true,
-    confirmButtonText: "Yes",
+    confirmButtonText: "Yes, reject it",
     confirmButtonColor: "#dc2626",
-    cancelButtonText: "No",
+    cancelButtonText: "Back",
     preConfirm: (value) => {
       if (!value || !value.trim()) {
         Swal.showValidationMessage("Reason is required");
