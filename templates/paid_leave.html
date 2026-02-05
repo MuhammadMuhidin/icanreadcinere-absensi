@@ -268,7 +268,7 @@ function loadData() {
 
       if (ROLE === "manager") {
         data = data.filter(d =>
-          ["WAIT", "ACCEPT", "DECLINE"].includes(d.status) ||
+          ["WAIT", "APPROVE", "REJECT"].includes(d.status) ||
           (d.status === "CANCEL" && d.name === "Hanny")
         );
       } else {
@@ -347,10 +347,10 @@ function renderTable(data) {
   // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
   if (ROLE === "manager") {
     buttons.push(
-      `<button class="btn-danger" onclick="decision(${l.id}, 'DECLINE')">Reject</button>`
+      `<button class="btn-danger" onclick="decision(${l.id}, 'REJECT')">Reject</button>`
     );
     buttons.push(
-      `<button class="btn-success" onclick="decision(${l.id}, 'ACCEPT')">Approve</button>`
+      `<button class="btn-success" onclick="decision(${l.id}, 'APPROVE')">Approve</button>`
     );
   }
 
