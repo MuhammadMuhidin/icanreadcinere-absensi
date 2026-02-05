@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Paid Leave</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f5f6fa;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 { margin-bottom: 16px; }
+
+    button {
+      padding: 8px 14px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: #2563eb; color: #fff; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-success { background: #16a34a; color: #fff; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      margin-top: 16px;
+    }
+
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #e5e7eb;
+      text-align: left;
+    }
+
+    th { background: #f1f5f9; }
+
+    .WAIT { color: #d97706; }
+    .ACCEPT { color: #16a34a; }
+    .DECLINE { color: #dc2626; }
+    .CANCEL { color: #6b7280; }
+
+    dialog {
+      border: none;
+      border-radius: 6px;
+      padding: 20px;
+      width: 300px;
+    }
+
+    dialog input {
+      width: 100%;
+      padding: 6px;
+      margin-bottom: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<h1>Paid Leave</h1>
+
+<button id="applyBtn" class="btn-primary" onclick="openDialog()">Ajukan Cuti</button>
+
+<table>
+  <thead>
+    <tr>
+      <th>Tanggal Pengajuan</th>
+      <th>Tanggal Cuti</th>
+      <th>Status</th>
+      <th>Aksi</th>
+    </tr>
+  </thead>
+  <tbody id="leaveTable"></tbody>
+</table>
+
+<dialog id="leaveDialog">
+  <h3>Ajukan Cuti</h3>
+  <label>Tanggal Cuti</label>
+  <input type="date" id="leaveDate">
+  <div style="text-align:right;">
+    <button onclick="closeDialog()">Batal</button>
+    <button class="btn-primary" onclick="submitLeave()">Ajukan</button>
+  </div>
+</dialog>
+
+<script>
+window.SESSION_NAME = "{{ SESSION_NAME }}";
+
+const NAME = window.SESSION_NAME;
+const ROLE = (NAME === "Hanny") ? "manager" : "employee";
+
+document.getElementById("applyBtn").style.display =
+  ROLE === "employee" ? "inline-block" : "none";
+
+function openDialog() {
+  document.getElementById("leaveDialog").showModal();
+}
+
+function closeDialog() {
+  document.getElementById("leaveDialog").close();
+}
+
+function loadData() {
+  fetch("/leave")
+    .then(r => r.json())
+    .then(res => {
+      let data = res.data;
+
+      if (ROLE === "manager") {
+        data = data.filter(d => {
+          if (["WAIT", "ACCEPT", "DECLINE"].includes(d.status)) return true;
+          if (d.status === "CANCEL" && d.name === "Hanny") return true;
+          return false;
+        });
+      } else {
+        data = data.filter(d => d.name === NAME);
+      }
+
+      data.sort((a, b) => {
+        if (a.status === "WAIT" && b.status !== "WAIT") return -1;
+        if (a.status !== "WAIT" && b.status === "WAIT") return 1;
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+
+      renderTable(data);
+    });
+}
+
+function submitLeave() {
+  const leaveDate = document.getElementById("leaveDate").value;
+  if (!leaveDate) return alert("Tanggal cuti wajib diisi");
+
+  fetch("/leave", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ leave_date: leaveDate })
+  }).then(() => {
+    closeDialog();
+    loadData();
+  });
+}
+
+function cancelLeave(id) {
+  if (!confirm("Batalkan pengajuan cuti?")) return;
+  fetch(`/leave/${id}/cancel`, { method: "PATCH" })
+    .then(() => loadData());
+}
+
+function decision(id, action) {
+  if (!confirm(`Yakin ${action}?`)) return;
+  fetch(`/leave/${id}/decision`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ action })
+  }).then(() => loadData());
+}
+
+function renderTable(data) {
+  const tbody = document.getElementById("leaveTable");
+  tbody.innerHTML = "";
+
+  data.forEach(l => {
+    let action = "-";
+
+    if (l.status === "WAIT") {
+      if (ROLE === "employee") {
+        action = `<button class="btn-danger" onclick="cancelLeave(${l.id})">Cancel</button>`;
+      }
+      if (ROLE === "manager") {
+        action = `
+          <button class="btn-success" onclick="decision(${l.id}, 'ACCEPT')">Approve</button>
+          <button class="btn-danger" onclick="decision(${l.id}, 'DECLINE')">Reject</button>
+        `;
+      }
+    }
+
+    tbody.innerHTML += `
+      <tr>
+        <td>${l.created_at?.slice(0,10) || "-"}</td>
+        <td>${l.leave_date}</td>
+        <td class="${l.status}">${l.status}</td>
+        <td>${action}</td>
+      </tr>
+    `;
+  });
+}
+
+loadData();
+</script>
+
+</body>
+</html>
