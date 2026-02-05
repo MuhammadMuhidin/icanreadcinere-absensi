@@ -450,7 +450,7 @@ def get_leave():
 
     sb = get_supabase()
     res = (
-        sb.table("paid_leave")
+        sb.table("paid_leave_dev")
         .select("*")
         .order("created_at", desc=True)
         .execute()
@@ -470,7 +470,7 @@ def submit_leave():
         return {"error": "leave_date required"}, 400
 
     sb = get_supabase()
-    sb.table("paid_leave").insert({
+    sb.table("paid_leave_dev").insert({
         "name": session["userid"],
         "leave_date": leave_date,
         "status": "WAIT"
@@ -485,7 +485,7 @@ def cancel_leave(leave_id):
 
     sb = get_supabase()
     leave = (
-        sb.table("paid_leave")
+        sb.table("paid_leave_dev")
         .select("name, status")
         .eq("id", leave_id)
         .single()
@@ -501,7 +501,7 @@ def cancel_leave(leave_id):
     if leave.data["status"] != "WAIT":
         return {"error": "cannot cancel"}, 400
 
-    sb.table("paid_leave") \
+    sb.table("paid_leave_dev") \
         .update({"status": "CANCEL"}) \
         .eq("id", leave_id) \
         .execute()
@@ -520,7 +520,7 @@ def decision_leave(leave_id):
         return {"error": "invalid action"}, 400
 
     sb = get_supabase()
-    sb.table("paid_leave") \
+    sb.table("paid_leave_dev") \
         .update({"status": action}) \
         .eq("id", leave_id) \
         .eq("status", "WAIT") \
