@@ -520,6 +520,47 @@ def decision_leave(leave_id):
         return {"error": "invalid action"}, 400
 
     sb = get_supabase()
+
+    # 1️⃣ Ambil data leave (nama & status)
+    leave = (
+        sb.table("paid_leave_dev")
+        .select("name, status")
+        .eq("id", leave_id)
+        .single()
+        .execute()
+    )
+
+    if not leave.data:
+        return {"error": "not found"}, 404
+
+    if leave.data["status"] != "WAIT":
+        return {"error": "already processed"}, 400
+
+    # 2️⃣ Jika ACCEPT → potong sisa cuti
+    if action == "ACCEPT":
+        nama = leave.data["name"]
+
+        balance = (
+            sb.table("balance_dev")
+            .select("sisa")
+            .eq("nama", nama)
+            .single()
+            .execute()
+        )
+
+        if not balance.data:
+            return {"error": "leave balance not found"}, 400
+
+        if balance.data["sisa"] <= 0:
+            return {"error": "no leave balance"}, 400
+
+        # potong 1
+        sb.table("balance_dev") \
+            .update({"sisa": balance.data["sisa"] - 1}) \
+            .eq("nama", nama) \
+            .execute()
+
+    # 3️⃣ Update status leave
     sb.table("paid_leave_dev") \
         .update({"status": action}) \
         .eq("id", leave_id) \
