@@ -18,23 +18,42 @@ app = Flask(
 )
 app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 
+def load_users():
+    raw = os.environ.get("USERS_JSON")
+    if not raw:
+        raise RuntimeError("USERS_JSON env not set")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        raise RuntimeError("USERS_JSON is invalid JSON")
+USERS = load_users()
+
+def send_wa(phone, message):
+    token = os.environ.get("FTICR_TOKEN")
+    if not token or not phone:
+        return
+    try:
+        requests.post(
+            "https://api.fonnte.com/send",
+            headers={
+                "Authorization": token
+            },
+            data={
+                "target": phone,
+                "message": message,
+                "delay": 2
+            },
+            timeout=10
+        )
+    except Exception as e:
+        print("FONNTE ERROR:", e)
+
 # =====================
 # CONSTANT
 # =====================
 GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
-
-USERS = {
-    "Hanny": {"password": "1918", "title": "Ms"},
-    "Dini": {"password": "2651", "title": "Ms"},
-    "Mita": {"password": "0000", "title": "Ms"},
-    "Fiya": {"password": "8997", "title": "Ms"},
-    "Nadhira": {"password": "3544", "title": "Ms"},
-    "Lintang": {"password": "0921", "title": "Mr"},
-    "Noel": {"password": "1301", "title": "Mr"},
-}
-
 TZ = pytz.timezone("Asia/Jakarta")
 
 # =====================
@@ -240,6 +259,7 @@ def login():
             session.permanent = True
             session["userid"] = userid
             session["title"] = USERS[userid]["title"]
+            session["phone"] = USERS[userid]["phone"]
             return redirect("/absence")
 
         flash("Incorrect userid or password", "error")
@@ -543,6 +563,11 @@ def decision_leave(leave_id):
     # 2️⃣ Jika APPROVE → potong sisa cuti
     if action == "APPROVE":
         nama = leave.data["name"]
+        
+        phone = session.get("phone")
+        leave_date = leave.data.get("leave_date")
+        wa_msg = f"🎉 Yay! Your request for leave on {leave_date} has been approved!"
+        send_wa(phone, wa_msg)
 
         balance = (
             sb.table("balance")
