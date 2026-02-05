@@ -191,7 +191,6 @@
   <div class="header">
     <h1>Paid Leave</h1>
     <div class="header-right">
-      <button id="darkModeToggle" class="btn-ghost">🌙</button>
       <button id="applyBtn" class="btn-primary" onclick="openDialog()">Request</button>
     </div>
   </div>
@@ -227,20 +226,10 @@
 /* =========================
    DARK MODE (GLOBAL STYLE)
    ========================= */
-const toggle = document.getElementById("darkModeToggle");
-
 if (localStorage.getItem("darkMode") === "enabled") {
-  document.body.classList.add("dark-mode");
-  toggle.textContent = "☀️";
-}
-
-toggle.addEventListener("click", () => {
-  document.body.classList.toggle("dark-mode");
-  const isDark = document.body.classList.contains("dark-mode");
-  localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
-  toggle.textContent = isDark ? "☀️" : "🌙";
-});
-
+    document.body.classList.add("dark-mode");
+  }
+  
 /* =========================
    PAID LEAVE LOGIC (UNCHANGED)
    ========================= */
