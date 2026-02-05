@@ -15,7 +15,7 @@
   <nav class="navbar navbar-light bg-white shadow-sm">
     <div class="container">
       <a href="/" class="navbar-brand fw-bold text-decoration-none">
-      ⬅️ go back
+      🏠 Homepage
       </a>
     </div>
   </nav>
@@ -28,28 +28,28 @@
       <div class="card-body">
         <form method="POST">
           <div class="mb-3">
-            <label class="form-label">Jenis</label>
+            <label class="form-label">Type</label>
             <select name="jenis" class="form-select" required id="jenis">
-              <option value="">-- Pilih --</option>
+              <option value="">-- Choose --</option>
               <option value="banner">News / Banner</option>
-              <option value="cuti">Saldo Cuti</option>
+              <option value="cuti">Leave Balance</option>
             </select>
           </div>
         
           <!-- Banner -->
           <div class="mb-3" id="bannerForm" style="display:none">
-            <label class="form-label">Konten News</label>
+            <label class="form-label">Content News</label>
             <textarea name="content" class="form-control" rows="5"></textarea>
           </div>
         
           <!-- Cuti -->
           <div id="cutiForm" style="display:none">
             <div class="mb-3">
-              <label class="form-label">Nama</label>
+              <label class="form-label">Employee Name</label>
               <input type="text" name="nama" class="form-control">
             </div>
             <div class="mb-3">
-              <label class="form-label">Sisa Cuti</label>
+              <label class="form-label">Leave Balance</label>
               <input type="number" name="sisa" class="form-control">
             </div>
           </div>
