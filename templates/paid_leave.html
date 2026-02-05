@@ -405,6 +405,17 @@ function renderTable(data) {
         <td>
           <div class="label">Status</div>
           <span class="status ${l.status}">${l.status}</span>
+          ${
+            l.status === "REJECT" && l.reason
+            ? `<div style="
+            margin-top:6px;
+            font-size:12px;
+            color: var(--muted);
+            line-height:1.4;
+            ">
+            <strong>Reason:</strong><br>
+            ${l.reason}</div>`: ""
+          }
         </td>
         <td>
           <div class="label">Action</div>
