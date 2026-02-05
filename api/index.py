@@ -137,7 +137,7 @@ def get_news():
     try:
         sb = get_supabase()
         res = (
-            sb.table("news_dev")
+            sb.table("news")
             .select("content")
             .order("updated_at", desc=True)
             .limit(1)
@@ -153,7 +153,7 @@ def get_sisa_cuti(userid):
     try:
         sb = get_supabase()
         res = (
-            sb.table("balance_dev")
+            sb.table("balance")
             .select("sisa")
             .eq("nama", userid)
             .limit(1)
@@ -171,7 +171,7 @@ def get_sisa_cuti(userid):
 def load_log():
     try:
         sb = get_supabase()
-        res = sb.table("log_absen_dev").select("*").execute()
+        res = sb.table("log_absen").select("*").execute()
         return res.data or []
     except Exception:
         return []
@@ -180,7 +180,7 @@ def sudah_absen_hari_ini(nama, aksi):
     today = datetime.now(TZ).strftime("%Y-%m-%d")
     sb = get_supabase()
     res = (
-        sb.table("log_absen_dev")
+        sb.table("log_absen")
         .select("id")
         .eq("nama", nama)
         .eq("aksi", aksi)
@@ -193,7 +193,7 @@ def sudah_absen_hari_ini(nama, aksi):
 def simpan_log_absen(nama, aksi):
     now = datetime.now(TZ)
     sb = get_supabase()
-    sb.table("log_absen_dev").insert({
+    sb.table("log_absen").insert({
         "nama": nama,
         "aksi": aksi,
         "tanggal": now.strftime("%Y-%m-%d"),
@@ -203,7 +203,7 @@ def simpan_log_absen(nama, aksi):
 def get_latest_absen_for_user(username):
     sb = get_supabase()
     res = (
-        sb.table("log_absen_dev")
+        sb.table("log_absen")
         .select("tanggal, aksi, waktu")
         .eq("nama", username)
         .order("tanggal", desc=True)
@@ -360,7 +360,7 @@ def upload():
                     flash("Content cannot be empty", "error")
                     return redirect("/upload")
 
-                sb.table("news_dev").insert({
+                sb.table("news").insert({
                     "content": content
                 }).execute()
 
@@ -380,7 +380,7 @@ def upload():
                     return redirect("/upload")
 
                 res = (
-                        sb.table("balance_dev")
+                        sb.table("balance")
                         .update({"sisa": sisa})
                         .eq("nama", nama)
                         .execute()
@@ -417,7 +417,7 @@ def checkdb():
     # === TEST SUPABASE ===
     try:
         sb = get_supabase()
-        res = table("news_dev").select("id").limit(1).execute()
+        res = table("news").select("id").limit(1).execute()
 
         if not res.data:
             result["supabase"] = "CONNECTED (no data)"
@@ -450,7 +450,7 @@ def get_leave():
 
     sb = get_supabase()
     res = (
-        sb.table("paid_leave_dev")
+        sb.table("paid_leave")
         .select("*")
         .order("created_at", desc=True)
         .execute()
@@ -470,7 +470,7 @@ def submit_leave():
         return {"error": "leave_date required"}, 400
 
     sb = get_supabase()
-    sb.table("paid_leave_dev").insert({
+    sb.table("paid_leave").insert({
         "name": session["userid"],
         "leave_date": leave_date,
         "status": "WAIT"
@@ -485,7 +485,7 @@ def cancel_leave(leave_id):
 
     sb = get_supabase()
     leave = (
-        sb.table("paid_leave_dev")
+        sb.table("paid_leave")
         .select("name, status")
         .eq("id", leave_id)
         .single()
@@ -501,7 +501,7 @@ def cancel_leave(leave_id):
     if leave.data["status"] != "WAIT":
         return {"error": "cannot cancel"}, 400
 
-    sb.table("paid_leave_dev") \
+    sb.table("paid_leave") \
         .update({"status": "CANCEL"}) \
         .eq("id", leave_id) \
         .execute()
@@ -527,7 +527,7 @@ def decision_leave(leave_id):
 
     # 1️⃣ Ambil data leave (nama & status)
     leave = (
-        sb.table("paid_leave_dev")
+        sb.table("paid_leave")
         .select("name, status")
         .eq("id", leave_id)
         .single()
@@ -545,7 +545,7 @@ def decision_leave(leave_id):
         nama = leave.data["name"]
 
         balance = (
-            sb.table("balance_dev")
+            sb.table("balance")
             .select("sisa")
             .eq("nama", nama)
             .single()
@@ -559,7 +559,7 @@ def decision_leave(leave_id):
             return {"error": "no leave balance"}, 400
 
         # potong 1
-        sb.table("balance_dev") \
+        sb.table("balance") \
             .update({"sisa": balance.data["sisa"] - 1}) \
             .eq("nama", nama) \
             .execute()
@@ -572,7 +572,7 @@ def decision_leave(leave_id):
         }
 
     # 3️⃣ Update status leave
-    sb.table("paid_leave_dev") \
+    sb.table("paid_leave") \
         .update(update_data) \
         .eq("id", leave_id) \
         .eq("status", "WAIT") \
