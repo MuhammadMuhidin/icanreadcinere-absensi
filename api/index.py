@@ -591,7 +591,7 @@ def decision_leave(leave_id):
             .eq("nama", nama) \
             .execute()
 
-        update_data = {"status": "ACCEPT", "reason": None}
+        update_data = {"status": "APPROVE", "reason": None}
     else:  # DECLINE
         update_data = {
             "status": "REJECT",
