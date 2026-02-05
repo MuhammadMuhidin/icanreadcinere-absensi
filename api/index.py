@@ -18,23 +18,42 @@ app = Flask(
 )
 app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 
+def load_users():
+    raw = os.environ.get("USERS_JSON")
+    if not raw:
+        raise RuntimeError("USERS_JSON env not set")
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        raise RuntimeError("USERS_JSON is invalid JSON")
+USERS = load_users()
+
+def send_wa(phone, message):
+    token = os.environ.get("FTICR_TOKEN")
+    if not token or not phone:
+        return
+    try:
+        requests.post(
+            "https://api.fonnte.com/send",
+            headers={
+                "Authorization": token
+            },
+            data={
+                "target": phone,
+                "message": message,
+                "delay": 2
+            },
+            timeout=10
+        )
+    except Exception as e:
+        print("FONNTE ERROR:", e)
+
 # =====================
 # CONSTANT
 # =====================
 GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
-
-USERS = {
-    "Hanny": {"password": "1918", "title": "Ms"},
-    "Dini": {"password": "2651", "title": "Ms"},
-    "Mita": {"password": "0000", "title": "Ms"},
-    "Fiya": {"password": "8997", "title": "Ms"},
-    "Nadhira": {"password": "3544", "title": "Ms"},
-    "Lintang": {"password": "0921", "title": "Mr"},
-    "Noel": {"password": "1301", "title": "Mr"},
-}
-
 TZ = pytz.timezone("Asia/Jakarta")
 
 # =====================
@@ -137,7 +156,7 @@ def get_news():
     try:
         sb = get_supabase()
         res = (
-            sb.table("news")
+            sb.table("news_dev")
             .select("content")
             .order("updated_at", desc=True)
             .limit(1)
@@ -153,7 +172,7 @@ def get_sisa_cuti(userid):
     try:
         sb = get_supabase()
         res = (
-            sb.table("balance")
+            sb.table("balance_dev")
             .select("sisa")
             .eq("nama", userid)
             .limit(1)
@@ -171,7 +190,7 @@ def get_sisa_cuti(userid):
 def load_log():
     try:
         sb = get_supabase()
-        res = sb.table("log_absen").select("*").execute()
+        res = sb.table("log_absen_dev").select("*").execute()
         return res.data or []
     except Exception:
         return []
@@ -180,7 +199,7 @@ def sudah_absen_hari_ini(nama, aksi):
     today = datetime.now(TZ).strftime("%Y-%m-%d")
     sb = get_supabase()
     res = (
-        sb.table("log_absen")
+        sb.table("log_absen_dev")
         .select("id")
         .eq("nama", nama)
         .eq("aksi", aksi)
@@ -193,7 +212,7 @@ def sudah_absen_hari_ini(nama, aksi):
 def simpan_log_absen(nama, aksi):
     now = datetime.now(TZ)
     sb = get_supabase()
-    sb.table("log_absen").insert({
+    sb.table("log_absen_dev").insert({
         "nama": nama,
         "aksi": aksi,
         "tanggal": now.strftime("%Y-%m-%d"),
@@ -203,7 +222,7 @@ def simpan_log_absen(nama, aksi):
 def get_latest_absen_for_user(username):
     sb = get_supabase()
     res = (
-        sb.table("log_absen")
+        sb.table("log_absen_dev")
         .select("tanggal, aksi, waktu")
         .eq("nama", username)
         .order("tanggal", desc=True)
@@ -380,7 +399,7 @@ def upload():
                     return redirect("/upload")
 
                 res = (
-                        sb.table("balance")
+                        sb.table("balance_dev")
                         .update({"sisa": sisa})
                         .eq("nama", nama)
                         .execute()
@@ -417,7 +436,7 @@ def checkdb():
     # === TEST SUPABASE ===
     try:
         sb = get_supabase()
-        res = table("news").select("id").limit(1).execute()
+        res = table("news_dev").select("id").limit(1).execute()
 
         if not res.data:
             result["supabase"] = "CONNECTED (no data)"
@@ -450,7 +469,7 @@ def get_leave():
 
     sb = get_supabase()
     res = (
-        sb.table("paid_leave")
+        sb.table("paid_leave_dev")
         .select("*")
         .order("created_at", desc=True)
         .execute()
@@ -470,7 +489,7 @@ def submit_leave():
         return {"error": "leave_date required"}, 400
 
     sb = get_supabase()
-    sb.table("paid_leave").insert({
+    sb.table("paid_leave_dev").insert({
         "name": session["userid"],
         "leave_date": leave_date,
         "status": "WAIT"
@@ -485,7 +504,7 @@ def cancel_leave(leave_id):
 
     sb = get_supabase()
     leave = (
-        sb.table("paid_leave")
+        sb.table("paid_leave_dev")
         .select("name, status")
         .eq("id", leave_id)
         .single()
@@ -501,7 +520,7 @@ def cancel_leave(leave_id):
     if leave.data["status"] != "WAIT":
         return {"error": "cannot cancel"}, 400
 
-    sb.table("paid_leave") \
+    sb.table("paid_leave_dev") \
         .update({"status": "CANCEL"}) \
         .eq("id", leave_id) \
         .execute()
@@ -527,8 +546,8 @@ def decision_leave(leave_id):
 
     # 1️⃣ Ambil data leave (nama & status)
     leave = (
-        sb.table("paid_leave")
-        .select("name, status")
+        sb.table("paid_leave_dev")
+        .select("name, status, leave_date")
         .eq("id", leave_id)
         .single()
         .execute()
@@ -541,41 +560,54 @@ def decision_leave(leave_id):
         return {"error": "already processed"}, 400
 
     # 2️⃣ Jika APPROVE → potong sisa cuti
+    # nama HARUS didefinisikan di awal
+    nama = leave.data["name"]
+    leave_date = leave.data["leave_date"]
+    
     if action == "APPROVE":
-        nama = leave.data["name"]
-
         balance = (
-            sb.table("balance")
+            sb.table("balance_dev")
             .select("sisa")
             .eq("nama", nama)
             .single()
             .execute()
         )
-
-        if not balance.data:
-            return {"error": "leave balance not found"}, 400
-
-        if balance.data["sisa"] <= 0:
+    
+        if not balance.data or balance.data["sisa"] <= 0:
             return {"error": "no leave balance"}, 400
-
-        # potong 1
-        sb.table("balance") \
+    
+        sb.table("balance_dev") \
             .update({"sisa": balance.data["sisa"] - 1}) \
             .eq("nama", nama) \
             .execute()
-
-        update_data = {"status": "ACCEPT", "reason": None}
-    else:  # DECLINE
-        update_data = {
-            "status": "REJECT",
-            "reason": reason
-        }
-
-    # 3️⃣ Update status leave
-    sb.table("paid_leave") \
-        .update(update_data) \
-        .eq("id", leave_id) \
-        .eq("status", "WAIT") \
-        .execute()
+    
+        sb.table("paid_leave_dev") \
+            .update({"status": "APPROVE", "reason": None}) \
+            .eq("id", leave_id) \
+            .eq("status", "WAIT") \
+            .execute()
+    
+        user_data = USERS.get(nama)
+        phone = user_data.get("phone") if user_data else None
+        if phone:
+            send_wa(
+                phone,
+                f"Yay! your request for leave on {leave_date} has been approved 🎉"
+            )
+    
+    else:  # REJECT
+        sb.table("paid_leave_dev") \
+            .update({"status": "REJECT", "reason": reason}) \
+            .eq("id", leave_id) \
+            .eq("status", "WAIT") \
+            .execute()
+    
+        user_data = USERS.get(nama)
+        phone = user_data.get("phone") if user_data else None
+        if phone:
+            send_wa(
+                phone,
+                f"Hi, your request for leave on {leave_date} was rejected with Reason: {reason}"
+            )
 
     return {"message": action}
