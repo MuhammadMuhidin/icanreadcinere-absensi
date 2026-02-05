@@ -560,16 +560,11 @@ def decision_leave(leave_id):
         return {"error": "already processed"}, 400
 
     # 2️⃣ Jika APPROVE → potong sisa cuti
+    # nama HARUS didefinisikan di awal
+    nama = leave.data["name"]
+    leave_date = leave.data["leave_date"]
+    
     if action == "APPROVE":
-        nama = leave.data["name"]
-        
-        user_data = USERS.get(nama)
-        phone = user_data.get("phone") if user_data else None
-        leave_date = leave.data["leave_date"]
-        if phone:
-            wa_msg = f"🎉 Yay! Your request for leave on {leave_date} has been approved!"
-            send_wa(phone, wa_msg)
-
         balance = (
             sb.table("balance_dev")
             .select("sisa")
@@ -577,31 +572,42 @@ def decision_leave(leave_id):
             .single()
             .execute()
         )
-
-        if not balance.data:
-            return {"error": "leave balance not found"}, 400
-
-        if balance.data["sisa"] <= 0:
+    
+        if not balance.data or balance.data["sisa"] <= 0:
             return {"error": "no leave balance"}, 400
-
-        # potong 1
-        sb.table("balance") \
+    
+        sb.table("balance_dev") \
             .update({"sisa": balance.data["sisa"] - 1}) \
             .eq("nama", nama) \
             .execute()
-
-        update_data = {"status": "APPROVE", "reason": None}
-    else:  # DECLINE
-        update_data = {
-            "status": "REJECT",
-            "reason": reason
-        }
-
-    # 3️⃣ Update status leave
-    sb.table("paid_leave_dev") \
-        .update(update_data) \
-        .eq("id", leave_id) \
-        .eq("status", "WAIT") \
-        .execute()
+    
+        sb.table("paid_leave_dev") \
+            .update({"status": "APPROVE", "reason": None}) \
+            .eq("id", leave_id) \
+            .eq("status", "WAIT") \
+            .execute()
+    
+        user_data = USERS.get(nama)
+        phone = user_data.get("phone") if user_data else None
+        if phone:
+            send_wa(
+                phone,
+                f"Yay! Your request for leave on {leave_date} has been approved! 🎉"
+            )
+    
+    else:  # REJECT
+        sb.table("paid_leave_dev") \
+            .update({"status": "REJECT", "reason": reason}) \
+            .eq("id", leave_id) \
+            .eq("status", "WAIT") \
+            .execute()
+    
+        user_data = USERS.get(nama)
+        phone = user_data.get("phone") if user_data else None
+        if phone:
+            send_wa(
+                phone,
+                f"Unfortunately, your request for leave on {leave_date} was rejected.\nReason: {reason}"
+            )
 
     return {"message": action}
