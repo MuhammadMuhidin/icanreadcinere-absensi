@@ -335,16 +335,27 @@ function renderTable(data) {
     let action = "-";
 
     if (l.status === "WAIT") {
-      if (ROLE === "employee") {
-        action = `<button class="btn-danger" onclick="cancelLeave(${l.id})">Cancel</button>`;
-      }
-      if (ROLE === "manager") {
-        action = `
-          <button class="btn-success" onclick="decision(${l.id}, 'ACCEPT')">Approve</button>
-          <button class="btn-danger" onclick="decision(${l.id}, 'DECLINE')">Reject</button>
-        `;
-      }
-    }
+  let buttons = [];
+
+  // Pemilik pengajuan (termasuk Hanny) → boleh cancel
+  if (l.name === NAME) {
+    buttons.push(
+      `<button class="btn-danger" onclick="cancelLeave(${l.id})">Cancel</button>`
+    );
+  }
+
+  // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
+  if (ROLE === "manager") {
+    buttons.push(
+      `<button class="btn-success" onclick="decision(${l.id}, 'ACCEPT')">Approve</button>`
+    );
+    buttons.push(
+      `<button class="btn-danger" onclick="decision(${l.id}, 'DECLINE')">Reject</button>`
+    );
+  }
+
+  action = buttons.join(" ");
+  }
 
     tbody.innerHTML += `
       <tr>
