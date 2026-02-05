@@ -484,7 +484,7 @@ def submit_leave():
         return {"error": "unauthorized"}, 401
 
     data = request.json
-    leave_date = data.get("leave_date_dev")
+    leave_date = data.get("leave_date")
 
     if not leave_date:
         return {"error": "leave_date required"}, 400
@@ -564,10 +564,12 @@ def decision_leave(leave_id):
     if action == "APPROVE":
         nama = leave.data["name"]
         
-        phone = session.get("phone")
+        user_data = USERS.get(nama)
+        phone = user_data.get("phone") if user_data else None
         leave_date = leave.data.get("leave_date")
-        wa_msg = f"🎉 Yay! Your request for leave on {leave_date} has been approved!"
-        send_wa(phone, wa_msg)
+        if phone:
+            wa_msg = f"🎉 Yay! Your request for leave on {leave_date} has been approved!"
+            send_wa(phone, wa_msg)
 
         balance = (
             sb.table("balance_dev")
