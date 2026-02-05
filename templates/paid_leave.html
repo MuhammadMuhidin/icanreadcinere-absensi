@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Paid Leave</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root {
       --primary: #2563eb;
@@ -296,18 +296,60 @@ function submitLeave() {
 }
 
 function cancelLeave(id) {
-  if (!confirm("Cancel this leave request?")) return;
-  fetch(`/leave/${id}/cancel`, { method: "PATCH" })
-    .then(() => loadData());
-}
+  Swal.fire({
+    title: "Cancel Leave Request?",
+    text: "This action cannot be undone.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, cancel it",
+    cancelButtonText: "Back",
+    confirmButtonColor: "#dc2626"
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    fetch(`/leave/${id}/cancel`, { method: "PATCH" })
+      .then(() => {
+        Swal.fire({
+          icon: "success",
+          title: "Canceled",
+          timer: 1200,
+          showConfirmButton: false
+        });
+        loadData();
+      });
+  });
+  }
 
 function decision(id, action) {
-  if (!confirm(`Confirm ${action}?`)) return;
-  fetch(`/leave/${id}/decision`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action })
-  }).then(() => loadData());
+  const isApprove = action === "APPROVE";
+
+  Swal.fire({
+    title: isApprove ? "Approve Leave Request?" : "Confirm Action",
+    text: isApprove
+      ? "This will approve the leave and deduct balance."
+      : "Are you sure?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: isApprove ? "Approve" : "Confirm",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#16a34a"
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    fetch(`/leave/${id}/decision`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action })
+    }).then(() => {
+      Swal.fire({
+        icon: "success",
+        title: "Approved",
+        timer: 1200,
+        showConfirmButton: false
+      });
+      loadData();
+    });
+  });
 }
 
 function renderTable(data) {
@@ -336,7 +378,7 @@ function renderTable(data) {
   // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
   if (ROLE === "manager") {
     buttons.push(
-      `<button class="btn-danger" onclick="decision(${l.id}, 'REJECT')">Reject</button>`
+      `<button class="btn-danger" onclick="rejectWithReason(${l.id})">Reject</button>`
     );
     buttons.push(
       `<button class="btn-success" onclick="decision(${l.id}, 'APPROVE')">Approve</button>`
@@ -363,6 +405,17 @@ function renderTable(data) {
         <td>
           <div class="label">Status</div>
           <span class="status ${l.status}">${l.status}</span>
+          ${
+            l.status === "REJECT" && l.reason
+            ? `<div style="
+            margin-top:6px;
+            font-size:12px;
+            color: var(--muted);
+            line-height:1.4;
+            ">
+            <strong>Reason:</strong><br>
+            ${l.reason}</div>`: ""
+          }
         </td>
         <td>
           <div class="label">Action</div>
@@ -373,6 +426,40 @@ function renderTable(data) {
   });
 }
 
+  function rejectWithReason(id) {
+  Swal.fire({
+    title: "Reject Leave Request",
+    input: "textarea",
+    inputLabel: "Reason for rejection",
+    inputPlaceholder: "Write the reason here...",
+    inputAttributes: {
+      rows: 4
+    },
+    showCancelButton: true,
+    confirmButtonText: "Reject",
+    confirmButtonColor: "#dc2626",
+    cancelButtonText: "Cancel",
+    preConfirm: (value) => {
+      if (!value || !value.trim()) {
+        Swal.showValidationMessage("Reason is required");
+        return false;
+      }
+      return value.trim();
+    }
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    fetch(`/leave/${id}/decision`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "REJECT",
+        reason: result.value
+      })
+    }).then(() => loadData());
+  });
+  }
+  
 loadData();
 </script>
 
