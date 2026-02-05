@@ -592,7 +592,7 @@ def decision_leave(leave_id):
         if phone:
             send_wa(
                 phone,
-                f"Yay! Your request for leave on {leave_date} has been approved! 🎉"
+                f"Yay! your request for leave on {leave_date} has been approved 🎉"
             )
     
     else:  # REJECT
@@ -607,7 +607,7 @@ def decision_leave(leave_id):
         if phone:
             send_wa(
                 phone,
-                f"Unfortunately, your request for leave on {leave_date} was rejected.\nReason: {reason}"
+                f"Hi, your request for leave on {leave_date} was rejected with Reason: {reason}"
             )
 
     return {"message": action}
