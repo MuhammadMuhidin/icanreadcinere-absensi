@@ -627,7 +627,7 @@ def wait_count_api():
     if session.get("userid") != "Hanny":
         return {"count": 0}, 403
 
-    res = supabase.table(T("paid_leave")) \
+    res = sb.table(T("paid_leave")) \
         .select("id", count="exact") \
         .eq("status", "WAIT") \
         .execute()
