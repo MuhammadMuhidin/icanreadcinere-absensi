@@ -432,3 +432,139 @@ def checkdb():
         status_code = 500
 
     return result, status_code
+
+@app.route("/paid_leave")
+def paid_leave():
+    if "userid" not in session:
+        return redirect("/")
+
+    return render_template(
+        "paid_leave.html",
+        SESSION_NAME=session["userid"]
+    )
+    
+@app.route("/leave", methods=["GET"])
+def get_leave():
+    if "userid" not in session:
+        return {"error": "unauthorized"}, 401
+
+    sb = get_supabase()
+    res = (
+        sb.table("paid_leave_dev")
+        .select("*")
+        .order("created_at", desc=True)
+        .execute()
+    )
+
+    return {"data": res.data or []}
+
+@app.route("/leave", methods=["POST"])
+def submit_leave():
+    if "userid" not in session:
+        return {"error": "unauthorized"}, 401
+
+    data = request.json
+    leave_date = data.get("leave_date")
+
+    if not leave_date:
+        return {"error": "leave_date required"}, 400
+
+    sb = get_supabase()
+    sb.table("paid_leave_dev").insert({
+        "name": session["userid"],
+        "leave_date": leave_date,
+        "status": "WAIT"
+    }).execute()
+
+    return {"message": "submitted"}, 201
+    
+@app.route("/leave/<int:leave_id>/cancel", methods=["PATCH"])
+def cancel_leave(leave_id):
+    if "userid" not in session:
+        return {"error": "unauthorized"}, 401
+
+    sb = get_supabase()
+    leave = (
+        sb.table("paid_leave_dev")
+        .select("name, status")
+        .eq("id", leave_id)
+        .single()
+        .execute()
+    )
+
+    if not leave.data:
+        return {"error": "not found"}, 404
+
+    if leave.data["name"] != session["userid"]:
+        return {"error": "forbidden"}, 403
+
+    if leave.data["status"] != "WAIT":
+        return {"error": "cannot cancel"}, 400
+
+    sb.table("paid_leave_dev") \
+        .update({"status": "CANCEL"}) \
+        .eq("id", leave_id) \
+        .execute()
+
+    return {"message": "canceled"}
+
+@app.route("/leave/<int:leave_id>/decision", methods=["PATCH"])
+def decision_leave(leave_id):
+    if session.get("userid") != "Hanny":
+        return {"error": "forbidden"}, 403
+
+    data = request.json
+    action = data.get("action")
+
+    if action not in ("APPROVE", "REJECT"):
+        return {"error": "invalid action"}, 400
+
+    sb = get_supabase()
+
+    # 1️⃣ Ambil data leave (nama & status)
+    leave = (
+        sb.table("paid_leave_dev")
+        .select("name, status")
+        .eq("id", leave_id)
+        .single()
+        .execute()
+    )
+
+    if not leave.data:
+        return {"error": "not found"}, 404
+
+    if leave.data["status"] != "WAIT":
+        return {"error": "already processed"}, 400
+
+    # 2️⃣ Jika APPROVE → potong sisa cuti
+    if action == "APPROVE":
+        nama = leave.data["name"]
+
+        balance = (
+            sb.table("balance_dev")
+            .select("sisa")
+            .eq("nama", nama)
+            .single()
+            .execute()
+        )
+
+        if not balance.data:
+            return {"error": "leave balance not found"}, 400
+
+        if balance.data["sisa"] <= 0:
+            return {"error": "no leave balance"}, 400
+
+        # potong 1
+        sb.table("balance_dev") \
+            .update({"sisa": balance.data["sisa"] - 1}) \
+            .eq("nama", nama) \
+            .execute()
+
+    # 3️⃣ Update status leave
+    sb.table("paid_leave_dev") \
+        .update({"status": action}) \
+        .eq("id", leave_id) \
+        .eq("status", "WAIT") \
+        .execute()
+
+    return {"message": action}
