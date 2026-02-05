@@ -450,7 +450,7 @@ def get_leave():
 
     sb = get_supabase()
     res = (
-        sb.table("paid_leave_dev")
+        sb.table("paid_leave")
         .select("*")
         .order("created_at", desc=True)
         .execute()
@@ -470,7 +470,7 @@ def submit_leave():
         return {"error": "leave_date required"}, 400
 
     sb = get_supabase()
-    sb.table("paid_leave_dev").insert({
+    sb.table("paid_leave").insert({
         "name": session["userid"],
         "leave_date": leave_date,
         "status": "WAIT"
@@ -485,7 +485,7 @@ def cancel_leave(leave_id):
 
     sb = get_supabase()
     leave = (
-        sb.table("paid_leave_dev")
+        sb.table("paid_leave")
         .select("name, status")
         .eq("id", leave_id)
         .single()
@@ -501,7 +501,7 @@ def cancel_leave(leave_id):
     if leave.data["status"] != "WAIT":
         return {"error": "cannot cancel"}, 400
 
-    sb.table("paid_leave_dev") \
+    sb.table("paid_leave") \
         .update({"status": "CANCEL"}) \
         .eq("id", leave_id) \
         .execute()
@@ -523,7 +523,7 @@ def decision_leave(leave_id):
 
     # 1️⃣ Ambil data leave (nama & status)
     leave = (
-        sb.table("paid_leave_dev")
+        sb.table("paid_leave")
         .select("name, status")
         .eq("id", leave_id)
         .single()
@@ -541,7 +541,7 @@ def decision_leave(leave_id):
         nama = leave.data["name"]
 
         balance = (
-            sb.table("balance_dev")
+            sb.table("balance")
             .select("sisa")
             .eq("nama", nama)
             .single()
@@ -555,13 +555,13 @@ def decision_leave(leave_id):
             return {"error": "no leave balance"}, 400
 
         # potong 1
-        sb.table("balance_dev") \
+        sb.table("balance") \
             .update({"sisa": balance.data["sisa"] - 1}) \
             .eq("nama", nama) \
             .execute()
 
     # 3️⃣ Update status leave
-    sb.table("paid_leave_dev") \
+    sb.table("paid_leave") \
         .update({"status": action}) \
         .eq("id", leave_id) \
         .eq("status", "WAIT") \
