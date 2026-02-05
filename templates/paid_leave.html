@@ -347,10 +347,10 @@ function renderTable(data) {
   // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
   if (ROLE === "manager") {
     buttons.push(
-      `<button class="btn-success" onclick="decision(${l.id}, 'ACCEPT')">Approve</button>`
+      `<button class="btn-danger" onclick="decision(${l.id}, 'DECLINE')">Reject</button>`
     );
     buttons.push(
-      `<button class="btn-danger" onclick="decision(${l.id}, 'DECLINE')">Reject</button>`
+      `<button class="btn-success" onclick="decision(${l.id}, 'ACCEPT')">Approve</button>`
     );
   }
 
