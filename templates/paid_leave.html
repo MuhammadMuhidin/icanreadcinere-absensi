@@ -249,8 +249,7 @@ window.SESSION_NAME = "{{ SESSION_NAME }}";
 const NAME = window.SESSION_NAME;
 const ROLE = (NAME === "Hanny") ? "manager" : "employee";
 
-document.getElementById("applyBtn").style.display =
-  ROLE === "employee" ? "inline-block" : "none";
+document.getElementById("applyBtn").hidden = false;
 
 function openDialog() {
   document.getElementById("leaveDialog").showModal();
