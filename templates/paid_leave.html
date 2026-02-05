@@ -1,92 +1,287 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Paid Leave</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
+
   <style>
+    /* ======================================================
+       THEME VARIABLES
+       ====================================================== */
+    :root {
+      --primary: #2563eb;
+      --danger: #dc2626;
+      --success: #16a34a;
+
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: rgba(0,0,0,0.05);
+    }
+
+    /* Auto dark mode (OS / browser setting) */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0f172a;
+        --card: #111827;
+        --text: #e5e7eb;
+        --muted: #9ca3af;
+        --border: #1f2937;
+        --shadow: rgba(0,0,0,0.4);
+      }
+    }
+
+    /* Manual override */
+    [data-theme="light"] {
+      --bg: #f5f6fa;
+      --card: #ffffff;
+      --text: #111827;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: rgba(0,0,0,0.05);
+    }
+
+    [data-theme="dark"] {
+      --bg: #0f172a;
+      --card: #111827;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2937;
+      --shadow: rgba(0,0,0,0.4);
+    }
+
+    * { box-sizing: border-box; }
+
     body {
-      font-family: Arial, sans-serif;
-      background: #f5f6fa;
       margin: 0;
-      padding: 20px;
+      padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
     }
-    h1 { margin-bottom: 16px; }
 
+    h1 {
+      margin: 0;
+      font-size: 20px;
+    }
+
+    /* ======================================================
+       CARD & HEADER
+       ====================================================== */
+    .card {
+      background: var(--card);
+      border-radius: 14px;
+      padding: 14px;
+      box-shadow: 0 10px 25px var(--shadow);
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 8px;
+    }
+
+    .header-right {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    /* ======================================================
+       BUTTONS
+       ====================================================== */
     button {
-      padding: 8px 14px;
       border: none;
-      border-radius: 4px;
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 14px;
       cursor: pointer;
+      transition: transform .05s ease, opacity .2s ease;
+      color: #fff;
     }
 
-    .btn-primary { background: #2563eb; color: #fff; }
-    .btn-danger { background: #dc2626; color: #fff; }
-    .btn-success { background: #16a34a; color: #fff; }
+    button:active { transform: scale(0.97); }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
 
+    .btn-primary { background: var(--primary); }
+    .btn-danger  { background: var(--danger); }
+    .btn-success { background: var(--success); }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    /* ======================================================
+       TABLE (MOBILE FIRST)
+       ====================================================== */
     table {
       width: 100%;
       border-collapse: collapse;
-      background: #fff;
-      margin-top: 16px;
+      margin-top: 8px;
     }
 
-    th, td {
-      padding: 10px;
-      border-bottom: 1px solid #e5e7eb;
-      text-align: left;
+    thead { display: none; }
+
+    tr {
+      border-bottom: 1px solid var(--border);
     }
 
-    th { background: #f1f5f9; }
+    td {
+      padding: 10px 0;
+      display: block;
+      font-size: 14px;
+    }
 
-    .WAIT { color: #d97706; }
-    .ACCEPT { color: #16a34a; }
-    .DECLINE { color: #dc2626; }
-    .CANCEL { color: #6b7280; }
+    .label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 2px;
+    }
 
+    .status {
+      font-weight: 600;
+    }
+
+    .WAIT    { color: #f59e0b; }
+    .ACCEPT  { color: var(--success); }
+    .DECLINE { color: var(--danger); }
+    .CANCEL  { color: var(--muted); }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 6px;
+    }
+
+    /* ======================================================
+       DIALOG
+       ====================================================== */
     dialog {
       border: none;
-      border-radius: 6px;
-      padding: 20px;
-      width: 300px;
+      border-radius: 16px;
+      padding: 18px;
+      width: 90%;
+      max-width: 320px;
+      background: var(--card);
+      color: var(--text);
+      animation: fadeUp .2s ease;
+    }
+
+    dialog::backdrop {
+      background: rgba(0,0,0,0.5);
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    dialog h3 {
+      margin: 0 0 12px 0;
+      font-size: 16px;
     }
 
     dialog input {
       width: 100%;
-      padding: 6px;
-      margin-bottom: 10px;
+      padding: 10px;
+      font-size: 14px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text);
+      margin-bottom: 14px;
+    }
+
+    .dialog-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+
+    /* ======================================================
+       LOADING
+       ====================================================== */
+    .loading {
+      text-align: center;
+      padding: 12px;
+      font-size: 14px;
+      color: var(--muted);
+    }
+
+    @media (min-width: 640px) {
+      thead { display: table-header-group; }
+      td { display: table-cell; padding: 10px; }
+      .label { display: none; }
+      .actions { margin-top: 0; }
     }
   </style>
 </head>
+
 <body>
 
-<h1>Paid Leave</h1>
+<div class="card">
+  <div class="header">
+    <h1>Paid Leave</h1>
 
-<button id="applyBtn" class="btn-primary" onclick="openDialog()">Ajukan Cuti</button>
+    <div class="header-right">
+      <button id="themeToggle" class="btn-ghost" onclick="toggleTheme()">🌓</button>
+      <button id="applyBtn" class="btn-primary" onclick="openDialog()">Apply</button>
+    </div>
+  </div>
 
-<table>
-  <thead>
-    <tr>
-      <th>Tanggal Pengajuan</th>
-      <th>Tanggal Cuti</th>
-      <th>Status</th>
-      <th>Aksi</th>
-    </tr>
-  </thead>
-  <tbody id="leaveTable"></tbody>
-</table>
+  <div id="loading" class="loading" style="display:none;">
+    Loading…
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Submitted</th>
+        <th>Leave Date</th>
+        <th>Status</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody id="leaveTable"></tbody>
+  </table>
+</div>
 
 <dialog id="leaveDialog">
-  <h3>Ajukan Cuti</h3>
-  <label>Tanggal Cuti</label>
+  <h3>Apply for Leave</h3>
   <input type="date" id="leaveDate">
-  <div style="text-align:right;">
-    <button onclick="closeDialog()">Batal</button>
-    <button class="btn-primary" onclick="submitLeave()">Ajukan</button>
+  <div class="dialog-actions">
+    <button class="btn-ghost" onclick="closeDialog()">Cancel</button>
+    <button id="submitBtn" class="btn-primary" onclick="submitLeave()">Submit</button>
   </div>
 </dialog>
 
 <script>
+/* ======================================================
+   THEME HANDLING
+   ====================================================== */
+const savedTheme = localStorage.getItem("theme");
+if (savedTheme) {
+  document.documentElement.setAttribute("data-theme", savedTheme);
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme");
+  const next = current === "dark" ? "light" : "dark";
+  document.documentElement.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
+}
+
+/* ======================================================
+   LOGIC (UNCHANGED)
+   ====================================================== */
 window.SESSION_NAME = "{{ SESSION_NAME }}";
 
 const NAME = window.SESSION_NAME;
@@ -104,17 +299,18 @@ function closeDialog() {
 }
 
 function loadData() {
+  document.getElementById("loading").style.display = "block";
+
   fetch("/leave")
     .then(r => r.json())
     .then(res => {
       let data = res.data;
 
       if (ROLE === "manager") {
-        data = data.filter(d => {
-          if (["WAIT", "ACCEPT", "DECLINE"].includes(d.status)) return true;
-          if (d.status === "CANCEL" && d.name === "Hanny") return true;
-          return false;
-        });
+        data = data.filter(d =>
+          ["WAIT", "ACCEPT", "DECLINE"].includes(d.status) ||
+          (d.status === "CANCEL" && d.name === "Hanny")
+        );
       } else {
         data = data.filter(d => d.name === NAME);
       }
@@ -126,31 +322,38 @@ function loadData() {
       });
 
       renderTable(data);
+    })
+    .finally(() => {
+      document.getElementById("loading").style.display = "none";
     });
 }
 
 function submitLeave() {
+  const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
-  if (!leaveDate) return alert("Tanggal cuti wajib diisi");
+  if (!leaveDate) return alert("Leave date is required");
+
+  btn.disabled = true;
 
   fetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: leaveDate })
   }).then(() => {
+    btn.disabled = false;
     closeDialog();
     loadData();
   });
 }
 
 function cancelLeave(id) {
-  if (!confirm("Batalkan pengajuan cuti?")) return;
+  if (!confirm("Cancel this leave request?")) return;
   fetch(`/leave/${id}/cancel`, { method: "PATCH" })
     .then(() => loadData());
 }
 
 function decision(id, action) {
-  if (!confirm(`Yakin ${action}?`)) return;
+  if (!confirm(`Confirm ${action}?`)) return;
   fetch(`/leave/${id}/decision`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -161,6 +364,12 @@ function decision(id, action) {
 function renderTable(data) {
   const tbody = document.getElementById("leaveTable");
   tbody.innerHTML = "";
+
+  if (!data.length) {
+    tbody.innerHTML =
+      `<tr><td colspan="4" class="loading">No data available</td></tr>`;
+    return;
+  }
 
   data.forEach(l => {
     let action = "-";
@@ -179,10 +388,22 @@ function renderTable(data) {
 
     tbody.innerHTML += `
       <tr>
-        <td>${l.created_at?.slice(0,10) || "-"}</td>
-        <td>${l.leave_date}</td>
-        <td class="${l.status}">${l.status}</td>
-        <td>${action}</td>
+        <td>
+          <div class="label">Submitted</div>
+          ${l.created_at?.slice(0,10) || "-"}
+        </td>
+        <td>
+          <div class="label">Leave Date</div>
+          ${l.leave_date}
+        </td>
+        <td>
+          <div class="label">Status</div>
+          <span class="status ${l.status}">${l.status}</span>
+        </td>
+        <td>
+          <div class="label">Action</div>
+          <div class="actions">${action}</div>
+        </td>
       </tr>
     `;
   });
