@@ -499,7 +499,7 @@ def submit_leave():
     sb.table(T("paid_leave")).insert({
         "name": session["userid"],
         "leave_date": leave_date,
-        "status": "WAIT"
+        "status": "WAITING APPROVAL"
     }).execute()
 
     return {"message": "submitted"}, 201
@@ -524,11 +524,11 @@ def cancel_leave(leave_id):
     if leave.data["name"] != session["userid"]:
         return {"error": "forbidden"}, 403
 
-    if leave.data["status"] != "WAIT":
+    if leave.data["status"] != "WAITING APPROVAL":
         return {"error": "cannot cancel"}, 400
 
     sb.table(T("paid_leave")) \
-        .update({"status": "CANCEL"}) \
+        .update({"status": "CANCELED"}) \
         .eq("id", leave_id) \
         .execute()
 
@@ -543,10 +543,10 @@ def decision_leave(leave_id):
     action = data.get("action")
     reason = data.get("reason", "").strip()
 
-    if action not in ("APPROVE", "REJECT"):
+    if action not in ("APPROVED", "REJECTED"):
         return {"error": "invalid action"}, 400
 
-    if action == "REJECT" and not reason:
+    if action == "REJECTED" and not reason:
         return {"error": "reason required"}, 400
 
     sb = get_supabase()
@@ -563,7 +563,7 @@ def decision_leave(leave_id):
     if not leave.data:
         return {"error": "not found"}, 404
 
-    if leave.data["status"] != "WAIT":
+    if leave.data["status"] != "WAITING APPROVAL":
         return {"error": "already processed"}, 400
 
     # 2️⃣ Jika APPROVE → potong sisa cuti
@@ -571,7 +571,7 @@ def decision_leave(leave_id):
     nama = leave.data["name"]
     leave_date = leave.data["leave_date"]
     
-    if action == "APPROVE":
+    if action == "APPROVED":
         balance = (
             sb.table(T("balance"))
             .select("sisa")
@@ -589,9 +589,9 @@ def decision_leave(leave_id):
             .execute()
     
         sb.table(T("paid_leave")) \
-            .update({"status": "APPROVE", "reason": None}) \
+            .update({"status": "APPROVED", "reason": None}) \
             .eq("id", leave_id) \
-            .eq("status", "WAIT") \
+            .eq("status", "WAITING APPROVAL") \
             .execute()
     
         user_data = USERS.get(nama)
@@ -604,9 +604,9 @@ def decision_leave(leave_id):
     
     else:  # REJECT
         sb.table(T("paid_leave")) \
-            .update({"status": "REJECT", "reason": reason}) \
+            .update({"status": "REJECTED", "reason": reason}) \
             .eq("id", leave_id) \
-            .eq("status", "WAIT") \
+            .eq("status", "WAITING APPROVAL") \
             .execute()
     
         user_data = USERS.get(nama)
@@ -618,3 +618,19 @@ def decision_leave(leave_id):
             )
 
     return {"message": action}
+
+# =========================
+# API: WAIT count (Hanny only)
+# =========================
+@app.route("/api/leave/wait-count")
+def wait_count_api():
+    if session.get("userid") != "Hanny":
+        return {"count": 0}, 403
+        
+    sb = get_supabase()
+    res = sb.table(T("paid_leave")) \
+        .select("id", count="exact") \
+        .eq("status", "WAITING APPROVAL") \
+        .execute()
+
+    return {"count": res.count or 0}, 200

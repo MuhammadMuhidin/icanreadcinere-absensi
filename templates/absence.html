@@ -66,6 +66,7 @@
   </table>
   <div style="margin: 16px 0; text-align: center;">
   <a href="/paid_leave" style="
+    position: relative;
     display: inline-block;
     padding: 12px 18px;
     border-radius: 14px;
@@ -77,7 +78,54 @@
     box-shadow: 0 8px 20px rgba(0,0,0,0.25);
   ">
     🗓️ View & Manage Leave
+    {% if session.userid == "Hanny" %}
+      <span id="leaveBadge" style="
+        display: none;
+        position: absolute;
+        top: -6px;
+        right: -6px;
+        width: 22px;
+        height: 22px;
+        line-height: 22px;
+        background: #ef4444;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        text-align: center;
+        border-radius: 50%;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    "></span>
+    {% endif %}
   </a>
+
+  {% if session.userid == "Hanny" %}
+    <script>
+    async function updateLeaveBadge() {
+      try {
+        const res = await fetch("/api/leave/wait-count", { cache: "no-store" });
+        if (!res.ok) return;
+    
+        const data = await res.json();
+        const badge = document.getElementById("leaveBadge");
+        if (!badge) return;
+    
+        if (data.count > 0) {
+          badge.textContent = data.count;
+          badge.style.display = "inline-block";
+        } else {
+          badge.style.display = "none";
+        }
+      } catch (_) {}
+    }
+    
+    // first load
+    updateLeaveBadge();
+    
+    // polling every 15s
+    setInterval(updateLeaveBadge, 15000);
+    </script>
+  {% endif %}
+    
   </div>
   <div class="news-box news-hb">
     <div class="news-title">📰 Latest News</div>
