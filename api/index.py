@@ -516,7 +516,7 @@ def decision_leave(leave_id):
     data = request.json
     action = data.get("action")
 
-    if action not in ("ACCEPT", "DECLINE"):
+    if action not in ("APPROVE", "REJECT"):
         return {"error": "invalid action"}, 400
 
     sb = get_supabase()
@@ -536,8 +536,8 @@ def decision_leave(leave_id):
     if leave.data["status"] != "WAIT":
         return {"error": "already processed"}, 400
 
-    # 2️⃣ Jika ACCEPT → potong sisa cuti
-    if action == "ACCEPT":
+    # 2️⃣ Jika APPROVE → potong sisa cuti
+    if action == "APPROVE":
         nama = leave.data["name"]
 
         balance = (
