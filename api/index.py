@@ -1,6 +1,7 @@
 from flask import Flask, render_template, request, redirect, flash, session, Response
 from math import radians, cos, sin, sqrt, atan2
 from collections import defaultdict
+from supabase import create_client
 from datetime import datetime
 from io import StringIO
 import os, requests, csv, pytz, json, boto3
@@ -21,7 +22,8 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 # CONSTANT
 # =====================
 GAS_URL = os.environ.get("GAS_URL")
-POINTOFFICE = (-6.323856, 106.784517)
+POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
+R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
 
 USERS = {
     "Hanny": {"password": "1918", "title": "Ms"},
@@ -34,6 +36,21 @@ USERS = {
 }
 
 TZ = pytz.timezone("Asia/Jakarta")
+
+# =====================
+# SUPABASE (LAZY INIT)
+# =====================
+_sb = None
+
+def get_supabase():
+     global _sb
+     if _sb is None:
+         url = os.environ.get("SUPABASE_URL")
+         key = os.environ.get("SUPABASE_ROLE_KEY")
+         if not url or not key:
+             raise RuntimeError("Supabase credentials not set")
+         _sb = create_client(url, key)
+     return _sb
 
 # =====================
 # R2 (LAZY INIT)
@@ -117,68 +134,98 @@ def check_late(checkin_time):
     return "On time!"
 
 def get_news():
-    content = r2_read_text("content/news.txt").strip()
-    return content or "Welcome to Attendance System"
+    try:
+        sb = get_supabase()
+        res = (
+            sb.table("news_dev")
+            .select("content")
+            .order("updated_at", desc=True)
+            .limit(1)
+            .execute()
+        )
+        if res.data:
+            return res.data[0]["content"]
+    except Exception:
+        pass
+    return "Welcome to Attendance System"
 
 def get_sisa_cuti(userid):
-    data = r2_read_text("data/cuti.csv")
-    if not data:
-        return "leave file not found"
+    try:
+        sb = get_supabase()
+        res = (
+            sb.table("balance_dev")
+            .select("sisa")
+            .eq("nama", userid)
+            .limit(1)
+            .execute()
+        )
 
-    for nama, sisa in csv.reader(data.splitlines()):
-        if nama.lower() == userid.lower():
-            return sisa
+        if res.data:
+            return res.data[0]["sisa"]
+
+    except Exception as e:
+        print("GET CUTI ERROR:", e)
 
     return "no leave balance, contact your supervisor"
 
 def load_log():
-    data = r2_read_text("data/log_absen.csv")
-    return list(csv.DictReader(data.splitlines())) if data else []
-
-def save_log(rows):
-    buf = StringIO()
-    writer = csv.DictWriter(buf, fieldnames=["nama", "aksi", "tanggal", "waktu"])
-    writer.writeheader()
-    writer.writerows(rows)
-    r2_write_text("data/log_absen.csv", buf.getvalue(), "text/csv")
+    try:
+        sb = get_supabase()
+        res = sb.table("log_absen_dev").select("*").execute()
+        return res.data or []
+    except Exception:
+        return []
 
 def sudah_absen_hari_ini(nama, aksi):
     today = datetime.now(TZ).strftime("%Y-%m-%d")
-    return any(
-        r["nama"] == nama and r["aksi"] == aksi and r["tanggal"] == today
-        for r in load_log()
+    sb = get_supabase()
+    res = (
+        sb.table("log_absen_dev")
+        .select("id")
+        .eq("nama", nama)
+        .eq("aksi", aksi)
+        .eq("tanggal", today)
+        .limit(1)
+        .execute()
     )
+    return bool(res.data)
 
 def simpan_log_absen(nama, aksi):
     now = datetime.now(TZ)
-    rows = load_log()
-    rows.append({
+    sb = get_supabase()
+    sb.table("log_absen_dev").insert({
         "nama": nama,
         "aksi": aksi,
         "tanggal": now.strftime("%Y-%m-%d"),
-        "waktu": now.strftime("%H:%M:%S")
-    })
-    save_log(rows)
+        "waktu": now.strftime("%H:%M:%S"),
+    }).execute()
 
 def get_latest_absen_for_user(username):
-    rows = [r for r in load_log() if r["nama"].lower() == username.lower()]
-    if not rows:
+    sb = get_supabase()
+    res = (
+        sb.table("log_absen_dev")
+        .select("tanggal, aksi, waktu")
+        .eq("nama", username)
+        .order("tanggal", desc=True)
+        .order("waktu", desc=True)
+        .execute()
+    )
+
+    if not res.data:
         return None, None, None
 
-    grouped = defaultdict(list)
-    for r in rows:
-        grouped[r["tanggal"]].append(r)
-
-    latest = max(grouped.keys())
+    latest_date = res.data[0]["tanggal"]
     checkin = checkout = None
 
-    for r in grouped[latest]:
+    for r in res.data:
+        if r["tanggal"] != latest_date:
+            break
         if r["aksi"].lower() == "check in":
             checkin = r["waktu"]
         elif r["aksi"].lower() == "check out":
             checkout = r["waktu"]
 
-    return latest, checkin, checkout
+    return latest_date, checkin, checkout
 
 # =====================
 # ROUTES
@@ -232,8 +279,8 @@ def absence():
         if sudah_absen_hari_ini(user, aksi):
             flash("Already done today", "error")
             return redirect("/absence")
-
-        if jarak_meter(lat, lon, *POINTOFFICE) > 150:
+        
+        if jarak_meter(lat, lon, POINTOFFICE[0], POINTOFFICE[1]) > 150:
             flash("Too far from office", "error")
             return redirect("/absence")
 
@@ -242,16 +289,20 @@ def absence():
             late_status = check_late(now)
 
         try:
-            requests.post(GAS_URL, json={
-                "nama": user,
-                "aksi": aksi,
-                "late_status": late_status,
-                "mood": request.form.get("mood"),
-                "notes": request.form.get("notes")
-            }, timeout=5)
+            requests.post(
+                GAS_URL,
+                json={
+                    "nama": user,
+                    "aksi": aksi,
+                    "late_status": late_status,
+                    "mood": request.form.get("mood"),
+                    "notes": request.form.get("notes"),
+                },
+                timeout=5,
+            )
         except Exception:
             pass
-
+            
         simpan_log_absen(user, aksi)
         flash("Recorded successfully!", "success")
         return redirect("/absence")
@@ -264,7 +315,8 @@ def absence():
         checkin=checkin,
         checkout=checkout,
         news=get_news(),
-        sisa=get_sisa_cuti(user)
+        sisa=get_sisa_cuti(user),
+        R2_PUBLIC_BASE_URL=R2_PUBLIC_BASE_URL
     )
 
 @app.route("/change_photo", methods=["POST"])
@@ -287,12 +339,10 @@ def change_photo():
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload():
-    # hanya admin tertentu
     if session.get("userid") not in ["Mita", "Hanny"]:
         return redirect("/")
 
     if request.method == "POST":
-        file = request.files.get("file")
         password = request.form.get("password")
         jenis = request.form.get("jenis")
 
@@ -300,50 +350,85 @@ def upload():
             flash("Wrong password!", "error")
             return redirect("/upload")
 
-        if not file or jenis not in ["banner", "cuti"]:
-            flash("Invalid upload type!", "error")
-            return redirect("/upload")
-
-        # tentukan target R2 key
-        if jenis == "banner":
-            if not file.filename.endswith(".txt"):
-                flash("Banner must be .txt file", "error")
-                return redirect("/upload")
-            r2_key = "content/news.txt"
-            content_type = "text/plain"
-
-        elif jenis == "cuti":
-            if session.get("userid") != "Hanny":
-                flash("You are not allowed to upload leave files!", "error")
-                return redirect("/upload")
-            if not file.filename.endswith(".csv"):
-                flash("Cuti must be .csv file", "error")
-                return redirect("/upload")
-            r2_key = "data/cuti.csv"
-            content_type = "text/csv"
+        sb = get_supabase()
 
         try:
-            r2 = get_r2()
-            r2.put_object(
-                Bucket=R2_BUCKET,
-                Key=r2_key,
-                Body=file.read(),
-                ContentType=content_type
-            )
-            flash(f"Upload {jenis.upper()} success!", "success")
+            # === BANNER / NEWS ===
+            if jenis == "banner":
+                content = request.form.get("content", "").strip()
+                if not content:
+                    flash("Content cannot be empty", "error")
+                    return redirect("/upload")
+
+                sb.table("news_dev").insert({
+                    "content": content
+                }).execute()
+
+                flash("News updated successfully", "success")
+
+            # === CUTI ===
+            elif jenis == "cuti":
+                if session.get("userid") != "Hanny":
+                    flash("You are not allowed", "error")
+                    return redirect("/upload")
+
+                nama = request.form.get("nama")
+                sisa = request.form.get("sisa")
+
+                if not nama or sisa is None:
+                    flash("Nama dan sisa wajib diisi", "error")
+                    return redirect("/upload")
+
+                res = (
+                        sb.table("balance_dev")
+                        .update({"sisa": sisa})
+                        .eq("nama", nama)
+                        .execute()
+                    )
+                
+                if not res.data:
+                    flash(f"Name '{nama}' not found!", "error")
+                else:
+                    flash("Leave balance updated", "success")
 
         except Exception as e:
-            flash("Upload failed!", "error")
+            print("UPLOAD ERROR:", e)
+            flash("Operation failed", "error")
 
         return redirect("/upload")
 
     return render_template("upload.html")
 
-@app.route("/__r2_test")
-def r2_test():
+@app.route("/__checkdb")
+def checkdb():
+    result = {
+        "r2": None,
+        "supabase": None,
+    }
+
+    # === TEST R2 ===
     try:
         r2 = get_r2()
         r2.head_bucket(Bucket=R2_BUCKET)
-        return "R2 CONNECTED", 200
+        result["r2"] = "CONNECTED"
     except Exception as e:
-        return f"R2 ERROR: {str(e)}", 500
+        result["r2"] = f"ERROR: {str(e)}"
+
+    # === TEST SUPABASE ===
+    try:
+        sb = get_supabase()
+        res = table("news_dev").select("id").limit(1).execute()
+
+        if not res.data:
+            result["supabase"] = "CONNECTED (no data)"
+        else:
+            result["supabase"] = "CONNECTED (with data)"
+    except Exception as e:
+        result["supabase"] = f"ERROR: {str(e)}"
+
+    # === FINAL RESPONSE ===
+    status_code = 200
+    if "ERROR" in result["r2"] or "ERROR" in result["supabase"]:
+        status_code = 500
+
+    return result, status_code
