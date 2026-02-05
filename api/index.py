@@ -618,3 +618,18 @@ def decision_leave(leave_id):
             )
 
     return {"message": action}
+
+# =========================
+# API: WAIT count (Hanny only)
+# =========================
+@app.route("/api/leave/wait-count")
+def wait_count_api():
+    if session.get("userid") != "Hanny":
+        return {"count": 0}, 403
+
+    res = supabase.table(T("paid_leave")) \
+        .select("id", count="exact") \
+        .eq("status", "WAIT") \
+        .execute()
+
+    return {"count": res.count or 0}, 200
