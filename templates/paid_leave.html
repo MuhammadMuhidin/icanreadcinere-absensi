@@ -120,10 +120,10 @@
       font-weight: 600;
     }
 
-    .WAIT    { color: #f59e0b; }
-    .APPROVE  { color: var(--success); }
-    .REJECT { color: var(--danger); }
-    .CANCEL  { color: var(--muted); }
+    .WAITING-APPROVAL { color: #f59e0b; }
+    .APPROVED  { color: var(--success); }
+    .REJECTED { color: var(--danger); }
+    .CANCELED  { color: var(--muted); }
 
     .actions {
       display: flex;
@@ -238,8 +238,6 @@ window.SESSION_NAME = "{{ SESSION_NAME }}";
 const NAME = window.SESSION_NAME;
 const ROLE = (NAME === "Hanny") ? "manager" : "employee";
 
-document.getElementById("applyBtn").hidden = false;
-
 function openDialog() {
   document.getElementById("leaveDialog").showModal();
 }
@@ -257,16 +255,16 @@ function loadData() {
 
       if (ROLE === "manager") {
         data = data.filter(d =>
-          ["WAIT", "APPROVE", "REJECT"].includes(d.status) ||
-          (d.status === "CANCEL" && d.name === "Hanny")
+          ["WAITING APPROVAL", "APPROVED", "REJECTED"].includes(d.status) ||
+          (d.status === "CANCELED" && d.name === "Hanny")
         );
       } else {
         data = data.filter(d => d.name === NAME);
       }
 
       data.sort((a, b) => {
-        if (a.status === "WAIT" && b.status !== "WAIT") return -1;
-        if (a.status !== "WAIT" && b.status === "WAIT") return 1;
+        if (a.status === "WAITING APPROVAL" && b.status !== "WAITING APPROVAL") return -1;
+        if (a.status !== "WAITING APPROVAL" && b.status === "WAITING APPROVAL") return 1;
         return new Date(b.created_at) - new Date(a.created_at);
       });
 
@@ -321,7 +319,7 @@ function cancelLeave(id) {
   }
 
 function decision(id, action) {
-  const isApprove = action === "APPROVE";
+  const isApprove = action === "APPROVED";
 
   Swal.fire({
     title: isApprove ? "Approve Leave Request?" : "Confirm Action",
@@ -331,7 +329,7 @@ function decision(id, action) {
     icon: "question",
     showCancelButton: true,
     confirmButtonText: isApprove ? "Approve" : "Confirm",
-    cancelButtonText: "Cancel",
+    cancelButtonText: "CANCELED",
     confirmButtonColor: "#16a34a"
   }).then((result) => {
     if (!result.isConfirmed) return;
@@ -365,7 +363,7 @@ function renderTable(data) {
   data.forEach(l => {
     let action = "-";
 
-    if (l.status === "WAIT") {
+    if (l.status === "WAITING APPROVAL") {
   let buttons = [];
 
   // Pemilik pengajuan (termasuk Hanny) → boleh cancel
@@ -381,7 +379,7 @@ function renderTable(data) {
       `<button class="btn-danger" onclick="rejectWithReason(${l.id})">Reject</button>`
     );
     buttons.push(
-      `<button class="btn-success" onclick="decision(${l.id}, 'APPROVE')">Approve</button>`
+      `<button class="btn-success" onclick="decision(${l.id}, 'APPROVED')">Approve</button>`
     );
   }
 
@@ -404,9 +402,9 @@ function renderTable(data) {
         </td>
         <td>
           <div class="label">Status</div>
-          <span class="status ${l.status}">${l.status}</span>
+          <span class="status ${l.status.replace(/\s+/g, '-')}">${l.status}</span>
           ${
-            l.status === "REJECT" && l.reason
+            l.status === "REJECTED" && l.reason
             ? `<div style="
             margin-top:6px;
             font-size:12px;
@@ -436,9 +434,9 @@ function renderTable(data) {
       rows: 4
     },
     showCancelButton: true,
-    confirmButtonText: "Reject",
+    confirmButtonText: "REJECTED",
     confirmButtonColor: "#dc2626",
-    cancelButtonText: "Cancel",
+    cancelButtonText: "CANCELED",
     preConfirm: (value) => {
       if (!value || !value.trim()) {
         Swal.showValidationMessage("Reason is required");
@@ -453,7 +451,7 @@ function renderTable(data) {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        action: "REJECT",
+        action: "REJECTED",
         reason: result.value
       })
     }).then(() => loadData());
