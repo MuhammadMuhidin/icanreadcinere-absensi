@@ -21,6 +21,7 @@ app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 # =====================
 # CONSTANT
 # =====================
+GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
 
@@ -175,9 +176,6 @@ def load_log():
     except Exception:
         return []
 
-def save_log(rows):
-    pass
-
 def sudah_absen_hari_ini(nama, aksi):
     today = datetime.now(TZ).strftime("%Y-%m-%d")
     sb = get_supabase()
@@ -291,18 +289,15 @@ def absence():
             late_status = check_late(now)
 
         try:
-            sb = get_supabase()
-            res = sb.table("full_absence_dev").insert({
-                "nama": user,
-                "aksi": aksi,
-                "late_status": late_status,
-                "mood": request.form.get("mood"),
-                "notes": request.form.get("notes")
-            }).execute()
-            print("INSERT OK:", res)
-        except Exception as e:
-            print("INSERT ERROR:", e)
-            raise
+             requests.post(GAS_URL, json={
+                            "nama": user,
+                            "aksi": aksi,
+                            "late_status": late_status,
+                            "mood": request.form.get("mood"),
+                            "notes": request.form.get("notes")
+                        }, timeout=5)
+        except Exception:
+            pass
             
         simpan_log_absen(user, aksi)
         flash("Recorded successfully!", "success")
