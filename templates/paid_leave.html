@@ -336,7 +336,7 @@ function renderTable(data) {
   // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
   if (ROLE === "manager") {
     buttons.push(
-      `<button class="btn-danger" onclick="decision(${l.id}, 'REJECT')">Reject</button>`
+      `<button class="btn-danger" onclick="rejectWithReason(${l.id})">Reject</button>`
     );
     buttons.push(
       `<button class="btn-success" onclick="decision(${l.id}, 'APPROVE')">Approve</button>`
@@ -373,6 +373,40 @@ function renderTable(data) {
   });
 }
 
+  function rejectWithReason(id) {
+  Swal.fire({
+    title: "Reject Leave Request",
+    input: "textarea",
+    inputLabel: "Reason for rejection",
+    inputPlaceholder: "Write the reason here...",
+    inputAttributes: {
+      rows: 4
+    },
+    showCancelButton: true,
+    confirmButtonText: "Reject",
+    confirmButtonColor: "#dc2626",
+    cancelButtonText: "Cancel",
+    preConfirm: (value) => {
+      if (!value || !value.trim()) {
+        Swal.showValidationMessage("Reason is required");
+        return false;
+      }
+      return value.trim();
+    }
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    fetch(`/leave/${id}/decision`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "REJECT",
+        reason: result.value
+      })
+    }).then(() => loadData());
+  });
+  }
+  
 loadData();
 </script>
 
