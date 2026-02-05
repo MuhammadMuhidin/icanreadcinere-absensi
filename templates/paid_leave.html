@@ -6,9 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   <style>
-    /* ======================================================
-       THEME VARIABLES
-       ====================================================== */
     :root {
       --primary: #2563eb;
       --danger: #dc2626;
@@ -22,29 +19,7 @@
       --shadow: rgba(0,0,0,0.05);
     }
 
-    /* Auto dark mode (OS / browser setting) */
-    @media (prefers-color-scheme: dark) {
-      :root {
-        --bg: #0f172a;
-        --card: #111827;
-        --text: #e5e7eb;
-        --muted: #9ca3af;
-        --border: #1f2937;
-        --shadow: rgba(0,0,0,0.4);
-      }
-    }
-
-    /* Manual override */
-    [data-theme="light"] {
-      --bg: #f5f6fa;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --shadow: rgba(0,0,0,0.05);
-    }
-
-    [data-theme="dark"] {
+    body.dark-mode {
       --bg: #0f172a;
       --card: #111827;
       --text: #e5e7eb;
@@ -68,9 +43,7 @@
       font-size: 20px;
     }
 
-    /* ======================================================
-       CARD & HEADER
-       ====================================================== */
+    /* === CARD === */
     .card {
       background: var(--card);
       border-radius: 14px;
@@ -92,9 +65,7 @@
       align-items: center;
     }
 
-    /* ======================================================
-       BUTTONS
-       ====================================================== */
+    /* === BUTTONS === */
     button {
       border: none;
       border-radius: 10px;
@@ -118,9 +89,7 @@
       border: 1px solid var(--border);
     }
 
-    /* ======================================================
-       TABLE (MOBILE FIRST)
-       ====================================================== */
+    /* === TABLE (MOBILE FIRST) === */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -129,9 +98,7 @@
 
     thead { display: none; }
 
-    tr {
-      border-bottom: 1px solid var(--border);
-    }
+    tr { border-bottom: 1px solid var(--border); }
 
     td {
       padding: 10px 0;
@@ -143,6 +110,10 @@
       font-size: 12px;
       color: var(--muted);
       margin-bottom: 2px;
+    }
+
+    .name {
+      font-weight: 600;
     }
 
     .status {
@@ -161,9 +132,7 @@
       margin-top: 6px;
     }
 
-    /* ======================================================
-       DIALOG
-       ====================================================== */
+    /* === DIALOG === */
     dialog {
       border: none;
       border-radius: 16px;
@@ -172,16 +141,10 @@
       max-width: 320px;
       background: var(--card);
       color: var(--text);
-      animation: fadeUp .2s ease;
     }
 
     dialog::backdrop {
       background: rgba(0,0,0,0.5);
-    }
-
-    @keyframes fadeUp {
-      from { opacity: 0; transform: translateY(10px); }
-      to   { opacity: 1; transform: translateY(0); }
     }
 
     dialog h3 {
@@ -206,9 +169,6 @@
       gap: 10px;
     }
 
-    /* ======================================================
-       LOADING
-       ====================================================== */
     .loading {
       text-align: center;
       padding: 12px;
@@ -230,9 +190,8 @@
 <div class="card">
   <div class="header">
     <h1>Paid Leave</h1>
-
     <div class="header-right">
-      <button id="themeToggle" class="btn-ghost" onclick="toggleTheme()">🌓</button>
+      <button id="darkModeToggle" class="btn-ghost">🌙</button>
       <button id="applyBtn" class="btn-primary" onclick="openDialog()">Apply</button>
     </div>
   </div>
@@ -244,6 +203,7 @@
   <table>
     <thead>
       <tr>
+        <th>Requested By</th>
         <th>Submitted</th>
         <th>Leave Date</th>
         <th>Status</th>
@@ -264,24 +224,26 @@
 </dialog>
 
 <script>
-/* ======================================================
-   THEME HANDLING
-   ====================================================== */
-const savedTheme = localStorage.getItem("theme");
-if (savedTheme) {
-  document.documentElement.setAttribute("data-theme", savedTheme);
+/* =========================
+   DARK MODE (GLOBAL STYLE)
+   ========================= */
+const toggle = document.getElementById("darkModeToggle");
+
+if (localStorage.getItem("darkMode") === "enabled") {
+  document.body.classList.add("dark-mode");
+  toggle.textContent = "☀️";
 }
 
-function toggleTheme() {
-  const current = document.documentElement.getAttribute("data-theme");
-  const next = current === "dark" ? "light" : "dark";
-  document.documentElement.setAttribute("data-theme", next);
-  localStorage.setItem("theme", next);
-}
+toggle.addEventListener("click", () => {
+  document.body.classList.toggle("dark-mode");
+  const isDark = document.body.classList.contains("dark-mode");
+  localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
+  toggle.textContent = isDark ? "☀️" : "🌙";
+});
 
-/* ======================================================
-   LOGIC (UNCHANGED)
-   ====================================================== */
+/* =========================
+   PAID LEAVE LOGIC (UNCHANGED)
+   ========================= */
 window.SESSION_NAME = "{{ SESSION_NAME }}";
 
 const NAME = window.SESSION_NAME;
@@ -293,7 +255,6 @@ document.getElementById("applyBtn").style.display =
 function openDialog() {
   document.getElementById("leaveDialog").showModal();
 }
-
 function closeDialog() {
   document.getElementById("leaveDialog").close();
 }
@@ -367,7 +328,7 @@ function renderTable(data) {
 
   if (!data.length) {
     tbody.innerHTML =
-      `<tr><td colspan="4" class="loading">No data available</td></tr>`;
+      `<tr><td colspan="5" class="loading">No data available</td></tr>`;
     return;
   }
 
@@ -388,6 +349,10 @@ function renderTable(data) {
 
     tbody.innerHTML += `
       <tr>
+        <td>
+          <div class="label">Requested by</div>
+          <span class="name">${l.name}</span>
+        </td>
         <td>
           <div class="label">Submitted</div>
           ${l.created_at?.slice(0,10) || "-"}
