@@ -289,13 +289,17 @@ def absence():
             late_status = check_late(now)
 
         try:
-             requests.post(GAS_URL, json={
-                            "nama": user,
-                            "aksi": aksi,
-                            "late_status": late_status,
-                            "mood": request.form.get("mood"),
-                            "notes": request.form.get("notes")
-                        }, timeout=5)
+            requests.post(
+                GAS_URL,
+                json={
+                    "nama": user,
+                    "aksi": aksi,
+                    "late_status": late_status,
+                    "mood": request.form.get("mood"),
+                    "notes": request.form.get("notes"),
+                },
+                timeout=5,
+            )
         except Exception:
             pass
             
