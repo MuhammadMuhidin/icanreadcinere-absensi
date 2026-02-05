@@ -296,18 +296,60 @@ function submitLeave() {
 }
 
 function cancelLeave(id) {
-  if (!confirm("Cancel this leave request?")) return;
-  fetch(`/leave/${id}/cancel`, { method: "PATCH" })
-    .then(() => loadData());
-}
+  Swal.fire({
+    title: "Cancel Leave Request?",
+    text: "This action cannot be undone.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonText: "Yes, cancel it",
+    cancelButtonText: "Back",
+    confirmButtonColor: "#dc2626"
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    fetch(`/leave/${id}/cancel`, { method: "PATCH" })
+      .then(() => {
+        Swal.fire({
+          icon: "success",
+          title: "Canceled",
+          timer: 1200,
+          showConfirmButton: false
+        });
+        loadData();
+      });
+  });
+  }
 
 function decision(id, action) {
-  if (!confirm(`Confirm ${action}?`)) return;
-  fetch(`/leave/${id}/decision`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action })
-  }).then(() => loadData());
+  const isApprove = action === "APPROVE";
+
+  Swal.fire({
+    title: isApprove ? "Approve Leave Request?" : "Confirm Action",
+    text: isApprove
+      ? "This will approve the leave and deduct balance."
+      : "Are you sure?",
+    icon: "question",
+    showCancelButton: true,
+    confirmButtonText: isApprove ? "Approve" : "Confirm",
+    cancelButtonText: "Cancel",
+    confirmButtonColor: "#16a34a"
+  }).then((result) => {
+    if (!result.isConfirmed) return;
+
+    fetch(`/leave/${id}/decision`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action })
+    }).then(() => {
+      Swal.fire({
+        icon: "success",
+        title: "Approved",
+        timer: 1200,
+        showConfirmButton: false
+      });
+      loadData();
+    });
+  });
 }
 
 function renderTable(data) {
