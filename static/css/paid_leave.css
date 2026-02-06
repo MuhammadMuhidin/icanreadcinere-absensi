@@ -125,9 +125,9 @@ button:disabled { opacity: .6; cursor: not-allowed; }
 }
 
 .btn-warning {
-  background: transparent;
-  color: var(--warning);
-  border: 1px solid var(--warning);
+  background: #f59e0b;          /* amber */
+  color: #fff;
+  border: none;
 }
 
 .btn-ghost {
