@@ -349,3 +349,18 @@ body.dark-mode .swal2-popup {
   background: rgba(40, 40, 40, 1) !important;
   color: white;
 }
+
+/* ===== UNIQUE ROW SEPARATOR : RECEIPT STYLE ===== */
+tbody tr {
+  position: relative;
+}
+
+tbody tr:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: -6px;
+  border-bottom: 2px dashed var(--border);
+  opacity: 0.8;
+}
