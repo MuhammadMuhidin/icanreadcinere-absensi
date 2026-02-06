@@ -8,6 +8,32 @@
       transition: background-color 0.3s, color 0.3s;
     }
 
+/* Navbar glass style – mengikuti News Ticker */
+.navbar {
+  background: rgba(0, 123, 255, 0.5) !important;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 10px rgba(0,0,0,0.15);
+}
+
+/* Navbar fixed & floating feel seperti ticker */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 998;
+}
+
+/* Tinggi & alignment konsisten */
+.navbar .container,
+.navbar .container-fluid {
+  min-height: 44px;
+}
+
+/* Warna putih untuk tulisan */
+.navbar-brand {
+      color: white;
+}
+
     .upload-card {
       max-width: 500px;
       margin: 40px auto;
@@ -70,14 +96,11 @@
       border: none;
     }
 
-    .dark-mode .navbar {
-      background-color: #222 !important;
-      color: #fff;
-    }
-
-    .dark-mode .navbar-brand {
-      color: white;
-    }
+/* Dark mode mengikuti ticker */
+.dark-mode .navbar {
+  background: rgba(0, 123, 255, 0.25) !important;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+}
 
     .dark-mode .navbar .btn-outline-danger {
       border-color: #bbb;
