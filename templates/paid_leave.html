@@ -370,12 +370,11 @@ function renderTable(data) {
         </td>
         <td>
           <div class="label">Submitted</div>
-          ${l.created_at ? new Date(l.created_at).toISOString()
-            .slice(0, 16).replace("T", " ") : "-"}
+          ${formatDatePretty(l.created_at)}
         </td>
         <td>
           <div class="label">Leave Date</div>
-          ${l.leave_date}
+          ${formatDatePretty(l.leave_date)}
         </td>
         <td>
           <div class="label">Status</div>
@@ -434,6 +433,28 @@ function renderTable(data) {
       })
     }).then(() => loadData());
   });
+  }
+
+  function formatDatePretty(dbDate) {
+  if (!dbDate || typeof dbDate !== "string") return "-";
+
+  // Ambil YYYY-MM-DD
+  const dateMatch = dbDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!dateMatch) return "-";
+
+  const yyyy = dateMatch[1];
+  const mm = dateMatch[2];
+  const dd = String(Number(dateMatch[3]));
+
+  const months = ["Jan","Feb","Mar","Apr","May","Jun",
+                  "Jul","Aug","Sep","Oct","Nov","Dec"];
+  const monthName = months[Number(mm) - 1];
+
+  // Ambil HH:MM jika ada
+  const timeMatch = dbDate.match(/(\d{2}):(\d{2})/);
+  const timePart = timeMatch ? `, ${timeMatch[1]}:${timeMatch[2]}` : "";
+
+  return `${dd} ${monthName} ${yyyy}${timePart}`;
   }
   
 loadData();
