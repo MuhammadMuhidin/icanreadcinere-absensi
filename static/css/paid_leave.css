@@ -500,3 +500,25 @@ tbody tr:not(:last-child)::after {
 table {
   margin-top: 8px;
 }
+
+/* ===== ROW HEAT INDICATOR (CORRECT WAY) ===== */
+tbody tr.waiting-approval td:first-child {
+  border-left: 4px solid var(--warning);
+}
+
+tbody tr.approved td:first-child {
+  border-left: 4px solid var(--success);
+}
+
+tbody tr.rejected td:first-child {
+  border-left: 4px solid var(--danger);
+}
+
+tbody tr.canceled td:first-child {
+  border-left: 4px solid var(--muted);
+}
+
+/* jarak isi supaya tidak nempel garis */
+tbody tr td:first-child {
+  padding-left: 10px;
+}
