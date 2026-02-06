@@ -370,8 +370,7 @@ function renderTable(data) {
         </td>
         <td>
           <div class="label">Submitted</div>
-          ${l.created_at ? new Date(l.created_at).toISOString()
-            .slice(0, 16).replace("T", " ") : "-"}
+          ${formatDatePretty(l.created_at)}
         </td>
         <td>
           <div class="label">Leave Date</div>
@@ -434,6 +433,26 @@ function renderTable(data) {
       })
     }).then(() => loadData());
   });
+  }
+
+  function formatDatePretty(dbDate) {
+  if (!dbDate) return "-";
+
+  // Normalisasi ke ISO agar JS konsisten
+  const iso = dbDate.replace(" ", "T").replace("+00", "Z");
+  const d = new Date(iso);
+
+  if (isNaN(d)) return "-";
+
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+  const yyyy = d.getFullYear();
+  const mmm = months[d.getMonth()];
+  const dd = d.getDate();
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+
+  return `${yyyy} ${mmm} ${dd}, ${hh}:${mm}`;
   }
   
 loadData();
