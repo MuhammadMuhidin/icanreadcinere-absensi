@@ -18,6 +18,21 @@
     </div>
   </div>
 
+  <!-- FILTER BAR -->
+<div class="filter-bar">
+  <div class="tabs">
+    <button class="tab active" data-status="ALL">All</button>
+    <button class="tab" data-status="WAITING APPROVAL">Waiting</button>
+    <button class="tab" data-status="APPROVED">Approved</button>
+    <button class="tab" data-status="REJECTED">Rejected</button>
+    <button class="tab" data-status="CANCELED">Canceled</button>
+  </div>
+
+  <select id="yearFilter">
+    <option value="ALL">All Years</option>
+  </select>
+</div>
+  
   <div id="loading" class="loading" style="display:none;">
     Loading…
   </div>
@@ -98,6 +113,76 @@ function loadData() {
     });
 }
 
+/* ================= FILTER STATE ================= */
+let ACTIVE_STATUS = "ALL";
+let ACTIVE_YEAR = new Date().getFullYear().toString();
+let RAW_DATA = [];
+
+/* override ringan tanpa ubah logic */
+const originalRenderTable = renderTable;
+
+renderTable = function(data) {
+  RAW_DATA = data;
+  populateYearFilter(data);
+  applyFilter();
+};
+
+/* ================= YEAR OPTIONS ================= */
+function populateYearFilter(data) {
+  const select = document.getElementById("yearFilter");
+  if (select.options.length > 1) return;
+
+  const years = [...new Set(
+    data
+      .filter(d => d.created_at)
+      .map(d => new Date(d.created_at).getFullYear())
+  )].sort((a,b) => b - a);
+
+  years.forEach(y => {
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    select.appendChild(opt);
+  });
+
+  select.value = ACTIVE_YEAR;
+}
+
+/* ================= APPLY FILTER ================= */
+function applyFilter() {
+  let filtered = [...RAW_DATA];
+
+  if (ACTIVE_STATUS !== "ALL") {
+    filtered = filtered.filter(d => d.status === ACTIVE_STATUS);
+  }
+
+  if (ACTIVE_YEAR !== "ALL") {
+    filtered = filtered.filter(d =>
+      d.created_at &&
+      new Date(d.created_at).getFullYear().toString() === ACTIVE_YEAR
+    );
+  }
+
+  originalRenderTable(filtered);
+}
+
+/* ================= TAB CLICK ================= */
+document.querySelectorAll(".tab").forEach(tab => {
+  tab.addEventListener("click", () => {
+    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+
+    ACTIVE_STATUS = tab.dataset.status;
+    applyFilter();
+  });
+});
+
+/* ================= YEAR CHANGE ================= */
+document.getElementById("yearFilter").addEventListener("change", e => {
+  ACTIVE_YEAR = e.target.value;
+  applyFilter();
+});
+  
 function submitLeave() {
   const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
