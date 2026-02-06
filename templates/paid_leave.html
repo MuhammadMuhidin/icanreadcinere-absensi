@@ -438,21 +438,19 @@ function renderTable(data) {
   function formatDatePretty(dbDate) {
   if (!dbDate) return "-";
 
-  // Normalisasi ke ISO agar JS konsisten
-  const iso = dbDate.replace(" ", "T").replace("+00", "Z");
-  const d = new Date(iso);
+  // Pecah manual: YYYY-MM-DD HH:MM:SS.xxxxxx+00
+  const match = dbDate.match(
+    /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/
+  );
 
-  if (isNaN(d)) return "-";
+  if (!match) return "-";
 
-  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const [, yyyy, mm, dd, hh, min] = match;
 
-  const yyyy = d.getFullYear();
-  const mmm = months[d.getMonth()];
-  const dd = d.getDate();
-  const hh = String(d.getHours()).padStart(2, "0");
-  const mm = String(d.getMinutes()).padStart(2, "0");
+  const months = ["Jan","Feb","Mar","Apr","May","Jun",
+                  "Jul","Aug","Sep","Oct","Nov","Dec"];
 
-  return `${yyyy} ${mmm} ${dd}, ${hh}:${mm}`;
+  return `${yyyy} ${months[Number(mm) - 1]} ${Number(dd)}, ${hh}:${min}`;
   }
   
 loadData();
