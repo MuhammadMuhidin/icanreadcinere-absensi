@@ -502,8 +502,8 @@ table {
 }
 
 /* ===== FULL HEIGHT ROW INDICATOR ===== */
-tbody tr {
-  position: relative;
+table {
+  padding-left: 10px;
 }
 
 tbody tr::before {
