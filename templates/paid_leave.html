@@ -198,15 +198,15 @@ function submitLeave() {
   const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
   if (!leaveDate) return alert("Leave date is required");
-
-  btn.disabled = true;
-
+  
+  btn.classList.add("btn-loading");
+  
   fetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: leaveDate })
   }).then(() => {
-    btn.disabled = false;
+    btn.classList.remove("btn-loading");
     closeDialog();
     loadData();
   });
