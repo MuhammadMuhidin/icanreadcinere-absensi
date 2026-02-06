@@ -399,6 +399,18 @@ tbody tr:not(:last-child)::after {
   animation: pulse 1.5s infinite;
 }
 
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
+}
+
 /* line */
 .step-bar {
   flex: 1;
