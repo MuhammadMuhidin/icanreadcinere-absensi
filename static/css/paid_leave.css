@@ -500,3 +500,25 @@ tbody tr:not(:last-child)::after {
 table {
   margin-top: 8px;
 }
+
+/* ===== ROW HEAT INDICATOR ===== */
+tbody tr {
+  border-left: 4px solid transparent;
+  padding-left: 10px; /* biar isi tidak nempel */
+}
+
+tbody tr.waiting {
+  border-left-color: var(--warning);
+}
+
+tbody tr.approved {
+  border-left-color: var(--success);
+}
+
+tbody tr.rejected {
+  border-left-color: var(--danger);
+}
+
+tbody tr.canceled {
+  border-left-color: var(--muted);
+}
