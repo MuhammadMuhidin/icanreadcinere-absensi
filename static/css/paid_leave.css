@@ -28,19 +28,27 @@
         height: 100%;
     }
 
-    body {
-      min-height: 100vh;
-      margin: 0;
-      padding: 16px;
-      background: var(--bg);
-      color: var(--text);
-      font-family: 'Segoe UI', sans-serif;
-      background-image: url('/static/Background.jpg');
-      background-size: cover;
-      background-repeat: no-repeat;
-      background-attachment: fixed;
-      transition: background-color 0.3s, color 0.3s;
-    }
+/* BODY HANYA UNTUK KONTEN */
+body {
+  padding: 16px;
+  font-family: 'Segoe UI', sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  position: relative;
+}
+
+/* BACKGROUND DIKUNCI MATI */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+
+  background-image: url('/static/Background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
 
     h1 {
       margin: 0;
