@@ -44,13 +44,6 @@
 .card {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-  border: 1px solid rgba(255,255,255,0.25);
-}
-.card {
-  color: var(--text);
-  text-shadow: 0 1px 2px rgba(0,0,0,0.15);
 }
 
     .header {
@@ -189,10 +182,4 @@
 body.dark-mode .card {
   background: rgba(17, 24, 39, 0.7); /* nyambung var --card */
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  border: 1px solid rgba(255,255,255,0.08);
-  box-shadow: 0 10px 25px rgba(0,0,0,0.45);
-}
-body.dark-mode .card {
-  text-shadow: none;
 }
