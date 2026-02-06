@@ -50,7 +50,7 @@ body::before {
   inset: 0;
   z-index: -1;
   background: url('/static/Background.jpg') center / cover no-repeat;
-  opacity: .35;
+  opacity: .25;
 }
 
 /* ================= CARD ================= */
