@@ -446,11 +446,29 @@ function closeEditDialog() {
   })
   .then(r => {
     if (!r.ok) throw new Error("Failed");
+    return r.json();
+  })
+  .then(() => {
     closeEditDialog();
+
+    Swal.fire({
+      icon: "success",
+      title: "Updated",
+      text: "Leave date has been updated",
+      timer: 1400,
+      showConfirmButton: false
+    });
+
     loadData();
   })
-  .catch(() => alert("Failed to update leave"));
-    }
+  .catch(() => {
+    Swal.fire({
+      icon: "error",
+      title: "Failed",
+      text: "Failed to update leave"
+    });
+  });
+  }
 
   function rejectWithReason(id) {
   Swal.fire({
