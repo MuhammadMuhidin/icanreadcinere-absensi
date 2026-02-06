@@ -44,6 +44,13 @@
 .card {
   background: rgba(255, 255, 255, 0.65);
   backdrop-filter: blur(6px);
+  border-radius: 14px !important;
+  overflow: hidden; /* WAJIB untuk backdrop-filter */
+}
+/* === Glass Card (mengikuti ticker & navbar) Dark mode === */
+body.dark-mode .card {
+  background: rgba(17, 24, 39, 0.7); /* nyambung var --card */
+  backdrop-filter: blur(6px);
 }
 
     .header {
@@ -177,9 +184,3 @@
       .label { display: none; }
       .actions { margin-top: 0; }
     }
-
-/* === Glass Card (mengikuti ticker & navbar) Dark mode === */
-body.dark-mode .card {
-  background: rgba(17, 24, 39, 0.7); /* nyambung var --card */
-  backdrop-filter: blur(6px);
-}
