@@ -395,7 +395,8 @@ tbody tr:not(:last-child)::after {
   flex-shrink: 0;
 }
 
-.step-dot.step-active {
+.step-dot.is-pulsing {
+  background: var(--primary);
   animation: pulse 1.5s infinite;
 }
 
