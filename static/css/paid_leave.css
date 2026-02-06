@@ -31,6 +31,7 @@
 /* BODY HANYA UNTUK KONTEN */
 body {
   padding: 16px;
+  padding-bottom: calc(16px + env(safe-area-inset-bottom));
   font-family: 'Segoe UI', sans-serif;
   color: var(--text);
   background: var(--bg);
