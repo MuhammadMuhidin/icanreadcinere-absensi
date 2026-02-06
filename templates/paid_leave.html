@@ -258,6 +258,50 @@ function decision(id, action) {
   });
 }
 
+function renderStepTimeline(status) {
+  const s = status.toLowerCase();
+
+  // step index:
+  // 0 = submitted
+  // 1 = waiting
+  // 2 = approved
+
+  let activeStep = 0;
+  let finalClass = "step-active";
+
+  if (s.includes("waiting")) {
+    activeStep = 1;
+  }
+
+  if (s === "approved" || s === "finished") {
+    activeStep = 2;
+    finalClass = "step-success";
+  }
+
+  if (s === "rejected" || s === "canceled") {
+    activeStep = 1;
+    finalClass = "step-danger";
+  }
+
+  return `
+    <div class="step-timeline">
+      <div class="step-line">
+        <div class="step-dot ${activeStep >= 0 ? finalClass : ""}"></div>
+        <div class="step-bar ${activeStep >= 1 ? finalClass : ""}"></div>
+        <div class="step-dot ${activeStep >= 1 ? finalClass : ""}"></div>
+        <div class="step-bar ${activeStep >= 2 ? finalClass : ""}"></div>
+        <div class="step-dot ${activeStep >= 2 ? finalClass : ""}"></div>
+      </div>
+
+      <div class="step-labels">
+        <span>Submitted</span>
+        <span>Waiting</span>
+        <span>Approved</span>
+      </div>
+    </div>
+  `;
+}
+  
 function renderTable(data) {
   const tbody = document.getElementById("leaveTable");
   tbody.innerHTML = "";
@@ -312,6 +356,7 @@ function renderTable(data) {
         <td>
           <div class="label">Status</div>
           <span class="status ${l.status.replace(/\s+/g, '-')}">${l.status}</span>
+          ${renderStepTimeline(l.status)}
           ${
             l.status === "REJECTED" && l.reason
             ? `<div style="
