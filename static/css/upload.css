@@ -1,6 +1,10 @@
     body {
       background-color: #f8f9fa;
       font-family: 'Segoe UI', sans-serif;
+      background-image: url('/static/Background.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
       transition: background-color 0.3s, color 0.3s;
     }
 
@@ -8,11 +12,21 @@
       max-width: 500px;
       margin: 40px auto;
       border-radius: 16px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.18);
+      overflow: hidden;
     }
 
     .card-header {
+      background: rgba(13, 110, 253, 0.9); /* primary tapi halus */
+      backdrop-filter: blur(6px);
+      border-bottom: none;
       border-radius: 16px 16px 0 0;
     }
+
+    .card-body {
+      background: rgba(255, 255, 255, 0.96);
+      border-radius: 0 0 16px 16px;
+     }
 
     .form-control {
       font-size: 16px;
