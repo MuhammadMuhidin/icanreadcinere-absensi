@@ -4,11 +4,9 @@
       background-image: url('/static/Background.jpg');
       background-size: cover;
       background-repeat: no-repeat;
-      background-attachment: fixed;
-      transition: background-color 0.3s, color 0.3s;
     }
 
-   .container {
+   .page-content {
       padding: 1.25rem;
     }
 
