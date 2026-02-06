@@ -394,7 +394,8 @@ function renderTable(data) {
         </td>
         <td>
           <div class="label">Submitted</div>
-          ${l.created_at?.slice(0,10) || "-"}
+          ${l.created_at ? new Date(l.created_at).toISOString()
+            .slice(0, 16).replace("T", " ") : "-"}
         </td>
         <td>
           <div class="label">Leave Date</div>
