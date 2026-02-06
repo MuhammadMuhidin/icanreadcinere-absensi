@@ -641,7 +641,7 @@ def edit_leave(id):
     leave_date = data.get("leave_date")
 
     if not leave_date:
-        return jsonify({"error": "leave_date required"}), 400
+        return {"error": "leave_date required"}, 400
 
     sb = get_supabase()
     sb.table(T("paid_leave")) \
@@ -652,4 +652,4 @@ def edit_leave(id):
         .eq("status", "WAITING APPROVAL") \
         .execute()
 
-    return jsonify({"success": True})
+    return {"success": True}, 200
