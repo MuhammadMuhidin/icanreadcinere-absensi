@@ -14,7 +14,6 @@
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   box-shadow: 0 2px 10px rgba(0,0,0,0.15);
-  color: #ffffff;
 }
 
 /* Navbar fixed & floating feel seperti ticker */
@@ -28,6 +27,11 @@
 .navbar .container,
 .navbar .container-fluid {
   min-height: 44px;
+}
+
+/* Warna putih untuk tulisan */
+.navbar-brand {
+      color: white;
 }
 
     .upload-card {
@@ -97,10 +101,6 @@
   background: rgba(0, 123, 255, 0.25) !important;
   border-bottom: 1px solid rgba(255,255,255,0.15);
 }
-
-    .dark-mode .navbar-brand {
-      color: white;
-    }
 
     .dark-mode .navbar .btn-outline-danger {
       border-color: #bbb;
