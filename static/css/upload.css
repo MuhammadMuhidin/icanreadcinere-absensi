@@ -8,6 +8,11 @@
       transition: background-color 0.3s, color 0.3s;
     }
 
+    .navbar {
+      padding-left: 12px;
+      padding-right: 12px;
+    }
+
     .upload-card {
       max-width: 500px;
       margin: 40px auto;
