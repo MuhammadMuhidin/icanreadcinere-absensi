@@ -395,6 +395,10 @@ tbody tr:not(:last-child)::after {
   flex-shrink: 0;
 }
 
+.step-dot.step-active {
+  animation: pulse 1.5s infinite;
+}
+
 /* line */
 .step-bar {
   flex: 1;
