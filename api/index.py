@@ -634,3 +634,22 @@ def wait_count_api():
         .execute()
 
     return {"count": res.count or 0}, 200
+
+@app.route("/leave/<int:id>", methods=["PATCH"])
+def edit_leave(id):
+    data = request.json
+    leave_date = data.get("leave_date")
+
+    if not leave_date:
+        return {"error": "leave_date required"}, 400
+
+    sb = get_supabase()
+    sb.table(T("paid_leave")) \
+        .update({
+            "leave_date": leave_date
+        }) \
+        .eq("id", id) \
+        .eq("status", "WAITING APPROVAL") \
+        .execute()
+
+    return {"success": True}, 200

@@ -60,6 +60,15 @@
   </div>
 </dialog>
 
+<dialog id="editLeaveDialog">
+  <h3>Edit Leave</h3>
+  <input type="date" id="editLeaveDate">
+  <div class="dialog-actions">
+    <button class="btn-ghost" onclick="closeEditDialog()">Cancel</button>
+    <button class="btn-primary" onclick="submitEdit()">Save</button>
+  </div>
+</dialog>
+
 <script>
 /* =========================
    DARK MODE (GLOBAL STYLE)
@@ -342,6 +351,16 @@ function renderTable(data) {
     if (l.status === "WAITING APPROVAL") {
   let buttons = [];
 
+  // EDIT (hanya pemilik request)
+  if (l.name === NAME) {
+    buttons.push(
+      `<button class="btn-warning"
+        onclick="openEditDialog(${l.id}, '${l.leave_date}')">
+        Edit
+      </button>`
+    );
+  }
+
   // Pemilik pengajuan (termasuk Hanny) → boleh cancel
   if (l.name === NAME) {
     buttons.push(
@@ -400,6 +419,57 @@ function renderTable(data) {
     `;
   });
 }
+
+  let EDIT_LEAVE_ID = null;
+
+function openEditDialog(id, currentDate) {
+  EDIT_LEAVE_ID = id;
+  document.getElementById("editLeaveDate").value = currentDate?.slice(0,10) || "";
+  document.getElementById("editLeaveDialog").showModal();
+}
+
+function closeEditDialog() {
+  EDIT_LEAVE_ID = null;
+  document.getElementById("editLeaveDialog").close();
+}
+
+  function submitEdit() {
+  const newDate = document.getElementById("editLeaveDate").value;
+  if (!newDate || !EDIT_LEAVE_ID) return;
+
+  fetch(`/leave/${EDIT_LEAVE_ID}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ leave_date: newDate })
+  })
+  .then(r => {
+    if (!r.ok) throw new Error("Failed");
+    return r.json(); // sekarang AMAN
+  })
+  .then(() => {
+    closeEditDialog();
+
+    // ⬇️ penting untuk Android / Chrome
+    setTimeout(() => {
+      Swal.fire({
+        icon: "success",
+        title: "Updated",
+        text: "Leave date has been updated",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }, 50);
+
+    loadData();
+  })
+  .catch(() => {
+    Swal.fire({
+      icon: "error",
+      title: "Failed",
+      text: "Failed to update leave"
+    });
+  });
+  }
 
   function rejectWithReason(id) {
   Swal.fire({
