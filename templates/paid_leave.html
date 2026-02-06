@@ -363,7 +363,7 @@ function renderTable(data) {
   }
 
     tbody.innerHTML += `
-      <tr>
+      <tr class="${l.status.replace(/\s+/g, '-').toLowerCase()}">
         <td>
           <div class="label">Requested by</div>
           <span class="name">${l.name}</span>
