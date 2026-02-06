@@ -8,11 +8,6 @@
       transition: background-color 0.3s, color 0.3s;
     }
 
-    .navbar {
-     background-color: rgba(255, 255, 255, 0.75) !important;
-     backdrop-filter: blur(6px);
-    };
-
     .upload-card {
       max-width: 500px;
       margin: 40px auto;
@@ -147,10 +142,6 @@
     .dark-mode .dark-mode-toggle {
       background: #333333;
       color: #ffffff;
-    }
-
-    .dark-mode .navbar {
-     background-color: rgba(20, 20, 20, 0.75) !important;
     }
 
     .background-overlay {
