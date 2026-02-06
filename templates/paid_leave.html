@@ -65,7 +65,9 @@
   <input type="date" id="editLeaveDate">
   <div class="dialog-actions">
     <button class="btn-ghost" onclick="closeEditDialog()">Cancel</button>
-    <button class="btn-primary" onclick="submitEdit()">Save</button>
+    <button id="editSaveBtn" class="btn-primary" onclick="submitEdit()">
+       <span class="btn-text">Save</span>
+    </button>
   </div>
 </dialog>
 
@@ -435,7 +437,11 @@ function closeEditDialog() {
 
   function submitEdit() {
   const newDate = document.getElementById("editLeaveDate").value;
+  const btn = document.getElementById("editSaveBtn");
+
   if (!newDate || !EDIT_LEAVE_ID) return;
+
+  btn.classList.add("btn-loading");
 
   fetch(`/leave/${EDIT_LEAVE_ID}`, {
     method: "PATCH",
@@ -444,12 +450,11 @@ function closeEditDialog() {
   })
   .then(r => {
     if (!r.ok) throw new Error("Failed");
-    return r.json(); // sekarang AMAN
+    return r.json();
   })
   .then(() => {
     closeEditDialog();
 
-    // ⬇️ penting untuk Android / Chrome
     setTimeout(() => {
       Swal.fire({
         icon: "success",
@@ -468,6 +473,9 @@ function closeEditDialog() {
       title: "Failed",
       text: "Failed to update leave"
     });
+  })
+  .finally(() => {
+    btn.classList.remove("btn-loading");
   });
   }
 
