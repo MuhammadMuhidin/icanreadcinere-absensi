@@ -643,6 +643,7 @@ def edit_leave(id):
     if not leave_date:
         return jsonify({"error": "leave_date required"}), 400
 
+    sb = get_supabase()
     sb.table(T("paid_leave")) \
         .update({
             "leave_date": leave_date
