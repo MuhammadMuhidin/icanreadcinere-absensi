@@ -365,54 +365,58 @@ tbody tr:not(:last-child)::after {
   opacity: 0.8;
 }
 
-/* ================= PROGRESS LINE (FINAL) ================= */
+/* ================= PROGRESS LINE (REFINED) ================= */
 
 .progress-line {
-  height: 4px;
+  height: 3px;
   width: 100%;
   background: var(--border);
-  border-radius: 4px;
+  border-radius: 3px;
   overflow: hidden;
   margin-top: 6px;
-  position: relative;
+  opacity: 0.9;
 }
 
+/* default: full line (final state) */
 .progress-fill {
   height: 100%;
   width: 100%;
   background: currentColor;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
-/* ===== WAITING : LIVE PROCESS ===== */
+/* ===== WAITING ONLY (LIVE EFFECT) ===== */
 .progress-fill.waiting {
-  width: 40%;
-  animation: progress-running 1.6s ease-in-out infinite;
+  width: 35%;
+  animation: progress-running 1.6s linear infinite;
+  opacity: 0.9;
 }
 
-/* ===== FINAL STATES : STATIC ===== */
+/* ===== FINAL STATES ===== */
 .progress-fill.approved,
-.progress-fill.finished,
+.progress-fill.finished {
+  width: 100%;
+  opacity: 0.6; /* lebih tenang */
+}
+
 .progress-fill.canceled {
   width: 100%;
+  background: var(--muted);
+  opacity: 0.5;
 }
 
 .progress-fill.rejected {
   width: 100%;
   background: var(--danger);
+  opacity: 0.6;
 }
 
 /* ===== ANIMATION ===== */
 @keyframes progress-running {
   0% {
     transform: translateX(-60%);
-    opacity: 0.4;
-  }
-  50% {
-    opacity: 1;
   }
   100% {
     transform: translateX(160%);
-    opacity: 0.4;
   }
 }
