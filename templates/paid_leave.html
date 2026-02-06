@@ -187,7 +187,7 @@ document.getElementById("yearFilter").addEventListener("change", e => {
 function renderProgress(status) {
   const s = status.toLowerCase();
 
-  if (s === "waiting for approval") {
+  if (s === "waiting approval" || s === "waiting for approval") {
     return `
       <div class="progress-line">
         <div class="progress-fill waiting"></div>
