@@ -261,26 +261,36 @@ function decision(id, action) {
 function renderStepTimeline(status) {
   const s = status.toLowerCase();
 
-  // step index:
-  // 0 = submitted
-  // 1 = waiting
-  // 2 = approved
-
   let activeStep = 0;
   let finalClass = "step-active";
+  let finalLabel = "Approved";
 
+  // WAITING
   if (s.includes("waiting")) {
     activeStep = 1;
+    finalClass = "step-active";
+    finalLabel = "Approved";
   }
 
+  // APPROVED / FINISHED
   if (s === "approved" || s === "finished") {
     activeStep = 2;
     finalClass = "step-success";
+    finalLabel = "Approved";
   }
 
-  if (s === "rejected" || s === "canceled") {
-    activeStep = 1;
+  // REJECTED
+  if (s === "rejected") {
+    activeStep = 2;
     finalClass = "step-danger";
+    finalLabel = "Rejected";
+  }
+
+  // CANCELED
+  if (s === "canceled") {
+    activeStep = 2;
+    finalClass = "step-muted";
+    finalLabel = "Canceled";
   }
 
   return `
@@ -296,11 +306,11 @@ function renderStepTimeline(status) {
       <div class="step-labels">
         <span>Submitted</span>
         <span>Waiting</span>
-        <span>Approved</span>
+        <span>${finalLabel}</span>
       </div>
     </div>
   `;
-}
+  }
   
 function renderTable(data) {
   const tbody = document.getElementById("leaveTable");
