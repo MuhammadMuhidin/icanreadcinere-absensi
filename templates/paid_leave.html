@@ -199,14 +199,14 @@ function submitLeave() {
   const leaveDate = document.getElementById("leaveDate").value;
   if (!leaveDate) return alert("Leave date is required");
   
-  btn.classList.add("btn-loading");
+  btn.disabled = true;
   
   fetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: leaveDate })
   }).then(() => {
-    btn.classList.remove("btn-loading");
+    btn.disabled = false;
     closeDialog();
     loadData();
   });
@@ -441,7 +441,7 @@ function closeEditDialog() {
 
   if (!newDate || !EDIT_LEAVE_ID) return;
 
-  btn.classList.add("btn-loading");
+  btn.disabled = true;
 
   fetch(`/leave/${EDIT_LEAVE_ID}`, {
     method: "PATCH",
@@ -454,7 +454,6 @@ function closeEditDialog() {
   })
   .then(() => {
     closeEditDialog();
-
     setTimeout(() => {
       Swal.fire({
         icon: "success",
@@ -464,7 +463,6 @@ function closeEditDialog() {
         showConfirmButton: false
       });
     }, 50);
-
     loadData();
   })
   .catch(() => {
@@ -475,7 +473,7 @@ function closeEditDialog() {
     });
   })
   .finally(() => {
-    btn.classList.remove("btn-loading");
+    btn.disabled = false;
   });
   }
 
