@@ -364,3 +364,54 @@ tbody tr:not(:last-child)::after {
   border-bottom: 2px dashed var(--border);
   opacity: 0.8;
 }
+
+/* ================= STEP TIMELINE ================= */
+
+.step-timeline {
+  margin-top: 8px;
+}
+
+.step-line {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* dot */
+.step-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+/* line */
+.step-bar {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+}
+
+/* labels */
+.step-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* ===== ACTIVE STATES ===== */
+.step-active {
+  background: var(--primary);
+}
+
+.step-success {
+  background: var(--success);
+}
+
+.step-danger {
+  background: var(--danger);
+}
