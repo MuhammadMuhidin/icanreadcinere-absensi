@@ -32,7 +32,6 @@ body.dark-mode {
 html, body {
   margin: 0;
   padding: 0;
-  overscroll-behavior: none;
 }
 
 body {
@@ -48,12 +47,18 @@ body {
 body::before {
   content: "";
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
   z-index: -1;
-  background: url('/static/Background.jpg') center / cover no-repeat;
-  opacity: .25;
-  transform: translateZ(0);
-  will-change: transform;
+
+  background-image: url('/static/Background.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  opacity: 0.25;
   pointer-events: none;
 }
 
@@ -388,6 +393,23 @@ tbody tr:not(:last-child)::after {
   border-radius: 50%;
   background: var(--border);
   flex-shrink: 0;
+}
+
+.step-dot.is-pulsing {
+  background: var(--primary);
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0.6);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(37, 99, 235, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(37, 99, 235, 0);
+  }
 }
 
 /* line */
