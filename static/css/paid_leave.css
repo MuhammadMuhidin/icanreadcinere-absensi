@@ -503,24 +503,26 @@ table {
 
 /* ===== ROW HEAT INDICATOR ===== */
 tbody tr {
-  border-left: 4px solid transparent;
-  padding-left: 10px; /* biar isi tidak nempel */
-  transition: border-color .2s ease, background .2s ease;
-  border-left-style: solid;
+  border-left: none;
 }
 
-tbody tr.waiting-approval {
-  border-left-color: var(--warning);
+tbody tr.waiting-approval td:first-child {
+  border-left: 4px solid var(--warning);
 }
 
-tbody tr.approved {
-  border-left-color: var(--success);
+tbody tr.approved td:first-child {
+  border-left: 4px solid var(--success);
 }
 
-tbody tr.rejected {
-  border-left-color: var(--danger);
+tbody tr.rejected td:first-child {
+  border-left: 4px solid var(--danger);
 }
 
-tbody tr.canceled {
-  border-left-color: var(--muted);
+tbody tr.canceled td:first-child {
+  border-left: 4px solid var(--muted);
+}
+
+/* jarak isi supaya tidak nempel garis */
+tbody tr td:first-child {
+  padding-left: 10px;
 }
