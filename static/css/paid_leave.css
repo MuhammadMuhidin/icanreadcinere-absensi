@@ -43,7 +43,6 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-
   background-image: url('/static/Background.jpg');
   background-size: cover;
   background-position: center;
@@ -60,7 +59,6 @@ body::before {
       background: var(--card);
       border-radius: 14px;
       padding: 14px;
-      margin-bottom: 14px;
       box-shadow: 0 10px 25px var(--shadow);
     }
 
