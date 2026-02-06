@@ -136,6 +136,34 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   color: var(--text);
 }
 
+.btn-loading {
+  pointer-events: none;
+  opacity: 0.75;
+  position: relative;
+}
+
+.btn-loading .btn-text {
+  visibility: hidden;
+}
+
+.btn-loading::after {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255,255,255,.6);
+  border-top-color: #fff;
+  border-radius: 50%;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: spin .7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg) translate(-50%, -50%); }
+}
+
 /* ================= TABLE ================= */
 table {
   width: 100%;
