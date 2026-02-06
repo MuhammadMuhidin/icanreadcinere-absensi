@@ -299,8 +299,9 @@ function renderStepTimeline(status) {
     <div class="step-timeline">
       <div class="step-line">
         <div class="step-dot ${
-          isWaiting ? "is-pulsing" : finalClass}">
-          </div>
+          isWaiting ? "is-pulsing" : activeStep >= 1 ? finalClass : ""
+        }"></div>
+        
         <div class="step-bar ${
           activeStep >= 1
             ? isWaiting
