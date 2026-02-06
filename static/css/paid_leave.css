@@ -506,9 +506,10 @@ tbody tr {
   border-left: 4px solid transparent;
   padding-left: 10px; /* biar isi tidak nempel */
   transition: border-color .2s ease, background .2s ease;
+  border-left-style: solid;
 }
 
-tbody tr.waiting {
+tbody tr.waiting-approval {
   border-left-color: var(--warning);
 }
 
