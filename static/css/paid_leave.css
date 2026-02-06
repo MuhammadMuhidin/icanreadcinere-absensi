@@ -341,10 +341,11 @@ dialog input {
 
 /* Light mode */
 body:not(.dark-mode) .swal2-popup {
-  background: rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 1) !important;
 }
 
 /* Dark mode */
 body.dark-mode .swal2-popup {
-  background: rgba(40, 40, 40, 0.95) !important;
+  background: rgba(40, 40, 40, 1) !important;
+  color: white;
 }
