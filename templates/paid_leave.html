@@ -374,7 +374,7 @@ function renderTable(data) {
         </td>
         <td>
           <div class="label">Leave Date</div>
-          ${l.leave_date}
+          ${formatDatePretty(l.leave_date)}
         </td>
         <td>
           <div class="label">Status</div>
@@ -436,21 +436,32 @@ function renderTable(data) {
   }
 
   function formatDatePretty(dbDate) {
-  if (!dbDate) return "-";
+  if (!dbDate || typeof dbDate !== "string") return "-";
 
-  // Pecah manual: YYYY-MM-DD HH:MM:SS.xxxxxx+00
-  const match = dbDate.match(
-    /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/
-  );
+  // Ambil bagian tanggal
+  // Support: "YYYY-MM-DD ..." atau "YYYY-MM-DD"
+  const datePart = dbDate.slice(0, 10);
+  const m = datePart.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "-";
 
-  if (!match) return "-";
+  const yyyy = m[1];
+  const mm = m[2];
+  const dd = String(Number(m[3])); // buang leading zero
 
-  const [, yyyy, mm, dd, hh, min] = match;
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const monthName = months[Number(mm) - 1];
 
-  const months = ["Jan","Feb","Mar","Apr","May","Jun",
-                  "Jul","Aug","Sep","Oct","Nov","Dec"];
+  // Cek ada jam atau tidak
+  // Support: " YYYY-MM-DD HH:MM..."
+  let timePart = "";
+  if (dbDate.length >= 16 && dbDate[10] === " ") {
+    const t = dbDate.slice(11, 16); // HH:MM
+    if (/^\d{2}:\d{2}$/.test(t)) {
+      timePart = `, ${t}`;
+    }
+  }
 
-  return `${yyyy} ${months[Number(mm) - 1]} ${Number(dd)}, ${hh}:${min}`;
+  return `${yyyy} ${monthName} ${dd}${timePart}`;
   }
   
 loadData();
