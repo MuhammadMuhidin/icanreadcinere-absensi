@@ -32,7 +32,7 @@ body.dark-mode {
 html, body {
   margin: 0;
   padding: 0;
-  overscroll-behavior: none;
+  overflow-x: hidden;
 }
 
 body {
@@ -50,7 +50,10 @@ body::before {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: url('/static/Background.jpg') center / cover no-repeat;
+  background-image: url('/static/Background.jpg');
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   opacity: .25;
   transform: translateZ(0);
   will-change: transform;
