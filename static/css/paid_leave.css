@@ -124,6 +124,12 @@ button:disabled { opacity: .6; cursor: not-allowed; }
   border: 1px solid var(--danger);
 }
 
+.btn-warning {
+  background: transparent;
+  color: var(--warning);
+  border: 1px solid var(--warning);
+}
+
 .btn-ghost {
   background: transparent;
   border: 1px solid var(--border);
