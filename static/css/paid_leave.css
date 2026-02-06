@@ -283,3 +283,56 @@ dialog input {
     border-spacing: 0;
   }
 }
+
+/* ================= FILTER BAR ================= */
+.filter-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+/* ================= TABS ================= */
+.tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+}
+
+.tab {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.tab.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ================= YEAR SELECT ================= */
+#yearFilter {
+  align-self: flex-start;
+  padding: 6px 12px;
+  font-size: 13px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--text);
+}
+
+/* ================= DESKTOP ================= */
+@media (min-width: 640px) {
+  .filter-bar {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
