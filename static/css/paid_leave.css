@@ -501,28 +501,35 @@ table {
   margin-top: 8px;
 }
 
-/* ===== ROW HEAT INDICATOR ===== */
+/* ===== FULL HEIGHT ROW INDICATOR ===== */
 tbody tr {
-  border-left: none;
+  position: relative;
 }
 
-tbody tr.waiting-approval td:first-child {
-  border-left: 4px solid var(--warning);
+tbody tr::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  bottom: 10px;
+  left: 0;
+  width: 4px;
+  border-radius: 4px;
+  background: transparent;
 }
 
-tbody tr.approved td:first-child {
-  border-left: 4px solid var(--success);
+/* status colors */
+tbody tr.waiting-approval::before {
+  background: var(--warning);
 }
 
-tbody tr.rejected td:first-child {
-  border-left: 4px solid var(--danger);
+tbody tr.approved::before {
+  background: var(--success);
 }
 
-tbody tr.canceled td:first-child {
-  border-left: 4px solid var(--muted);
+tbody tr.rejected::before {
+  background: var(--danger);
 }
 
-/* jarak isi supaya tidak nempel garis */
-tbody tr td:first-child {
-  padding-left: 10px;
+tbody tr.canceled::before {
+  background: var(--muted);
 }
