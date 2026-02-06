@@ -1,195 +1,285 @@
-    :root {
-      --primary: #2563eb;
-      --danger: #dc2626;
-      --success: #16a34a;
+:root {
+  --primary: #2563eb;
+  --danger: #dc2626;
+  --success: #16a34a;
+  --warning: #f59e0b;
 
-      --bg: #f5f6fa;
-      --card: #ffffff;
-      --text: #111827;
-      --muted: #6b7280;
-      --border: #e5e7eb;
-      --shadow: rgba(0,0,0,0.05);
-    }
+  --bg: #f4f6fb;
+  --card: #ffffff;
+  --text: #0f172a;
+  --muted: #6b7280;
+  --border: #e5e7eb;
 
-    body.dark-mode {
-      --bg: #0f172a;
-      --card: #111827;
-      --text: #e5e7eb;
-      --muted: #9ca3af;
-      --border: #1f2937;
-      --shadow: rgba(0,0,0,0.4);
-    }
+  --radius: 18px;
+  --radius-sm: 12px;
 
-    * { box-sizing: border-box; }
+  --shadow-sm: 0 4px 10px rgba(0,0,0,.05);
+  --shadow-md: 0 12px 30px rgba(0,0,0,.08);
+}
 
-    html, body {
-        margin: 0;
-        padding: 0;
-        height: 100%;
-    }
+body.dark-mode {
+  --bg: #0b1220;
+  --card: #0f172a;
+  --text: #e5e7eb;
+  --muted: #9ca3af;
+  --border: #1f2937;
+}
 
-/* BODY HANYA UNTUK KONTEN */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
 body {
+  min-height: 100vh;
   padding: 16px;
-  font-family: 'Segoe UI', sans-serif;
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
   color: var(--text);
   background: var(--bg);
   position: relative;
 }
 
-/* BACKGROUND DIKUNCI MATI */
+/* background image locked */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-image: url('/static/Background.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
+  background: url('/static/Background.jpg') center / cover no-repeat;
+  opacity: .25;
 }
 
-    h1 {
-      margin: 0;
-      font-size: 20px;
-    }
+/* ================= CARD ================= */
+.card {
+  max-width: 920px;
+  margin: 0 auto;
+  background: var(--card);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-md);
+  padding: 18px;
+}
 
-    /* === CARD === */
-    .card {
-      background: var(--card);
-      border-radius: 14px;
-      padding: 14px;
-      box-shadow: 0 10px 25px var(--shadow);
-    }
+/* ================= HEADER ================= */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
 
-    .header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-      gap: 8px;
-    }
+h1 {
+  font-size: 20px;
+  font-weight: 650;
+  margin: 0;
+}
 
-    .header-right {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
+.header-right button {
+  height: 40px;
+}
 
-    /* === BUTTONS === */
-    button {
-      border: none;
-      border-radius: 10px;
-      padding: 10px 14px;
-      font-size: 14px;
-      cursor: pointer;
-      transition: transform .05s ease, opacity .2s ease;
-      color: #fff;
-    }
+/* ================= BUTTON ================= */
+button {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s ease, transform .05s ease, opacity .15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
 
-    button:active { transform: scale(0.97); }
-    button:disabled { opacity: 0.6; cursor: not-allowed; }
+button:active { transform: scale(.97); }
+button:disabled { opacity: .6; cursor: not-allowed; }
 
-    .btn-primary { background: var(--primary); }
-    .btn-danger  { background: var(--danger); }
-    .btn-success { background: var(--success); }
+.btn-primary {
+  background: var(--primary);
+  color: #fff;
+}
 
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
+.btn-success {
+  background: var(--success);
+  color: #fff;
+}
 
-    /* === TABLE (MOBILE FIRST) === */
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 8px;
-    }
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid var(--danger);
+}
 
-    thead { display: none; }
+.btn-ghost {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
 
-    tr { border-bottom: 1px solid var(--border); }
+/* ================= TABLE ================= */
+table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0 12px;
+}
 
-    td {
-      padding: 10px 0;
-      display: block;
-      font-size: 14px;
-    }
+thead {
+  display: none;
+}
 
-    .label {
-      font-size: 12px;
-      color: var(--muted);
-      margin-bottom: 2px;
-    }
+tr {
+  background: transparent;
+}
 
-    .name {
-      font-weight: 600;
-    }
+tbody tr {
+  background: rgba(255,255,255,.55);
+}
 
-    .status {
-      font-weight: 600;
-    }
+body.dark-mode tbody tr {
+  background: rgba(15,23,42,.7);
+}
 
-    .WAITING-APPROVAL { color: #f59e0b; }
-    .APPROVED  { color: var(--success); }
-    .REJECTED { color: var(--danger); }
-    .CANCELED  { color: var(--muted); }
+td {
+  padding: 12px 14px;
+  display: block;
+  vertical-align: top;
+}
 
-    .actions {
-      display: flex;
-      gap: 8px;
-      flex-wrap: wrap;
-      margin-top: 6px;
-    }
+tbody tr td:first-child {
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
 
-    /* === DIALOG === */
-    dialog {
-      border: none;
-      border-radius: 16px;
-      padding: 18px;
-      width: 90%;
-      max-width: 320px;
-      background: var(--card);
-      color: var(--text);
-    }
+tbody tr td:last-child {
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
 
-    dialog::backdrop {
-      background: rgba(0,0,0,0.5);
-    }
+/* ================= TEXT ================= */
+.label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 4px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
 
-    dialog h3 {
-      margin: 0 0 12px 0;
-      font-size: 16px;
-    }
+.name {
+  font-weight: 600;
+  font-size: 15px;
+}
 
-    dialog input {
-      width: 100%;
-      padding: 10px;
-      font-size: 14px;
-      border-radius: 10px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text);
-      margin-bottom: 14px;
-    }
+/* ================= STATUS BADGE ================= */
+.status {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+}
 
-    .dialog-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 10px;
-    }
+.WAITING-APPROVAL {
+  background: rgba(245,158,11,.15);
+  color: var(--warning);
+}
 
-    .loading {
-      text-align: center;
-      padding: 12px;
-      font-size: 14px;
-      color: var(--muted);
-    }
+.APPROVED {
+  background: rgba(22,163,74,.15);
+  color: var(--success);
+}
 
-    @media (min-width: 640px) {
-      thead { display: table-header-group; }
-      td { display: table-cell; padding: 10px; }
-      .label { display: none; }
-      .actions { margin-top: 0; }
-    }
+.REJECTED {
+  background: rgba(220,38,38,.15);
+  color: var(--danger);
+}
+
+.CANCELED {
+  background: rgba(107,114,128,.15);
+  color: var(--muted);
+}
+
+/* ================= ACTION ================= */
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ================= LOADING ================= */
+.loading {
+  padding: 18px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ================= DIALOG ================= */
+dialog {
+  border: none;
+  border-radius: var(--radius);
+  padding: 18px;
+  width: 92%;
+  max-width: 360px;
+  background: var(--card);
+  color: var(--text);
+  box-shadow: var(--shadow-md);
+}
+
+dialog::backdrop {
+  background: rgba(0,0,0,.55);
+}
+
+dialog h3 {
+  margin: 0 0 14px 0;
+  font-size: 16px;
+}
+
+dialog input {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font-size: 14px;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+/* ================= DESKTOP ================= */
+@media (min-width: 640px) {
+  thead {
+    display: table-header-group;
+  }
+
+  tbody tr {
+    background: transparent;
+  }
+
+  tr {
+    border-bottom: 1px solid var(--border);
+  }
+
+  td {
+    display: table-cell;
+    padding: 12px;
+  }
+
+  .label {
+    display: none;
+  }
+
+  table {
+    border-spacing: 0;
+  }
+}
