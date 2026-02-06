@@ -41,6 +41,7 @@ body {
   color: var(--text);
   background: var(--bg);
   position: relative;
+  padding: 0;
 }
 
 /* background image locked */
@@ -449,6 +450,7 @@ tbody tr:not(:last-child)::after {
 .card {
   position: relative;
   padding-top: 0;
+  margin: 16px auto; 
 }
 
 /* Header (judul + request) */
