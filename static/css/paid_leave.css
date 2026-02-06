@@ -537,3 +537,8 @@ tbody tr.canceled::before {
 thead th:first-child {
   padding-left: 14px;
 }
+
+.indicator-col {
+  width: 12px;
+  padding: 0;
+  }
