@@ -454,7 +454,7 @@ function renderTable(data) {
   const timeMatch = dbDate.match(/(\d{2}):(\d{2})/);
   const timePart = timeMatch ? `, ${timeMatch[1]}:${timeMatch[2]}` : "";
 
-  return `${yyyy} ${monthName} ${dd}${timePart}`;
+  return `${dd} ${monthName} ${yyyy}${timePart}`;
   }
   
 loadData();
