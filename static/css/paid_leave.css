@@ -533,3 +533,7 @@ tbody tr.rejected::before {
 tbody tr.canceled::before {
   background: var(--muted);
 }
+
+thead th:first-child {
+  padding-left: 14px;
+}
