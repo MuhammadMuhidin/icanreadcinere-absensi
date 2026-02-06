@@ -296,7 +296,7 @@ dialog input {
 .tabs {
   display: flex;
   gap: 6px;
-  overflow-x: auto;
+  overflow-x: hidden;
 }
 
 .tab {
