@@ -182,45 +182,6 @@ document.getElementById("yearFilter").addEventListener("change", e => {
   ACTIVE_YEAR = e.target.value;
   applyFilter();
 });
-
-/* ======= status progres ====== */
-function renderProgress(status) {
-  const s = status.toLowerCase();
-
-  if (s === "waiting approval" || s === "waiting for approval") {
-    return `
-      <div class="progress-line">
-        <div class="progress-fill waiting"></div>
-      </div>
-    `;
-  }
-
-  if (s === "approved" || s === "finished") {
-    return `
-      <div class="progress-line">
-        <div class="progress-fill approved"></div>
-      </div>
-    `;
-  }
-
-  if (s === "rejected") {
-    return `
-      <div class="progress-line">
-        <div class="progress-fill rejected"></div>
-      </div>
-    `;
-  }
-
-  if (s === "canceled") {
-    return `
-      <div class="progress-line">
-        <div class="progress-fill canceled"></div>
-      </div>
-    `;
-  }
-
-  return "";
-}
   
 function submitLeave() {
   const btn = document.getElementById("submitBtn");
@@ -351,7 +312,6 @@ function renderTable(data) {
         <td>
           <div class="label">Status</div>
           <span class="status ${l.status.replace(/\s+/g, '-')}">${l.status}</span>
-          ${renderProgress(l.status)}
           ${
             l.status === "REJECTED" && l.reason
             ? `<div style="
