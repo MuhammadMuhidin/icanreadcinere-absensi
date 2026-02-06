@@ -259,17 +259,20 @@ function decision(id, action) {
 }
 
 function renderStepTimeline(status) {
+function renderStepTimeline(status) {
   const s = status.toLowerCase();
 
   let activeStep = 0;
   let finalClass = "step-active";
   let finalLabel = "Approved";
+  let isWaiting = false;
 
   // WAITING
   if (s.includes("waiting")) {
     activeStep = 1;
     finalClass = "step-active";
     finalLabel = "Approved";
+    isWaiting = true;
   }
 
   // APPROVED / FINISHED
@@ -296,10 +299,20 @@ function renderStepTimeline(status) {
   return `
     <div class="step-timeline">
       <div class="step-line">
-        <div class="step-dot ${activeStep >= 0 ? finalClass : ""}"></div>
-        <div class="step-bar ${activeStep >= 1 ? finalClass : ""}"></div>
+        <div class="step-dot ${finalClass}"></div>
+
+        <div class="step-bar ${
+          activeStep >= 1
+            ? isWaiting
+              ? "step-waiting"
+              : finalClass
+            : ""
+        }"></div>
+
         <div class="step-dot ${activeStep >= 1 ? finalClass : ""}"></div>
+
         <div class="step-bar ${activeStep >= 2 ? finalClass : ""}"></div>
+
         <div class="step-dot ${activeStep >= 2 ? finalClass : ""}"></div>
       </div>
 
@@ -310,7 +323,7 @@ function renderStepTimeline(status) {
       </div>
     </div>
   `;
-  }
+}
   
 function renderTable(data) {
   const tbody = document.getElementById("leaveTable");
