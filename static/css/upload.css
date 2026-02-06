@@ -41,7 +41,7 @@
 
     @media (max-width: 576px) {
       .upload-card {
-        margin: 20px 20px;
+        margin: 20px 12px;
       }
 
       .btn-upload {
