@@ -351,13 +351,6 @@ function renderTable(data) {
     if (l.status === "WAITING APPROVAL") {
   let buttons = [];
 
-  // Pemilik pengajuan (termasuk Hanny) → boleh cancel
-  if (l.name === NAME) {
-    buttons.push(
-      `<button class="btn-danger" onclick="cancelLeave(${l.id})">Cancel</button>`
-    );
-  }
-
   // EDIT (hanya pemilik request)
   if (l.name === NAME) {
     buttons.push(
@@ -365,6 +358,13 @@ function renderTable(data) {
         onclick="openEditDialog(${l.id}, '${l.leave_date}')">
         Edit
       </button>`
+    );
+  }
+
+  // Pemilik pengajuan (termasuk Hanny) → boleh cancel
+  if (l.name === NAME) {
+    buttons.push(
+      `<button class="btn-danger" onclick="cancelLeave(${l.id})">Cancel</button>`
     );
   }
 
