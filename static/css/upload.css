@@ -1,9 +1,15 @@
-    body {
-      background-color: #f8f9fa;
-      font-family: 'Segoe UI', sans-serif;
-      transition: background-color 0.3s, color 0.3s;
-    }
-
+body {
+    margin: 0;
+    padding: 1.25rem;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url('/static/Background.jpg');
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    color: #f0f4f8;
+    font-size: 1rem;
+    transition: background-color 0.3s, color 0.3s;
+}
     .upload-card {
       max-width: 500px;
       margin: 40px auto;
