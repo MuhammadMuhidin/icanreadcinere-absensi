@@ -364,3 +364,32 @@ tbody tr:not(:last-child)::after {
   border-bottom: 2px dashed var(--border);
   opacity: 0.8;
 }
+
+/* ===== MICRO TIMELINE (CSS ONLY) ===== */
+.status {
+  position: relative;
+  padding-left: 18px;
+}
+
+.status::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: currentColor;
+}
+
+.status::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: -6px;
+  width: 2px;
+  height: calc(100% + 12px);
+  background: currentColor;
+  opacity: 0.3;
+}
