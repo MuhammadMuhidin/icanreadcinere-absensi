@@ -448,6 +448,7 @@ tbody tr:not(:last-child)::after {
 
 .card {
   position: relative;
+  padding-top: 0;
 }
 
 /* Header (judul + request) */
@@ -457,6 +458,7 @@ tbody tr:not(:last-child)::after {
   z-index: 20;
   background: var(--card);
   padding-top: 8px;
+  margin-bottom: 0;
 }
 
 /* Filter bar tepat di bawah header */
