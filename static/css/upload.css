@@ -1,15 +1,21 @@
-body {
-    margin: 0;
-    padding: 1.25rem;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-image: url('/static/Background.jpg');
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    color: #f0f4f8;
-    font-size: 1rem;
-    transition: background-color 0.3s, color 0.3s;
-}
+    * {
+      box-sizing: border-box;
+      font-family: 'Segoe UI', sans-serif;
+    }
+
+    body {
+      margin: 0;
+      background: #f0f2f5;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 50vh;
+      background-image: url('/static/Background.jpg');
+      background-size: cover;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      transition: background-color 0.3s, color 0.3s;
+    }
     .upload-card {
       max-width: 500px;
       margin: 40px auto;
