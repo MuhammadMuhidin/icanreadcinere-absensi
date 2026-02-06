@@ -32,6 +32,7 @@ body.dark-mode {
 html, body {
   margin: 0;
   padding: 0;
+  overscroll-behavior: none;
 }
 
 body {
@@ -51,6 +52,9 @@ body::before {
   z-index: -1;
   background: url('/static/Background.jpg') center / cover no-repeat;
   opacity: .25;
+  transform: translateZ(0);
+  will-change: transform;
+  pointer-events: none;
 }
 
 /* ================= CARD ================= */
@@ -442,4 +446,35 @@ tbody tr:not(:last-child)::after {
   100% {
     left: 100%;
   }
+}
+
+/* ================= STICKY HEADER & FILTER ================= */
+
+.card {
+  position: relative;
+}
+
+/* Header (judul + request) */
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: var(--card);
+  padding-top: 8px;
+}
+
+/* Filter bar tepat di bawah header */
+.filter-bar {
+  position: sticky;
+  top: 56px; /* tinggi header */
+  z-index: 19;
+  background: var(--card);
+  padding: 8px 0 10px;
+  border-bottom: 1px solid var(--border);
+  backdrop-filter: blur(6px);
+}
+
+/* Supaya konten tidak ketutup */
+table {
+  margin-top: 8px;
 }
