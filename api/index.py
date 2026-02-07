@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, flash, session, Response
+from flask import Flask, render_template, request, redirect, jsonify, flash, session, Response
 from math import radians, cos, sin, sqrt, atan2
 from collections import defaultdict
 from supabase import create_client
@@ -549,10 +549,9 @@ def submit_leave():
     if not is_non_teacher(user_id):
         conflict = has_leave_conflict(sb, leave_date_raw)
         if conflict:
-            return (
-                f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}",
-                409,
-            )
+            return jsonify(
+                message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"
+            ), 409
         
     # Insert
     sb.table(T("paid_leave")).insert({
@@ -561,7 +560,7 @@ def submit_leave():
         "status": "WAITING APPROVAL"
     }).execute()
 
-    return "submitted", 201
+    return {"message": "submitted"}, 201
     
 @app.route("/leave/<int:leave_id>/cancel", methods=["PATCH"])
 def cancel_leave(leave_id):

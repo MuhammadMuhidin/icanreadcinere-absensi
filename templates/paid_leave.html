@@ -245,94 +245,53 @@ document.getElementById("yearFilter").addEventListener("change", e => {
 });
   
 function submitLeave() {
-  const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
-
-  if (!leaveDate) {
-    Swal.fire({
-      icon: "warning",
-      text: "Leave date is required"
-    });
-    return;
-  }
-
-  btn.disabled = true;
+  if (!leaveDate) return;
+  
   closeDialog();
   showLoader("Submitting leave…");
-  fetch("/leave", {
+
+  apiFetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: leaveDate })
   })
-  .then(async r => {
-    if (!r.ok) {
-      const msg = await r.text();
-      throw new Error(msg || "Failed to submit");
-    }
-  })
   .then(() => {
-    Swal.fire({
-      icon: "success",
-      title: "Submitted",
-      text: "Leave request has been sent",
-      timer: 1500,
-      showConfirmButton: false
-    });
-    loadData();
+    showLoader("Request submitted", "success");
+    closeDialog();
+    setTimeout(() => {
+      loadData(true); // silent reload
+    }, 400);
   })
   .catch(err => {
-    Swal.fire({
-      icon: "warning",
-      title: "Cannot submit",
-      text: err.message
-    });
+    showError(err.message); // ⬅️ Swal di sini
   })
   .finally(() => {
-    btn.disabled = false;
-    hideLoader();
+    hideLoader(600); // ⬅️ loader PASTI ditutup
   });
 }
 
 function submitEdit() {
   const newDate = document.getElementById("editLeaveDate").value;
-  const btn = document.getElementById("editSaveBtn");
-
   if (!newDate || !EDIT_LEAVE_ID) return;
 
-  btn.disabled = true;
   closeEditDialog();
   showLoader("Saving changes…");
-  fetch(`/leave/${EDIT_LEAVE_ID}`, {
+
+  apiFetch(`/leave/${EDIT_LEAVE_ID}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: newDate })
   })
-  .then(async r => {
-    if (!r.ok) {
-      const msg = await r.text();
-      throw new Error(msg || "Failed to edit");
-    }
-  })
   .then(() => {
-    Swal.fire({
-      icon: "success",
-      title: "Edited",
-      text: "Leave request has been edited",
-      timer: 1500,
-      showConfirmButton: false
-    });
-    loadData();
+    showLoader("Changes saved", "success");
+    setTimeout(() => loadData(true), 400);
   })
   .catch(err => {
-    Swal.fire({
-      icon: "warning",
-      title: "Cannot edit",
-      text: err.message
-    });
+    showError(err.message); // ⬅️ Swal error
   })
   .finally(() => {
-    btn.disabled = false;
-    hideLoader();
+    hideLoader(600);
   });
 }
 
@@ -345,53 +304,102 @@ function cancelLeave(id) {
     confirmButtonText: "Yes, cancel it",
     cancelButtonText: "Back",
     confirmButtonColor: "#dc2626"
-  }).then((result) => {
+  }).then(result => {
     if (!result.isConfirmed) return;
+
     showLoader("Canceling request…");
-    fetch(`/leave/${id}/cancel`, { method: "PATCH" })
+
+    apiFetch(`/leave/${id}/cancel`, { method: "PATCH" })
       .then(() => {
-        Swal.fire({
-          icon: "success",
-          title: "Canceled",
-          timer: 1200,
-          showConfirmButton: false
-        });
-        hideLoader();
-        loadData();
+        showLoader("Canceled", "success");
+        setTimeout(() => loadData(true), 400);
+      })
+      .catch(err => {
+        showError(err.message); // ⬅️ Swal error
+      })
+      .finally(() => {
+        hideLoader(600);
       });
   });
-  }
+}
 
 function decision(id, action) {
   const isApprove = action === "APPROVED";
 
-  Swal.fire({
-    title: isApprove ? "Approve this request?" : "Confirm Action",
-    text: isApprove
-      ? "This will approve the leave and deduct balance."
-      : "Are you sure?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: isApprove ? "Yes, approve it" : "Confirm",
-    cancelButtonText: "Back",
-    confirmButtonColor: "#16a34a"
-  }).then((result) => {
-    if (!result.isConfirmed) return;
-    showLoader(action === "APPROVED" ? "Approving…" : "Rejecting…");
-    fetch(`/leave/${id}/decision`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action })
-    }).then(() => {
-      Swal.fire({
-        icon: "success",
-        title: "Approved",
-        timer: 1200,
-        showConfirmButton: false
-      });
-      hideLoader();
-      loadData();
+  // 1️⃣ APPROVE → confirm dulu
+  if (isApprove) {
+    Swal.fire({
+      title: "Approve this request?",
+      text: "This will approve the leave and deduct balance.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Approve",
+      cancelButtonText: "Back",
+      confirmButtonColor: "#16a34a"
+    }).then(async result => {
+      if (!result.isConfirmed) return;
+
+      showLoader("Approving…");
+
+      try {
+        await apiFetch(`/leave/${id}/decision`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "APPROVED" })
+        });
+
+        showLoader("Approved", "success");
+        setTimeout(() => loadData(true), 400);
+      } catch (err) {
+        showError(err.message); // ⬅️ Swal error
+      } finally {
+        hideLoader(600);
+      }
     });
+
+    return;
+  }
+
+  // 2️⃣ REJECT → input reason
+  Swal.fire({
+    title: "Reject this request?",
+    input: "textarea",
+    inputLabel: "Reason",
+    inputPlaceholder: "Write the reason here…",
+    inputAttributes: { rows: 4 },
+    showCancelButton: true,
+    confirmButtonText: "Reject",
+    confirmButtonColor: "#dc2626",
+    cancelButtonText: "Back",
+    preConfirm: value => {
+      if (!value || !value.trim()) {
+        Swal.showValidationMessage("Reason is required");
+        return false;
+      }
+      return value.trim();
+    }
+  }).then(async result => {
+    if (!result.isConfirmed) return;
+
+    showLoader("Rejecting…");
+
+    try {
+      await apiFetch(`/leave/${id}/decision`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "REJECTED",
+          reason: result.value
+        })
+      });
+
+      showLoader("Rejected", "success");
+      setTimeout(() => loadData(true), 400);
+    } catch (err) {
+      showError(err.message); // ⬅️ Swal error
+    } finally {
+      hideLoader(700);
+    }
   });
 }
 
@@ -499,7 +507,7 @@ function renderTable(data) {
   // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
   if (ROLE === "manager") {
     buttons.push(
-      `<button class="btn-danger" onclick="rejectWithReason(${l.id})">Reject</button>`
+      `<button class="btn-danger" onclick="decision(${l.id}, 'REJECTED')">Reject</button>`
     );
     buttons.push(
       `<button class="btn-success" onclick="decision(${l.id}, 'APPROVED')">Approve</button>`
@@ -548,49 +556,6 @@ function renderTable(data) {
   });
 }
 
-  function rejectWithReason(id) {
-  Swal.fire({
-    title: "Reject this request?",
-    input: "textarea",
-    inputLabel: "what's the reason:",
-    inputPlaceholder: "Write the reason here...",
-    inputAttributes: {
-      rows: 4
-    },
-    showCancelButton: true,
-    confirmButtonText: "Yes, reject it",
-    confirmButtonColor: "#dc2626",
-    cancelButtonText: "Back",
-    preConfirm: (value) => {
-      if (!value || !value.trim()) {
-        Swal.showValidationMessage("Reason is required");
-        return false;
-      }
-      return value.trim();
-    }
-  }).then((result) => {
-    if (!result.isConfirmed) return;
-    showLoader("Rejecting process…");
-    fetch(`/leave/${id}/decision`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "REJECTED",
-        reason: result.value
-      })
-    }).then(() => {
-      Swal.fire({
-        icon: "success",
-        title: "Rejected",
-        timer: 1200,
-        showConfirmButton: false
-      });
-      hideLoader();
-      loadData();
-    });
-  });
-  }
-
   function formatDatePretty(dbDate) {
   if (!dbDate || typeof dbDate !== "string") return "-";
 
@@ -613,14 +578,45 @@ function renderTable(data) {
   return `${dd} ${monthName} ${yyyy}${timePart}`;
   }
 
-  function showLoader(text = "Processing…") {
+function showLoader(text, state = "default") {
   const el = document.getElementById("actionLoader");
+  el.dataset.state = state;
   document.getElementById("loaderText").textContent = text;
   el.classList.add("show");
+}
+
+function showError(message) {
+  hideLoader(); // ⬅️ WAJIB: loader ditutup dulu
+  Swal.fire({
+    icon: "error",
+    title: "Unable to proceed",
+    text: message,
+    confirmButtonText: "OK"
+  });
+}
+
+  function hideLoader(delay = 0) {
+  setTimeout(() => {
+    document.getElementById("actionLoader").classList.remove("show");
+  }, delay);
   }
 
-  function hideLoader() {
-  document.getElementById("actionLoader").classList.remove("show");
+  async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options);
+
+  if (res.ok) return res;
+
+  let msg = "Something went wrong";
+  const contentType = res.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
+    const data = await res.json();
+    msg = data.message || msg;
+  } else {
+    const text = await res.text();
+    if (text) msg = text;
+  }
+  throw new Error(msg);
   }
   
 loadData();
