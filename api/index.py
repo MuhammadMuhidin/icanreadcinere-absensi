@@ -691,9 +691,11 @@ def edit_leave(id):
         .execute()
 
     if dup.data:
+        row = dup.data[0]
         return (
-            f"{dup.data[0]['name']} already has a
-            {dup.data[0]['status']} leave request for that date", 409
+            f"{row['name']} already has a {row['status']}
+            leave request for that date",
+            409
         )
         
     # update hanya jika masih WAITING
