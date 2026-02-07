@@ -482,7 +482,7 @@ function submitEdit() {
   })
   .then(r => {
     if (!r.ok) throw new Error("Failed");
-    return r.json();
+    return r.text();
   })
   .then(() => {
     closeEditDialog();
@@ -498,6 +498,7 @@ function submitEdit() {
     loadData();
   })
   .catch(() => {
+    closeEditDialog();
     Swal.fire({
       icon: "error",
       title: "Failed",
