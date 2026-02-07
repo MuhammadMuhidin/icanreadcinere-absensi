@@ -197,18 +197,50 @@ document.getElementById("yearFilter").addEventListener("change", e => {
 function submitLeave() {
   const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
-  if (!leaveDate) return alert("Leave date is required");
-  
+
+  if (!leaveDate) {
+    Swal.fire({
+      icon: "warning",
+      text: "Leave date is required"
+    });
+    return;
+  }
+
   btn.disabled = true;
-  
+
   fetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: leaveDate })
-  }).then(() => {
-    btn.disabled = false;
+  })
+  .then(async r => {
+    if (!r.ok) {
+      const msg = await r.text();
+      throw new Error(msg || "Failed to submit");
+    }
+  })
+  .then(() => {
     closeDialog();
+
+    Swal.fire({
+      icon: "success",
+      title: "Submitted",
+      text: "Leave request has been sent",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
     loadData();
+  })
+  .catch(err => {
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot submit",
+      text: err.message
+    });
+  })
+  .finally(() => {
+    btn.disabled = false;
   });
 }
 
