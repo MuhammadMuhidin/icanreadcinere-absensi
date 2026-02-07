@@ -536,3 +536,66 @@ tbody tr td:first-child {
 .tab {
   transition: background .15s ease, color .15s ease;
 }
+
+.action-loader {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.25);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .25s ease;
+}
+
+.action-loader.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.loader-card {
+  background: var(--card);
+  border-radius: 20px;
+  padding: 22px 26px;
+  box-shadow: 0 20px 50px rgba(0,0,0,.18);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  animation: pop .35s ease;
+}
+
+@keyframes pop {
+  from { transform: scale(.92); opacity: 0 }
+  to   { transform: scale(1); opacity: 1 }
+}
+
+.loader-icon {
+  display: flex;
+  gap: 4px;
+}
+
+.loader-icon span {
+  width: 6px;
+  height: 18px;
+  background: var(--primary);
+  border-radius: 6px;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.loader-icon span:nth-child(2) { animation-delay: .15s }
+.loader-icon span:nth-child(3) { animation-delay: .3s }
+
+@keyframes pulse {
+  0%,100% { transform: scaleY(.4); opacity: .5 }
+  50%     { transform: scaleY(1); opacity: 1 }
+}
+
+.loader-text {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: .2px;
+}
