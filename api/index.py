@@ -516,12 +516,14 @@ def submit_leave():
         return "leave date too far in the future", 400
 
     # Cek duplikat (WAITING / APPROVED)
-    dup = sb.table(T("paid_leave")) \
-        .select("id, name, leave_date") \
-        .eq("leave_date", leave_date_raw) \
-        .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
-        .not_("name", "in", ["Hanny", "Dini", "Lintang"]) \
+    dup = (
+        sb.table(T("paid_leave"))
+        .select("id, name, leave_date")
+        .eq("leave_date", leave_date_raw)
+        .in_("status", ["WAITING APPROVAL", "APPROVED"])
+        .filter("name", "not.in", '("Hanny","Dini","Lintang")')
         .execute()
+    )
 
     if dup.data:
         row = dup.data[0]
@@ -686,13 +688,15 @@ def edit_leave(id):
     sb = get_supabase()
 
     # 🔑 cek duplikat GLOBAL (exclude record ini)
-    dup = sb.table(T("paid_leave")) \
-        .select("id, name, leave_date") \
-        .eq("leave_date", leave_date_raw) \
-        .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
-        .not_("name", "in", ["Hanny", "Dini", "Lintang"]) \
-        .neq("id", id) \
+    dup = (
+        sb.table(T("paid_leave"))
+        .select("id, name, leave_date")
+        .eq("leave_date", leave_date_raw)
+        .in_("status", ["WAITING APPROVAL", "APPROVED"])
+        .filter("name", "not.in", '("Hanny","Dini","Lintang")')
+        .neq("id", id)
         .execute()
+    )
 
     if dup.data:
         row = dup.data[0]
