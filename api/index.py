@@ -517,7 +517,7 @@ def submit_leave():
 
     # Cek duplikat (WAITING / APPROVED)
     dup = sb.table(T("paid_leave")) \
-        .select("id, name, status") \
+        .select("id, name, leave_date") \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
         .execute()
@@ -525,7 +525,7 @@ def submit_leave():
     if dup.data:
         row = dup.data[0]
         return (
-            f"Upss, {row['name']} already has a {row['status']} leave request for that date", 409
+            f"Oops! {row['name']} already has a leave request on {row['leave_date']}", 409
         )
         
     # Insert
@@ -686,7 +686,7 @@ def edit_leave(id):
 
     # 🔑 cek duplikat GLOBAL (exclude record ini)
     dup = sb.table(T("paid_leave")) \
-        .select("id, name, status") \
+        .select("id, name, leave_date") \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
         .neq("id", id) \
@@ -695,7 +695,7 @@ def edit_leave(id):
     if dup.data:
         row = dup.data[0]
         return (
-            f"Upss, {row['name']} already has a {row['status']} leave request for that date", 409
+            f"Oops! {row['name']} already has a leave request on {row['leave_date']}", 409
         )
         
     # update hanya jika masih WAITING
