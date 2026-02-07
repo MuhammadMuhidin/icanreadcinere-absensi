@@ -788,7 +788,7 @@ def check_missed_attendance():
 
     return {
         "show": True,
-        "message": "Sepertinya kemarin anda lupa absen"
+        "message": "It seems that you may have forgotten to complete your check-in or check-out yesterday."
     }
 # =====================
 # PATCH END
