@@ -481,8 +481,11 @@ function submitEdit() {
     body: JSON.stringify({ leave_date: newDate })
   })
   .then(r => {
-    if (!r.ok) throw new Error("Failed");
-    return r.text();
+    if (!r.ok) {
+      const err = new Error(msg || "Failed");
+      err.status = r.status;   // 🔑 SIMPAN STATUS
+      throw err;
+    }
   })
   .then(() => {
     closeEditDialog();
@@ -497,18 +500,26 @@ function submitEdit() {
     }, 50);
     loadData();
   })
-  .catch(() => {
+  .catch(err => {
     closeEditDialog();
-    Swal.fire({
-      icon: "error",
-      title: "Failed",
-      text: "Failed to update leave"
-    });
+    if (err.status === 409) {
+      Swal.fire({
+        icon: "warning",
+        title: "Date unavailable",
+        text: err.message
+      });
+    } else {
+      Swal.fire({
+        icon: "error",
+        title: "Failed",
+        text: err.message || "Failed to update leave"
+      });
+    }
   })
   .finally(() => {
     btn.disabled = false;
   });
-  }
+}
 
   function rejectWithReason(id) {
   Swal.fire({
