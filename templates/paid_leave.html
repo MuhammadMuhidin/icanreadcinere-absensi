@@ -588,10 +588,11 @@ function showLoader(text, state = "default") {
 function showError(message) {
   hideLoader(); // ⬅️ WAJIB: loader ditutup dulu
   Swal.fire({
-    icon: "error",
+    imageUrl: "/static/error.svg",
+    imageWidth: "100%",
+    imageHeight: "100%",
     title: "Unable to proceed",
-    text: message,
-    confirmButtonText: "OK"
+    text: message
   });
 }
 
