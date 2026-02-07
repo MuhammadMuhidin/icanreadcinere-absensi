@@ -675,33 +675,31 @@ def edit_leave(id):
 
     # validasi format tanggal
     try:
-        leave_date = isoparse(leave_date_raw).date()
+        isoparse(leave_date_raw)
     except Exception:
         return "invalid date format", 400
 
     sb = get_supabase()
 
-    # 🔑 CEK GLOBAL: siapa pun, asal bukan record ini
+    # 🔑 cek duplikat GLOBAL (exclude record ini)
     dup = sb.table(T("paid_leave")) \
-        .select("*") \
+        .select("id") \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
+        .neq("id", id) \
         .execute()
 
     if dup.data:
-        return (
-            "you or someone else has already submitted for that date, "
-            "contact your supervisor for more information",
-            409
-        )
+        return "you or someone else has already submitted for that date", 409
 
     # update hanya jika masih WAITING
-    sb.table(T("paid_leave")) \
-        .update({
-            "leave_date": leave_date_raw
-        }) \
+    res = sb.table(T("paid_leave")) \
+        .update({"leave_date": leave_date_raw}) \
         .eq("id", id) \
         .eq("status", "WAITING APPROVAL") \
         .execute()
+
+    if not res.data:
+        return "leave cannot be updated", 409
 
     return "ok", 200
