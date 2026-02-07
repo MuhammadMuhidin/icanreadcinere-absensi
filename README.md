@@ -13,3 +13,5 @@ This application aims to improve attendance accuracy, simplify HR administrative
 
 ## Purpose
 The system is built to support operational efficiency at *I Can Read* Cinere by reducing manual attendance handling and minimizing data inconsistencies.
+
+Made with ♥️
