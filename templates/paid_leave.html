@@ -300,6 +300,7 @@ function submitEdit() {
   if (!newDate || !EDIT_LEAVE_ID) return;
 
   btn.disabled = true;
+  closeEditDialog();
   showLoader("Saving changes…");
   fetch(`/leave/${EDIT_LEAVE_ID}`, {
     method: "PATCH",
@@ -320,7 +321,6 @@ function submitEdit() {
       timer: 1500,
       showConfirmButton: false
     });
-
     loadData();
   })
   .catch(err => {
