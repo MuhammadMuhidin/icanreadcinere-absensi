@@ -220,24 +220,30 @@ function submitLeave() {
     }
   })
   .then(() => {
+    // 1️⃣ tutup dialog dulu (WAJIB)
     closeDialog();
+    // 2️⃣ tunggu dialog benar-benar hilang (mobile safe)
     setTimeout(() => {
-    Swal.fire({
-      icon: "success",
-      title: "Submitted",
-      text: "Leave request has been sent",
-      timer: 1500,
-      showConfirmButton: false
-    });
-   }, 60);
+      Swal.fire({
+        icon: "success",
+        title: "Submitted",
+        text: "Leave request has been sent",
+        timer: 1500,
+        showConfirmButton: false
+      });
+    }, 80);
+
     loadData();
   })
   .catch(err => {
-    Swal.fire({
-      icon: "warning",
-      title: "Cannot submit",
-      text: err.message
-    });
+    // ❗ dialog BIARKAN terbuka saat error
+    setTimeout(() => {
+      Swal.fire({
+        icon: "warning",
+        title: "Cannot submit",
+        text: err.message
+      });
+    }, 0);
   })
   .finally(() => {
     btn.disabled = false;
