@@ -698,6 +698,7 @@ def wait_count_api():
 def edit_leave(id):
     data = request.json or {}
     leave_date_raw = data.get("leave_date")
+    user_id = session["userid"]
 
     if not leave_date_raw:
         return "leave_date required", 400
