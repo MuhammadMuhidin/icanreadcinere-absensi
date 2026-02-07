@@ -667,29 +667,42 @@ def wait_count_api():
 
 @app.route("/leave/<int:id>", methods=["PATCH"])
 def edit_leave(id):
-    data = request.json
-    leave_date = data.get("leave_date")
+    data = request.json or {}
+    leave_date_raw = data.get("leave_date")
+
+    if not leave_date_raw:
+        return "leave_date required", 400
+
+    # validasi format tanggal
+    try:
+        leave_date = isoparse(leave_date_raw).date()
+    except Exception:
+        return "invalid date format", 400
+
     sb = get_supabase()
 
-    if not leave_date:
-        return {"error": "leave_date required"}, 400
-
-        dup = sb.table(T("paid_leave")) \
+    # 🔑 CEK GLOBAL: siapa pun, asal bukan record ini
+    dup = sb.table(T("paid_leave")) \
         .select("id") \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
+        .neq("id", id) \
         .execute()
 
     if dup.data:
-        return "you or someone else has already submitted for that date,\
-        contact your supervisor for more information", 409
-        
+        return (
+            "you or someone else has already submitted for that date, "
+            "contact your supervisor for more information",
+            409
+        )
+
+    # update hanya jika masih WAITING
     sb.table(T("paid_leave")) \
         .update({
-            "leave_date": leave_date
+            "leave_date": leave_date_raw
         }) \
         .eq("id", id) \
         .eq("status", "WAITING APPROVAL") \
         .execute()
 
-    return {"success": True}, 200
+    return "", 200
