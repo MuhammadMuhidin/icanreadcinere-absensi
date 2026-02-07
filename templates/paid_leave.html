@@ -258,8 +258,8 @@ function submitLeave() {
   }
 
   btn.disabled = true;
+  closeDialog();
   showLoader("Submitting leave…");
-  
   fetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -272,7 +272,6 @@ function submitLeave() {
     }
   })
   .then(() => {
-    closeDialog();
     Swal.fire({
       icon: "success",
       title: "Submitted",
@@ -284,7 +283,6 @@ function submitLeave() {
     loadData();
   })
   .catch(err => {
-    closeDialog();
     Swal.fire({
       icon: "warning",
       title: "Cannot submit",
@@ -304,8 +302,8 @@ function submitEdit() {
   if (!newDate || !EDIT_LEAVE_ID) return;
 
   btn.disabled = true;
+  closeEditDialog();
   showLoader("Saving changes…");
-
   fetch(`/leave/${EDIT_LEAVE_ID}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
@@ -318,7 +316,6 @@ function submitEdit() {
     }
   })
   .then(() => {
-    closeEditDialog();
     Swal.fire({
       icon: "success",
       title: "Edited",
@@ -330,7 +327,6 @@ function submitEdit() {
     loadData();
   })
   .catch(err => {
-    closeEditDialog();
     Swal.fire({
       icon: "warning",
       title: "Cannot edit",
@@ -592,6 +588,7 @@ function renderTable(data) {
         timer: 1200,
         showConfirmButton: false
       });
+      hideLoader();
       loadData();
     });
   });
