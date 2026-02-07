@@ -33,9 +33,14 @@
   </select>
 </div>
   
-  <div id="loading" class="loading" style="display:none;">
-    Loading…
+<div id="actionLoader" class="action-loader">
+  <div class="loader-card">
+    <div class="loader-icon">
+      <span></span><span></span><span></span>
+    </div>
+    <div id="loaderText" class="loader-text">Processing</div>
   </div>
+</div>
 
   <table>
     <thead>
@@ -253,7 +258,8 @@ function submitLeave() {
   }
 
   btn.disabled = true;
-
+  showLoader("Submitting leave…");
+  
   fetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -287,6 +293,7 @@ function submitLeave() {
   })
   .finally(() => {
     btn.disabled = false;
+    hideLoader();
   });
 }
 
@@ -297,6 +304,7 @@ function submitEdit() {
   if (!newDate || !EDIT_LEAVE_ID) return;
 
   btn.disabled = true;
+  showLoader("Saving changes…");
 
   fetch(`/leave/${EDIT_LEAVE_ID}`, {
     method: "PATCH",
@@ -331,6 +339,7 @@ function submitEdit() {
   })
   .finally(() => {
     btn.disabled = false;
+    hideLoader();
   });
 }
 
@@ -345,7 +354,7 @@ function cancelLeave(id) {
     confirmButtonColor: "#dc2626"
   }).then((result) => {
     if (!result.isConfirmed) return;
-
+    showLoader("Canceling request…");
     fetch(`/leave/${id}/cancel`, { method: "PATCH" })
       .then(() => {
         Swal.fire({
@@ -354,6 +363,7 @@ function cancelLeave(id) {
           timer: 1200,
           showConfirmButton: false
         });
+        hideLoader();
         loadData();
       });
   });
@@ -374,7 +384,7 @@ function decision(id, action) {
     confirmButtonColor: "#16a34a"
   }).then((result) => {
     if (!result.isConfirmed) return;
-
+    showLoader(action === "APPROVED" ? "Approving…" : "Rejecting…");
     fetch(`/leave/${id}/decision`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -386,6 +396,7 @@ function decision(id, action) {
         timer: 1200,
         showConfirmButton: false
       });
+      hideLoader();
       loadData();
     });
   });
@@ -566,7 +577,7 @@ function renderTable(data) {
     }
   }).then((result) => {
     if (!result.isConfirmed) return;
-
+    showLoader("Rejecting process…");
     fetch(`/leave/${id}/decision`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -606,6 +617,16 @@ function renderTable(data) {
   const timePart = timeMatch ? `, ${timeMatch[1]}:${timeMatch[2]}` : "";
 
   return `${dd} ${monthName} ${yyyy}${timePart}`;
+  }
+
+  function showLoader(text = "Processing…") {
+  const el = document.getElementById("actionLoader");
+  document.getElementById("loaderText").textContent = text;
+  el.classList.add("show");
+  }
+
+  function hideLoader() {
+  document.getElementById("actionLoader").classList.remove("show");
   }
   
 loadData();
