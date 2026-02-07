@@ -248,50 +248,24 @@ function submitLeave() {
   const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
 
-  if (!leaveDate) {
-    Swal.fire({
-      icon: "warning",
-      text: "Leave date is required"
-    });
-    return;
-  }
-
-  btn.disabled = true;
-  closeDialog();
   showLoader("Submitting leave…");
-  fetch("/leave", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ leave_date: leaveDate })
+
+  apiFetch("/leave", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  body: JSON.stringify({ leave_date })
   })
-  .then(async r => {
-    if (!r.ok) {
-      const msg = await r.text();
-      throw new Error(msg || "Failed to submit");
-    }
-  })
-  .then(() => {
-    Swal.fire({
-      icon: "success",
-      title: "Submitted",
-      text: "Leave request has been sent",
-      timer: 1500,
-      showConfirmButton: false
+    .then(() => {
+  showLoader("Request submitted", "success");
+  closeDialog();
+  loadData();
+    })
+    .catch(err => {
+  showError(err.message);
+    })
+    .finally(() => {
+      // hideLoader dipanggil di showError / success
     });
-    loadData();
-  })
-  .catch(err => {
-    Swal.fire({
-      icon: "warning",
-      title: "Cannot submit",
-      text: err.message
-    });
-  })
-  .finally(() => {
-    btn.disabled = false;
-    hideLoader();
-  });
-}
 
 function submitEdit() {
   const newDate = document.getElementById("editLeaveDate").value;
@@ -613,14 +587,33 @@ function renderTable(data) {
   return `${dd} ${monthName} ${yyyy}${timePart}`;
   }
 
-  function showLoader(text = "Processing…") {
+function showLoader(text, state = "default") {
   const el = document.getElementById("actionLoader");
+  el.dataset.state = state;
   document.getElementById("loaderText").textContent = text;
   el.classList.add("show");
-  }
+}
+
+function showError(message) {
+  showLoader(message, "danger");
+  hideLoader(1800); // cukup lama buat kebaca
+}
 
   function hideLoader() {
   document.getElementById("actionLoader").classList.remove("show");
+  }
+
+  async function apiFetch(url, options = {}) {
+  const res = await fetch(url, options);
+  if (res.ok) return res;
+  let msg = "Something went wrong";
+  try {
+    const data = await res.json();
+    msg = data.message || msg;
+  } catch {
+    msg = await res.text() || msg;
+  }
+  throw new Error(msg);
   }
   
 loadData();
