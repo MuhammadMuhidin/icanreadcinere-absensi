@@ -273,44 +273,25 @@ function submitLeave() {
 
 function submitEdit() {
   const newDate = document.getElementById("editLeaveDate").value;
-  const btn = document.getElementById("editSaveBtn");
-
   if (!newDate || !EDIT_LEAVE_ID) return;
 
-  btn.disabled = true;
   closeEditDialog();
   showLoader("Saving changes…");
-  fetch(`/leave/${EDIT_LEAVE_ID}`, {
+
+  apiFetch(`/leave/${EDIT_LEAVE_ID}`, {
     method: "PATCH",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: newDate })
   })
-  .then(async r => {
-    if (!r.ok) {
-      const msg = await r.text();
-      throw new Error(msg || "Failed to edit");
-    }
-  })
   .then(() => {
-    Swal.fire({
-      icon: "success",
-      title: "Edited",
-      text: "Leave request has been edited",
-      timer: 1500,
-      showConfirmButton: false
-    });
-    loadData();
+    showLoader("Changes saved", "success");
+    setTimeout(() => loadData(true), 400);
   })
   .catch(err => {
-    Swal.fire({
-      icon: "warning",
-      title: "Cannot edit",
-      text: err.message
-    });
+    showError(err.message); // ⬅️ Swal error
   })
   .finally(() => {
-    btn.disabled = false;
-    hideLoader();
+    hideLoader(600);
   });
 }
 
