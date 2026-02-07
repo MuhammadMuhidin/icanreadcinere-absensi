@@ -221,7 +221,7 @@ function submitLeave() {
   })
   .then(() => {
     closeDialog();
-
+    setTimeout(() => {
     Swal.fire({
       icon: "success",
       title: "Submitted",
@@ -229,7 +229,7 @@ function submitLeave() {
       timer: 1500,
       showConfirmButton: false
     });
-
+   }, 60);
     loadData();
   })
   .catch(err => {
