@@ -789,8 +789,8 @@ def check_missed_attendance():
     return {
         "show": True,
         "message":(
-            "It seems that you may have forgotten to complete "
-            "your check-in or check-out yesterday."
+            "We detected that you did not complete your"
+            " check-in or check-out yesterday."
         )
     }
 # =====================
