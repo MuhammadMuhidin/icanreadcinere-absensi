@@ -259,16 +259,15 @@ function submitLeave() {
     showLoader("Request submitted", "success");
     closeDialog();
 
-    // delay dikit biar success kebaca
     setTimeout(() => {
       loadData(true); // silent reload
     }, 400);
   })
   .catch(err => {
-    showError(err.message);
+    showError(err.message); // ⬅️ Swal di sini
   })
   .finally(() => {
-    hideLoader(800); // ⬅️ INI KUNCI
+    hideLoader(600); // ⬅️ loader PASTI ditutup
   });
 }
 
@@ -600,8 +599,13 @@ function showLoader(text, state = "default") {
 }
 
 function showError(message) {
-  showLoader(message, "danger");
-  hideLoader(1800); // cukup lama buat kebaca
+  hideLoader(); // ⬅️ WAJIB: loader ditutup dulu
+  Swal.fire({
+    icon: "error",
+    title: "Action failed",
+    text: message,
+    confirmButtonText: "OK"
+  });
 }
 
   function hideLoader(delay = 0) {
@@ -616,7 +620,6 @@ function showError(message) {
   if (res.ok) return res;
 
   let msg = "Something went wrong";
-
   const contentType = res.headers.get("content-type") || "";
 
   if (contentType.includes("application/json")) {
@@ -626,7 +629,6 @@ function showError(message) {
     const text = await res.text();
     if (text) msg = text;
   }
-
   throw new Error(msg);
   }
   
