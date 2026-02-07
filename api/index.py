@@ -5,6 +5,8 @@ from supabase import create_client
 from datetime import datetime
 from io import StringIO
 import os, requests, csv, pytz, json, boto3
+from datetime import date
+from dateutil.parser import isoparse
 
 # =====================
 # Flask App
@@ -490,15 +492,38 @@ def submit_leave():
         return {"error": "unauthorized"}, 401
 
     data = request.json
-    leave_date = data.get("leave_date")
-
-    if not leave_date:
+    leave_date_raw = data.get("leave_date")
+    user_id = session["userid"]
+    today = date.today()
+    sb = get_supabase()
+        
+    #  Wajib ada
+    if not leave_date_raw:
         return {"error": "leave_date required"}, 400
 
-    sb = get_supabase()
+    #  Tidak boleh tanggal lampau
+    if leave_date < today:
+        return {"error":"leave date cannot be in the past"}, 400
+
+    # Batas maksimal (opsional, aman)
+    if (leave_date - today).days > 30:
+        return {"error":"leave date too far in the future"}, 400
+
+    # Cek duplikat (WAITING / APPROVED)
+    dup = sb.table(T("paid_leave")) \
+        .select("id") \
+        .eq("name", user_id) \
+        .eq("leave_date", leave_date_raw) \
+        .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
+        .execute()
+
+    if dup.data:
+        return {"error":"leave already exists for this date"}, 409
+
+    # Inseet
     sb.table(T("paid_leave")).insert({
         "name": session["userid"],
-        "leave_date": leave_date,
+        "leave_date": leave_date_raw,
         "status": "WAITING APPROVAL"
     }).execute()
 
