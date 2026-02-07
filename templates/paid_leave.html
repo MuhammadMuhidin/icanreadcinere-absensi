@@ -541,7 +541,15 @@ function renderTable(data) {
         action: "REJECTED",
         reason: result.value
       })
-    }).then(() => loadData());
+    }).then(() => {
+      Swal.fire({
+        icon: "success",
+        title: "Rejected",
+        timer: 1200,
+        showConfirmButton: false
+      });
+      loadData();
+    });
   });
   }
 
