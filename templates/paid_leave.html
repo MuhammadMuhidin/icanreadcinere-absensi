@@ -257,6 +257,50 @@ function submitLeave() {
   });
 }
 
+function submitEdit() {
+  const newDate = document.getElementById("editLeaveDate").value;
+  const btn = document.getElementById("editSaveBtn");
+
+  if (!newDate || !EDIT_LEAVE_ID) return;
+
+  btn.disabled = true;
+
+  fetch(`/leave/${EDIT_LEAVE_ID}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ leave_date: newDate })
+  })
+  .then(async r => {
+    if (!r.ok) {
+      const msg = await r.text();
+      throw new Error(msg || "Failed to edit");
+    }
+  })
+  .then(() => {
+    closeEditDialog();
+    Swal.fire({
+      icon: "success",
+      title: "Edited",
+      text: "Leave request has been edited",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    loadData();
+  })
+  .catch(err => {
+    closeEditDialog();
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot edit",
+      text: err.message
+    });
+  })
+  .finally(() => {
+    btn.disabled = false;
+  });
+}
+
 function cancelLeave(id) {
   Swal.fire({
     title: "Cancel this request?",
@@ -464,50 +508,6 @@ function renderTable(data) {
         </td>
       </tr>
     `;
-  });
-}
-
-function submitEdit() {
-  const newDate = document.getElementById("editLeaveDate").value;
-  const btn = document.getElementById("editSaveBtn");
-
-  if (!newDate || !EDIT_LEAVE_ID) return;
-
-  btn.disabled = true;
-
-  fetch(`/leave/${EDIT_LEAVE_ID}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ leave_date: newDate })
-  })
-  .then(async r => {
-    if (!r.ok) {
-      const msg = await r.text();
-      throw new Error(msg || "Failed to edit");
-    }
-  })
-  .then(() => {
-    closeDialog();
-    Swal.fire({
-      icon: "success",
-      title: "Edited",
-      text: "Leave request has been edited",
-      timer: 1500,
-      showConfirmButton: false
-    });
-
-    loadData();
-  })
-  .catch(err => {
-    closeDialog();
-    Swal.fire({
-      icon: "warning",
-      title: "Cannot edit",
-      text: err.message
-    });
-  })
-  .finally(() => {
-    btn.disabled = false;
   });
 }
 
