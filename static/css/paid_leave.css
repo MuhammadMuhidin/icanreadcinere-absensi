@@ -436,6 +436,10 @@ tbody tr:not(:last-child)::after {
 }
 
 /* ===== ACTIVE STATES ===== */
+.step-muted { 
+  background: var(--muted); 
+}
+
 .step-active {
   background: var(--primary);
 }
