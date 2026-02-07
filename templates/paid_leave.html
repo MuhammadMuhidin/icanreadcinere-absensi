@@ -604,8 +604,10 @@ function showError(message) {
   hideLoader(1800); // cukup lama buat kebaca
 }
 
-  function hideLoader() {
-  document.getElementById("actionLoader").classList.remove("show");
+  function hideLoader(delay = 0) {
+  setTimeout(() => {
+    document.getElementById("actionLoader").classList.remove("show");
+  }, delay);
   }
 
   async function apiFetch(url, options = {}) {
