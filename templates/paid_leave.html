@@ -180,6 +180,9 @@ function applyFilter() {
     filtered = filtered.filter(d => d.status === ACTIVE_STATUS);
   }
 
+  // update count berdasarkan tahun aktif
+  updateTabCounts(filtered);
+  
   if (ACTIVE_YEAR !== "ALL") {
     filtered = filtered.filter(d =>
       d.created_at &&
@@ -189,6 +192,31 @@ function applyFilter() {
 
   originalRenderTable(filtered);
 }
+
+/*===== COUNT STATUS =====*/
+  function updateTabCounts(data) {
+  const counts = {
+    ALL: data.length
+  };
+
+  data.forEach(d => {
+    counts[d.status] = (counts[d.status] || 0) + 1;
+  });
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    const status = tab.dataset.status;
+    const count = counts[status] || 0;
+
+    // ambil teks asli (tanpa count lama)
+    const baseLabel = tab.textContent.replace(/\s*\(\d+\)$/, "");
+
+    if (count >= 1) {
+      tab.textContent = `${baseLabel} (${count})`;
+    } else {
+      tab.textContent = baseLabel;
+    }
+  });
+  }
 
 /* ================= TAB CLICK ================= */
 document.querySelectorAll(".tab").forEach(tab => {
