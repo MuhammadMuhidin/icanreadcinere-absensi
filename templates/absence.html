@@ -413,14 +413,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (data.show) {
       Swal.fire({
         imageUrl: "/static/reminder.svg",
-        imageWidth: "100%",
-        imageHeight: "100%",
-        text: data.message,
-        confirmButtonText: "OK",
-        allowOutsideClick: false,
-        customClass: {
-          popup: 'my-swal-popup'
-        }
+        imageWidth: "50%",
+        imageHeight: "50%",
+        title: "Reminder",
+        text: data.message
       }).then(() => {
         // tandai sudah tampil hari ini
         localStorage.setItem(flagKey, "1");
