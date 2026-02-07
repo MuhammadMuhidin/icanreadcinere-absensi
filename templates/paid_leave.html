@@ -612,14 +612,21 @@ function showError(message) {
 
   async function apiFetch(url, options = {}) {
   const res = await fetch(url, options);
+
   if (res.ok) return res;
+
   let msg = "Something went wrong";
-  try {
+
+  const contentType = res.headers.get("content-type") || "";
+
+  if (contentType.includes("application/json")) {
     const data = await res.json();
     msg = data.message || msg;
-  } catch {
-    msg = await res.text() || msg;
+  } else {
+    const text = await res.text();
+    if (text) msg = text;
   }
+
   throw new Error(msg);
   }
   
