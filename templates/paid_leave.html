@@ -86,10 +86,23 @@ window.SESSION_NAME = "{{ SESSION_NAME }}";
 
 const NAME = window.SESSION_NAME;
 const ROLE = (NAME === "Hanny") ? "manager" : "employee";
+let EDIT_LEAVE_ID = null;
 
+function openEditDialog(id, currentDate) {
+  EDIT_LEAVE_ID = id;
+  document.getElementById("editLeaveDate").value = currentDate?.slice(0,10) || "";
+  document.getElementById("editLeaveDialog").showModal();
+}
+  
+function closeEditDialog() {
+  EDIT_LEAVE_ID = null;
+  document.getElementById("editLeaveDialog").close();
+}
+  
 function openDialog() {
   document.getElementById("leaveDialog").showModal();
 }
+  
 function closeDialog() {
   document.getElementById("leaveDialog").close();
 }
@@ -197,18 +210,94 @@ document.getElementById("yearFilter").addEventListener("change", e => {
 function submitLeave() {
   const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
-  if (!leaveDate) return alert("Leave date is required");
-  
+
+  if (!leaveDate) {
+    Swal.fire({
+      icon: "warning",
+      text: "Leave date is required"
+    });
+    return;
+  }
+
   btn.disabled = true;
-  
+
   fetch("/leave", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: leaveDate })
-  }).then(() => {
-    btn.disabled = false;
+  })
+  .then(async r => {
+    if (!r.ok) {
+      const msg = await r.text();
+      throw new Error(msg || "Failed to submit");
+    }
+  })
+  .then(() => {
     closeDialog();
+    Swal.fire({
+      icon: "success",
+      title: "Submitted",
+      text: "Leave request has been sent",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
     loadData();
+  })
+  .catch(err => {
+    closeDialog();
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot submit",
+      text: err.message
+    });
+  })
+  .finally(() => {
+    btn.disabled = false;
+  });
+}
+
+function submitEdit() {
+  const newDate = document.getElementById("editLeaveDate").value;
+  const btn = document.getElementById("editSaveBtn");
+
+  if (!newDate || !EDIT_LEAVE_ID) return;
+
+  btn.disabled = true;
+
+  fetch(`/leave/${EDIT_LEAVE_ID}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ leave_date: newDate })
+  })
+  .then(async r => {
+    if (!r.ok) {
+      const msg = await r.text();
+      throw new Error(msg || "Failed to edit");
+    }
+  })
+  .then(() => {
+    closeEditDialog();
+    Swal.fire({
+      icon: "success",
+      title: "Edited",
+      text: "Leave request has been edited",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    loadData();
+  })
+  .catch(err => {
+    closeEditDialog();
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot edit",
+      text: err.message
+    });
+  })
+  .finally(() => {
+    btn.disabled = false;
   });
 }
 
@@ -421,61 +510,6 @@ function renderTable(data) {
     `;
   });
 }
-
-  let EDIT_LEAVE_ID = null;
-
-function openEditDialog(id, currentDate) {
-  EDIT_LEAVE_ID = id;
-  document.getElementById("editLeaveDate").value = currentDate?.slice(0,10) || "";
-  document.getElementById("editLeaveDialog").showModal();
-}
-
-function closeEditDialog() {
-  EDIT_LEAVE_ID = null;
-  document.getElementById("editLeaveDialog").close();
-}
-
-  function submitEdit() {
-  const newDate = document.getElementById("editLeaveDate").value;
-  const btn = document.getElementById("editSaveBtn");
-
-  if (!newDate || !EDIT_LEAVE_ID) return;
-
-  btn.disabled = true;
-
-  fetch(`/leave/${EDIT_LEAVE_ID}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ leave_date: newDate })
-  })
-  .then(r => {
-    if (!r.ok) throw new Error("Failed");
-    return r.json();
-  })
-  .then(() => {
-    closeEditDialog();
-    setTimeout(() => {
-      Swal.fire({
-        icon: "success",
-        title: "Updated",
-        text: "Leave date has been updated",
-        timer: 1500,
-        showConfirmButton: false
-      });
-    }, 50);
-    loadData();
-  })
-  .catch(() => {
-    Swal.fire({
-      icon: "error",
-      title: "Failed",
-      text: "Failed to update leave"
-    });
-  })
-  .finally(() => {
-    btn.disabled = false;
-  });
-  }
 
   function rejectWithReason(id) {
   Swal.fire({

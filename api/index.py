@@ -5,6 +5,8 @@ from supabase import create_client
 from datetime import datetime
 from io import StringIO
 import os, requests, csv, pytz, json, boto3
+from datetime import date
+from dateutil.parser import isoparse
 
 # =====================
 # Flask App
@@ -490,19 +492,47 @@ def submit_leave():
         return {"error": "unauthorized"}, 401
 
     data = request.json
-    leave_date = data.get("leave_date")
-
-    if not leave_date:
-        return {"error": "leave_date required"}, 400
-
+    leave_date_raw = data.get("leave_date")
+    user_id = session["userid"]
+    today = date.today()
     sb = get_supabase()
+        
+    #  Wajib ada
+    if not leave_date_raw:
+        return "leave_date required", 400
+
+    #  Parse & validasi format
+    try:
+        leave_date = isoparse(leave_date_raw).date()
+    except Exception:
+        return "invalid date format", 400
+
+    #  Tidak boleh tanggal lampau
+    if leave_date < today:
+        return "leave date cannot be in the past", 400
+
+    # Batas maksimal (opsional, aman)
+    if (leave_date - today).days > 30:
+        return "leave date too far in the future", 400
+
+    # Cek duplikat (WAITING / APPROVED)
+    dup = sb.table(T("paid_leave")) \
+        .select("id") \
+        .eq("leave_date", leave_date_raw) \
+        .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
+        .execute()
+
+    if dup.data:
+        return "you or someone else has already submitted for that date", 409
+
+    # Inseet
     sb.table(T("paid_leave")).insert({
         "name": session["userid"],
-        "leave_date": leave_date,
+        "leave_date": leave_date_raw,
         "status": "WAITING APPROVAL"
     }).execute()
 
-    return {"message": "submitted"}, 201
+    return "submitted", 201
     
 @app.route("/leave/<int:leave_id>/cancel", methods=["PATCH"])
 def cancel_leave(leave_id):
@@ -637,19 +667,39 @@ def wait_count_api():
 
 @app.route("/leave/<int:id>", methods=["PATCH"])
 def edit_leave(id):
-    data = request.json
-    leave_date = data.get("leave_date")
+    data = request.json or {}
+    leave_date_raw = data.get("leave_date")
 
-    if not leave_date:
-        return {"error": "leave_date required"}, 400
+    if not leave_date_raw:
+        return "leave_date required", 400
+
+    # validasi format tanggal
+    try:
+        isoparse(leave_date_raw)
+    except Exception:
+        return "invalid date format", 400
 
     sb = get_supabase()
-    sb.table(T("paid_leave")) \
-        .update({
-            "leave_date": leave_date
-        }) \
+
+    # 🔑 cek duplikat GLOBAL (exclude record ini)
+    dup = sb.table(T("paid_leave")) \
+        .select("id") \
+        .eq("leave_date", leave_date_raw) \
+        .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
+        .neq("id", id) \
+        .execute()
+
+    if dup.data:
+        return "you or someone else has already submitted for that date", 409
+
+    # update hanya jika masih WAITING
+    res = sb.table(T("paid_leave")) \
+        .update({"leave_date": leave_date_raw}) \
         .eq("id", id) \
         .eq("status", "WAITING APPROVAL") \
         .execute()
 
-    return {"success": True}, 200
+    if not res.data:
+        return "leave cannot be updated", 409
+
+    return "ok", 200
