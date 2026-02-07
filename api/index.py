@@ -693,7 +693,7 @@ def edit_leave(id):
         .select("id, name, leave_date")
         .eq("leave_date", leave_date_raw)
         .in_("status", ["WAITING APPROVAL", "APPROVED"])
-        .not_.in_("name", "in", '("Hanny", "Dini", "Lintang")')
+        .not_.in_("name", '("Hanny", "Dini", "Lintang")')
         .neq("id", id)
         .execute()
     )
