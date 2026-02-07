@@ -159,10 +159,6 @@ renderTable = function(data) {
 /* ================= YEAR OPTIONS ================= */
 function populateYearFilter(data) {
   const select = document.getElementById("yearFilter");
-  if (!years.includes(Number(ACTIVE_YEAR))) {
-  ACTIVE_YEAR = "ALL";
-  }
-  
   if (select.options.length > 1) return;
 
   const years = [...new Set(
