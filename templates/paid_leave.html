@@ -86,10 +86,23 @@ window.SESSION_NAME = "{{ SESSION_NAME }}";
 
 const NAME = window.SESSION_NAME;
 const ROLE = (NAME === "Hanny") ? "manager" : "employee";
+let EDIT_LEAVE_ID = null;
 
+function openEditDialog(id, currentDate) {
+  EDIT_LEAVE_ID = id;
+  document.getElementById("editLeaveDate").value = currentDate?.slice(0,10) || "";
+  document.getElementById("editLeaveDialog").showModal();
+}
+  
+function closeEditDialog() {
+  EDIT_LEAVE_ID = null;
+  document.getElementById("editLeaveDialog").close();
+}
+  
 function openDialog() {
   document.getElementById("leaveDialog").showModal();
 }
+  
 function closeDialog() {
   document.getElementById("leaveDialog").close();
 }
@@ -452,19 +465,6 @@ function renderTable(data) {
       </tr>
     `;
   });
-}
-
-  let EDIT_LEAVE_ID = null;
-
-function openEditDialog(id, currentDate) {
-  EDIT_LEAVE_ID = id;
-  document.getElementById("editLeaveDate").value = currentDate?.slice(0,10) || "";
-  document.getElementById("editLeaveDialog").showModal();
-}
-
-function closeEditDialog() {
-  EDIT_LEAVE_ID = null;
-  document.getElementById("editLeaveDialog").close();
 }
 
 function submitEdit() {
