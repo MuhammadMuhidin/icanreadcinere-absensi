@@ -518,13 +518,12 @@ def submit_leave():
     # Cek duplikat (WAITING / APPROVED)
     dup = sb.table(T("paid_leave")) \
         .select("id") \
-        .eq("name", user_id) \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
         .execute()
 
     if dup.data:
-        return "leave already exists for this date", 409
+        return "you or someone else has already submitted for that date", 409
 
     # Inseet
     sb.table(T("paid_leave")).insert({
@@ -670,11 +669,21 @@ def wait_count_api():
 def edit_leave(id):
     data = request.json
     leave_date = data.get("leave_date")
+    sb = get_supabase()
 
     if not leave_date:
         return {"error": "leave_date required"}, 400
 
-    sb = get_supabase()
+        dup = sb.table(T("paid_leave")) \
+        .select("id") \
+        .eq("leave_date", leave_date_raw) \
+        .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
+        .execute()
+
+    if dup.data:
+        return "you or someone else has already submitted for that date,\
+        contact your supervisor for more information", 409
+        
     sb.table(T("paid_leave")) \
         .update({
             "leave_date": leave_date
