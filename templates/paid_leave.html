@@ -480,41 +480,31 @@ function submitEdit() {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ leave_date: newDate })
   })
-  .then(r => {
+  .then(async r => {
     if (!r.ok) {
-      const err = new Error(msg || "Failed");
-      err.status = r.status;   // 🔑 SIMPAN STATUS
-      throw err;
+      const msg = await r.text();
+      throw new Error(msg || "Failed to edit");
     }
   })
   .then(() => {
-    closeEditDialog();
-    setTimeout(() => {
-      Swal.fire({
-        icon: "success",
-        title: "Updated",
-        text: "Leave date has been updated",
-        timer: 1500,
-        showConfirmButton: false
-      });
-    }, 50);
+    closeDialog();
+    Swal.fire({
+      icon: "success",
+      title: "Edited",
+      text: "Leave request has been edited",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
     loadData();
   })
   .catch(err => {
-    closeEditDialog();
-    if (err.status === 409) {
-      Swal.fire({
-        icon: "warning",
-        title: "Date unavailable",
-        text: err.message
-      });
-    } else {
-      Swal.fire({
-        icon: "error",
-        title: "Failed",
-        text: err.message || "Failed to update leave"
-      });
-    }
+    closeDialog();
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot edit",
+      text: err.message
+    });
   })
   .finally(() => {
     btn.disabled = false;
