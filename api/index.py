@@ -525,7 +525,7 @@ def submit_leave():
     if dup.data:
         row = dup.data[0]
         return (
-            f"{row['name']} already has a {row['status']}leave request for that date", 409
+            f"Upss, {row['name']} already has a {row['status']} leave request for that date", 409
         )
         
     # Insert
@@ -695,7 +695,7 @@ def edit_leave(id):
     if dup.data:
         row = dup.data[0]
         return (
-            f"{row['name']} already has a {row['status']}leave request for that date", 409
+            f"Upss, {row['name']} already has a {row['status']} leave request for that date", 409
         )
         
     # update hanya jika masih WAITING
