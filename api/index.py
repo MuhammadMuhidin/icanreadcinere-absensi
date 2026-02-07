@@ -683,10 +683,9 @@ def edit_leave(id):
 
     # 🔑 CEK GLOBAL: siapa pun, asal bukan record ini
     dup = sb.table(T("paid_leave")) \
-        .select("id") \
+        .select("*") \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
-        .neq("id", id) \
         .execute()
 
     if dup.data:
@@ -705,4 +704,4 @@ def edit_leave(id):
         .eq("status", "WAITING APPROVAL") \
         .execute()
 
-    return "", 200
+    return "ok", 200
