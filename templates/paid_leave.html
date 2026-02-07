@@ -304,53 +304,102 @@ function cancelLeave(id) {
     confirmButtonText: "Yes, cancel it",
     cancelButtonText: "Back",
     confirmButtonColor: "#dc2626"
-  }).then((result) => {
+  }).then(result => {
     if (!result.isConfirmed) return;
+
     showLoader("Canceling request…");
-    fetch(`/leave/${id}/cancel`, { method: "PATCH" })
+
+    apiFetch(`/leave/${id}/cancel`, { method: "PATCH" })
       .then(() => {
-        Swal.fire({
-          icon: "success",
-          title: "Canceled",
-          timer: 1200,
-          showConfirmButton: false
-        });
-        hideLoader();
-        loadData();
+        showLoader("Canceled", "success");
+        setTimeout(() => loadData(true), 400);
+      })
+      .catch(err => {
+        showError(err.message); // ⬅️ Swal error
+      })
+      .finally(() => {
+        hideLoader(600);
       });
   });
-  }
+}
 
 function decision(id, action) {
   const isApprove = action === "APPROVED";
 
-  Swal.fire({
-    title: isApprove ? "Approve this request?" : "Confirm Action",
-    text: isApprove
-      ? "This will approve the leave and deduct balance."
-      : "Are you sure?",
-    icon: "question",
-    showCancelButton: true,
-    confirmButtonText: isApprove ? "Yes, approve it" : "Confirm",
-    cancelButtonText: "Back",
-    confirmButtonColor: "#16a34a"
-  }).then((result) => {
-    if (!result.isConfirmed) return;
-    showLoader(action === "APPROVED" ? "Approving…" : "Rejecting…");
-    fetch(`/leave/${id}/decision`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action })
-    }).then(() => {
-      Swal.fire({
-        icon: "success",
-        title: "Approved",
-        timer: 1200,
-        showConfirmButton: false
-      });
-      hideLoader();
-      loadData();
+  // 1️⃣ APPROVE → confirm dulu
+  if (isApprove) {
+    Swal.fire({
+      title: "Approve this request?",
+      text: "This will approve the leave and deduct balance.",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Approve",
+      cancelButtonText: "Back",
+      confirmButtonColor: "#16a34a"
+    }).then(async result => {
+      if (!result.isConfirmed) return;
+
+      showLoader("Approving…");
+
+      try {
+        await apiFetch(`/leave/${id}/decision`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "APPROVED" })
+        });
+
+        showLoader("Approved", "success");
+        setTimeout(() => loadData(true), 400);
+      } catch (err) {
+        showError(err.message); // ⬅️ Swal error
+      } finally {
+        hideLoader(600);
+      }
     });
+
+    return;
+  }
+
+  // 2️⃣ REJECT → input reason
+  Swal.fire({
+    title: "Reject this request?",
+    input: "textarea",
+    inputLabel: "Reason",
+    inputPlaceholder: "Write the reason here…",
+    inputAttributes: { rows: 4 },
+    showCancelButton: true,
+    confirmButtonText: "Reject",
+    confirmButtonColor: "#dc2626",
+    cancelButtonText: "Back",
+    preConfirm: value => {
+      if (!value || !value.trim()) {
+        Swal.showValidationMessage("Reason is required");
+        return false;
+      }
+      return value.trim();
+    }
+  }).then(async result => {
+    if (!result.isConfirmed) return;
+
+    showLoader("Rejecting…");
+
+    try {
+      await apiFetch(`/leave/${id}/decision`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "REJECTED",
+          reason: result.value
+        })
+      });
+
+      showLoader("Rejected", "success");
+      setTimeout(() => loadData(true), 400);
+    } catch (err) {
+      showError(err.message); // ⬅️ Swal error
+    } finally {
+      hideLoader(700);
+    }
   });
 }
 
@@ -458,7 +507,7 @@ function renderTable(data) {
   // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
   if (ROLE === "manager") {
     buttons.push(
-      `<button class="btn-danger" onclick="rejectWithReason(${l.id})">Reject</button>`
+      `<button class="btn-danger" onclick="decision(${l.id}, 'REJECTED')">Reject</button>`
     );
     buttons.push(
       `<button class="btn-success" onclick="decision(${l.id}, 'APPROVED')">Approve</button>`
@@ -506,49 +555,6 @@ function renderTable(data) {
     `;
   });
 }
-
-  function rejectWithReason(id) {
-  Swal.fire({
-    title: "Reject this request?",
-    input: "textarea",
-    inputLabel: "what's the reason:",
-    inputPlaceholder: "Write the reason here...",
-    inputAttributes: {
-      rows: 4
-    },
-    showCancelButton: true,
-    confirmButtonText: "Yes, reject it",
-    confirmButtonColor: "#dc2626",
-    cancelButtonText: "Back",
-    preConfirm: (value) => {
-      if (!value || !value.trim()) {
-        Swal.showValidationMessage("Reason is required");
-        return false;
-      }
-      return value.trim();
-    }
-  }).then((result) => {
-    if (!result.isConfirmed) return;
-    showLoader("Rejecting process…");
-    fetch(`/leave/${id}/decision`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "REJECTED",
-        reason: result.value
-      })
-    }).then(() => {
-      Swal.fire({
-        icon: "success",
-        title: "Rejected",
-        timer: 1200,
-        showConfirmButton: false
-      });
-      hideLoader();
-      loadData();
-    });
-  });
-  }
 
   function formatDatePretty(dbDate) {
   if (!dbDate || typeof dbDate !== "string") return "-";
