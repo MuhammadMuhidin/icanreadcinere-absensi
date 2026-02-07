@@ -66,6 +66,36 @@ def T(name: str) -> str:
     return f"{name}{DB_PREFIX}"
 
 # =====================
+# HELPER CONFLICT TABLE
+# =====================
+NON_TEACHERS = {"Hanny", "Dini", "Lintang"}
+
+def is_non_teacher(name: str) -> bool:
+    return name in NON_TEACHERS
+
+def non_teacher_sql_tuple() -> str:
+    return "(" + ",".join(f'"{n}"' for n in NON_TEACHERS) + ")"
+
+def has_leave_conflict(sb, leave_date_raw: str, exclude_id: int | None = None) -> dict | None:
+    """
+    Cek conflict antar TEACHER saja.
+    Non-teacher otomatis diabaikan.
+    """
+    q = (
+        sb.table(T("paid_leave"))
+        .select("id, name, leave_date")
+        .eq("leave_date", leave_date_raw)
+        .in_("status", ["WAITING APPROVAL", "APPROVED"])
+        .filter("name", "not.in", non_teacher_sql_tuple())
+    )
+
+    if exclude_id is not None:
+        q = q.neq("id", exclude_id)
+
+    res = q.execute()
+    return res.data[0] if res.data else None
+
+# =====================
 # SUPABASE (LAZY INIT)
 # =====================
 _sb = None
@@ -515,21 +545,14 @@ def submit_leave():
     if (leave_date - today).days > 30:
         return "leave date too far in the future", 400
 
-    # Cek duplikat (WAITING / APPROVED)
-    dup = (
-        sb.table(T("paid_leave"))
-        .select("id, name, leave_date")
-        .eq("leave_date", leave_date_raw)
-        .in_("status", ["WAITING APPROVAL", "APPROVED"])
-        .filter("name", "not.in", '("Hanny","Dini","Lintang")')
-        .execute()
-    )
-
-    if dup.data:
-        row = dup.data[0]
-        return (
-            f"Oops! {row['name']} already has a leave request on {row['leave_date']}", 409
-        )
+    # 🔑 conflict hanya untuk teacher
+    if not is_non_teacher(user_id):
+        conflict = has_leave_conflict(sb, leave_date_raw)
+        if conflict:
+            return (
+                f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}",
+                409,
+            )
         
     # Insert
     sb.table(T("paid_leave")).insert({
@@ -687,22 +710,14 @@ def edit_leave(id):
 
     sb = get_supabase()
 
-    # 🔑 cek duplikat GLOBAL (exclude record ini)
-    dup = (
-        sb.table(T("paid_leave"))
-        .select("id, name, leave_date")
-        .eq("leave_date", leave_date_raw)
-        .in_("status", ["WAITING APPROVAL", "APPROVED"])
-        .filter("name", "not.in", '("Hanny","Dini","Lintang")')
-        .neq("id", id)
-        .execute()
-    )
-
-    if dup.data:
-        row = dup.data[0]
-        return (
-            f"Oops! {row['name']} already has a leave request on {row['leave_date']}", 409
-        )
+    # 🔑 conflict hanya untuk teacher
+    if not is_non_teacher(user_id):
+        conflict = has_leave_conflict(sb, leave_date_raw, exclude_id=id)
+        if conflict:
+            return (
+                f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}",
+                409,
+            )
         
     # update hanya jika masih WAITING
     res = sb.table(T("paid_leave")) \
