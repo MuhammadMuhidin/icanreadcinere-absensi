@@ -194,7 +194,7 @@ document.getElementById("yearFilter").addEventListener("change", e => {
   applyFilter();
 });
   
-async function submitLeave() {
+function submitLeave() {
   const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
 
@@ -208,20 +208,19 @@ async function submitLeave() {
 
   btn.disabled = true;
 
-  try {
-    const r = await fetch("/leave", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ leave_date: leaveDate })
-    });
-
+  fetch("/leave", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ leave_date: leaveDate })
+  })
+  .then(async r => {
     if (!r.ok) {
       const msg = await r.text();
       throw new Error(msg || "Failed to submit");
     }
-
-    // ⬇️ INI KUNCI UTAMA
-    await closeDialogAndWait();
+  })
+  .then(() => {
+    closeDialog();
 
     Swal.fire({
       icon: "success",
@@ -232,16 +231,17 @@ async function submitLeave() {
     });
 
     loadData();
-
-  } catch (err) {
+  })
+  .catch(err => {
     Swal.fire({
       icon: "warning",
       title: "Cannot submit",
       text: err.message
     });
-  } finally {
+  })
+  .finally(() => {
     btn.disabled = false;
-  }
+  });
 }
 
 function cancelLeave(id) {
@@ -467,7 +467,7 @@ function closeEditDialog() {
   document.getElementById("editLeaveDialog").close();
 }
 
-  function submitEdit() {
+function submitEdit() {
   const newDate = document.getElementById("editLeaveDate").value;
   const btn = document.getElementById("editSaveBtn");
 
