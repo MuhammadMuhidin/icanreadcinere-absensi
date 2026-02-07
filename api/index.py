@@ -5,7 +5,7 @@ from supabase import create_client
 from datetime import datetime
 from io import StringIO
 import os, requests, csv, pytz, json, boto3
-from datetime import date
+from datetime import datetime, date, timedelta
 from dateutil.parser import isoparse
 
 # =====================
