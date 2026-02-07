@@ -174,21 +174,54 @@ function populateYearFilter(data) {
 
 /* ================= APPLY FILTER ================= */
 function applyFilter() {
-  let filtered = [...RAW_DATA];
-
-  if (ACTIVE_STATUS !== "ALL") {
-    filtered = filtered.filter(d => d.status === ACTIVE_STATUS);
-  }
+  // 1. filter berdasarkan tahun saja
+  let yearFiltered = [...RAW_DATA];
 
   if (ACTIVE_YEAR !== "ALL") {
-    filtered = filtered.filter(d =>
+    yearFiltered = yearFiltered.filter(d =>
       d.created_at &&
       new Date(d.created_at).getFullYear().toString() === ACTIVE_YEAR
     );
   }
 
-  originalRenderTable(filtered);
-}
+  // 2. update count tab (SELALU dari yearFiltered)
+  updateTabCounts(yearFiltered);
+
+  // 3. baru filter status untuk isi table
+  let tableData = [...yearFiltered];
+
+  if (ACTIVE_STATUS !== "ALL") {
+    tableData = tableData.filter(d => d.status === ACTIVE_STATUS);
+  }
+
+  // 4. render table
+  originalRenderTable(tableData);
+  }
+
+/*===== COUNT STATUS =====*/
+  function updateTabCounts(data) {
+  const counts = {
+    ALL: data.length
+  };
+
+  data.forEach(d => {
+    counts[d.status] = (counts[d.status] || 0) + 1;
+  });
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    const status = tab.dataset.status;
+    const count = counts[status] || 0;
+
+    // ambil teks asli (tanpa count lama)
+    const baseLabel = tab.textContent.replace(/\s*\(\d+\)$/, "");
+
+    if (count >= 1) {
+      tab.textContent = `${baseLabel} (${count})`;
+    } else {
+      tab.textContent = baseLabel;
+    }
+  });
+  }
 
 /* ================= TAB CLICK ================= */
 document.querySelectorAll(".tab").forEach(tab => {

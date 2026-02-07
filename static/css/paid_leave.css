@@ -532,3 +532,7 @@ tbody tr.canceled td:first-child {
 tbody tr td:first-child {
   padding-left: 10px;
 }
+
+.tab {
+  transition: background .15s ease, color .15s ease;
+}
