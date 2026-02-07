@@ -499,15 +499,21 @@ def submit_leave():
         
     #  Wajib ada
     if not leave_date_raw:
-        return {"error": "leave_date required"}, 400
+        return "leave_date required", 400
+
+    #  Parse & validasi format
+    try:
+        leave_date = isoparse(leave_date_raw).date()
+    except Exception:
+        return "invalid date format", 400
 
     #  Tidak boleh tanggal lampau
     if leave_date < today:
-        return {"error":"leave date cannot be in the past"}, 400
+        return "leave date cannot be in the past", 400
 
     # Batas maksimal (opsional, aman)
     if (leave_date - today).days > 30:
-        return {"error":"leave date too far in the future"}, 400
+        return "leave date too far in the future", 400
 
     # Cek duplikat (WAITING / APPROVED)
     dup = sb.table(T("paid_leave")) \
@@ -518,7 +524,7 @@ def submit_leave():
         .execute()
 
     if dup.data:
-        return {"error":"leave already exists for this date"}, 409
+        return "leave already exists for this date", 409
 
     # Inseet
     sb.table(T("paid_leave")).insert({
@@ -527,7 +533,7 @@ def submit_leave():
         "status": "WAITING APPROVAL"
     }).execute()
 
-    return {"message": "submitted"}, 201
+    return "submitted", 201
     
 @app.route("/leave/<int:leave_id>/cancel", methods=["PATCH"])
 def cancel_leave(leave_id):
