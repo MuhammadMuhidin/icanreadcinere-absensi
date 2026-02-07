@@ -412,8 +412,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (data.show) {
       Swal.fire({
-        icon: "warning",
-        title: "⚠️ Reminder",
+        imageUrl: "/static/reminder.svg",
+        imageWidth: "100%",
+        imageHeight: "100%",
         text: data.message,
         confirmButtonText: "OK",
         allowOutsideClick: false,
