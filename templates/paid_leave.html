@@ -247,7 +247,8 @@ document.getElementById("yearFilter").addEventListener("change", e => {
 function submitLeave() {
   const leaveDate = document.getElementById("leaveDate").value;
   if (!leaveDate) return;
-
+  
+  closeDialog();
   showLoader("Submitting leave…");
 
   apiFetch("/leave", {
@@ -258,7 +259,6 @@ function submitLeave() {
   .then(() => {
     showLoader("Request submitted", "success");
     closeDialog();
-
     setTimeout(() => {
       loadData(true); // silent reload
     }, 400);
