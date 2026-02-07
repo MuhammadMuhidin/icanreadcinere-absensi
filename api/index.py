@@ -517,15 +517,18 @@ def submit_leave():
 
     # Cek duplikat (WAITING / APPROVED)
     dup = sb.table(T("paid_leave")) \
-        .select("id") \
+        .select("id, name, leave_date") \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
         .execute()
 
     if dup.data:
-        return "you or someone else has already submitted for that date", 409
-
-    # Inseet
+        row = dup.data[0]
+        return (
+            f"Oops! {row['name']} already has a leave request on {row['leave_date']}", 409
+        )
+        
+    # Insert
     sb.table(T("paid_leave")).insert({
         "name": session["userid"],
         "leave_date": leave_date_raw,
@@ -644,7 +647,7 @@ def decision_leave(leave_id):
         if phone:
             send_wa(
                 phone,
-                f"Hi, your request for leave on {leave_date} was rejected with Reason: {reason}"
+                f"Hi, your request for leave on {leave_date} was rejected with reason: {reason}"
             )
 
     return {"message": action}
@@ -683,15 +686,18 @@ def edit_leave(id):
 
     # 🔑 cek duplikat GLOBAL (exclude record ini)
     dup = sb.table(T("paid_leave")) \
-        .select("id") \
+        .select("id, name, leave_date") \
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
         .neq("id", id) \
         .execute()
 
     if dup.data:
-        return "you or someone else has already submitted for that date", 409
-
+        row = dup.data[0]
+        return (
+            f"Oops! {row['name']} already has a leave request on {row['leave_date']}", 409
+        )
+        
     # update hanya jika masih WAITING
     res = sb.table(T("paid_leave")) \
         .update({"leave_date": leave_date_raw}) \
