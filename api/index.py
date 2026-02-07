@@ -523,9 +523,14 @@ def submit_leave():
         .execute()
 
     if dup.data:
-        return f"{dup.data[0]} already has a {dup.data[1]} leave request for that date", 409
-
-    # Inseet
+        row = dup.data[0]
+        return (
+            f"{row['name']} already has a {row['status']}
+            leave request for that date",
+            409
+        )
+        
+    # Insert
     sb.table(T("paid_leave")).insert({
         "name": session["userid"],
         "leave_date": leave_date_raw,
@@ -687,7 +692,6 @@ def edit_leave(id):
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
         .neq("id", id) \
-        .limit(1) \
         .execute()
 
     if dup.data:
