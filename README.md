@@ -1,6 +1,6 @@
-# icanreadcinere-absensi
+# icanreadcinere
 
-**icanreadcinere-absensi** is an internal attendance management system developed for *I Can Read* Cinere branch.  
+this is an internal attendance management system developed for *I Can Read* Cinere branch.  
 The system is designed to record employee check-in and check-out activities and to manage leave requests in a centralized and structured manner.
 
 This application aims to improve attendance accuracy, simplify HR administrative processes, and provide clear, trackable attendance data for daily operations and reporting purposes.
