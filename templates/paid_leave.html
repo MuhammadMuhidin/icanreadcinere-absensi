@@ -462,24 +462,11 @@ function openEditDialog(id, currentDate) {
   document.getElementById("editLeaveDialog").showModal();
 }
 
-function closeDialogAndWait() {
-  return new Promise(resolve => {
-    const dialog = document.getElementById("leaveDialog");
-
-    if (!dialog.open) {
-      resolve();
-      return;
-    }
-
-    dialog.addEventListener("close", () => {
-      // tunggu 1 frame setelah dialog benar-benar hilang
-      requestAnimationFrame(() => resolve());
-    }, { once: true });
-
-    dialog.close();
-  });
+function closeEditDialog() {
+  EDIT_LEAVE_ID = null;
+  document.getElementById("editLeaveDialog").close();
 }
-  
+
   function submitEdit() {
   const newDate = document.getElementById("editLeaveDate").value;
   const btn = document.getElementById("editSaveBtn");
