@@ -234,7 +234,6 @@ function submitLeave() {
   })
   .then(() => {
     closeDialog();
-
     Swal.fire({
       icon: "success",
       title: "Submitted",
@@ -246,6 +245,7 @@ function submitLeave() {
     loadData();
   })
   .catch(err => {
+    closeDialog();
     Swal.fire({
       icon: "warning",
       title: "Cannot submit",
