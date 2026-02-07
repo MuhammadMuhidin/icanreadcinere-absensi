@@ -521,7 +521,7 @@ def submit_leave():
         .select("id, name, leave_date")
         .eq("leave_date", leave_date_raw)
         .in_("status", ["WAITING APPROVAL", "APPROVED"])
-        .not_.in_("name", "in", '("Hanny", "Dini", "Lintang")')
+        .filter("name", "not.in", '("Hanny","Dini","Lintang")')
         .execute()
     )
 
