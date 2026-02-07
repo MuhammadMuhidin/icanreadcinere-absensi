@@ -523,7 +523,7 @@ def submit_leave():
         .execute()
 
     if dup.data:
-        return f"{row['name']} already has a {row['status']} leave request for that date", 409
+        return f"{dup.data[0]} already has a {dup.data[1]} leave request for that date", 409
 
     # Inseet
     sb.table(T("paid_leave")).insert({
@@ -644,7 +644,7 @@ def decision_leave(leave_id):
         if phone:
             send_wa(
                 phone,
-                f"Hi, your request for leave on {leave_date} was rejected with Reason: {reason}"
+                f"Hi, your request for leave on {leave_date} was rejected with reason: {reason}"
             )
 
     return {"message": action}
@@ -687,11 +687,15 @@ def edit_leave(id):
         .eq("leave_date", leave_date_raw) \
         .in_("status", ["WAITING APPROVAL", "APPROVED"]) \
         .neq("id", id) \
+        .limit(1) \
         .execute()
 
     if dup.data:
-        return f"{row['name']} already has a {row['status']} leave request for that date", 409
-
+        return (
+            f"{dup.data[0]['name']} already has a
+            {dup.data[0]['status']} leave request for that date", 409
+        )
+        
     # update hanya jika masih WAITING
     res = sb.table(T("paid_leave")) \
         .update({"leave_date": leave_date_raw}) \
