@@ -194,7 +194,7 @@ document.getElementById("yearFilter").addEventListener("change", e => {
   applyFilter();
 });
   
-function submitLeave() {
+async function submitLeave() {
   const btn = document.getElementById("submitBtn");
   const leaveDate = document.getElementById("leaveDate").value;
 
@@ -208,46 +208,40 @@ function submitLeave() {
 
   btn.disabled = true;
 
-  fetch("/leave", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ leave_date: leaveDate })
-  })
-  .then(async r => {
+  try {
+    const r = await fetch("/leave", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ leave_date: leaveDate })
+    });
+
     if (!r.ok) {
       const msg = await r.text();
       throw new Error(msg || "Failed to submit");
     }
-  })
-  .then(() => {
-    // 1️⃣ tutup dialog dulu (WAJIB)
-    closeDialog();
-    // 2️⃣ tunggu dialog benar-benar hilang (mobile safe)
-    setTimeout(() => {
-      Swal.fire({
-        icon: "success",
-        title: "Submitted",
-        text: "Leave request has been sent",
-        timer: 1500,
-        showConfirmButton: false
-      });
-    }, 80);
+
+    // ⬇️ INI KUNCI UTAMA
+    await closeDialogAndWait();
+
+    Swal.fire({
+      icon: "success",
+      title: "Submitted",
+      text: "Leave request has been sent",
+      timer: 1500,
+      showConfirmButton: false
+    });
 
     loadData();
-  })
-  .catch(err => {
-    // ❗ dialog BIARKAN terbuka saat error
-    setTimeout(() => {
-      Swal.fire({
-        icon: "warning",
-        title: "Cannot submit",
-        text: err.message
-      });
-    }, 0);
-  })
-  .finally(() => {
+
+  } catch (err) {
+    Swal.fire({
+      icon: "warning",
+      title: "Cannot submit",
+      text: err.message
+    });
+  } finally {
     btn.disabled = false;
-  });
+  }
 }
 
 function cancelLeave(id) {
@@ -468,11 +462,24 @@ function openEditDialog(id, currentDate) {
   document.getElementById("editLeaveDialog").showModal();
 }
 
-function closeEditDialog() {
-  EDIT_LEAVE_ID = null;
-  document.getElementById("editLeaveDialog").close();
-}
+function closeDialogAndWait() {
+  return new Promise(resolve => {
+    const dialog = document.getElementById("leaveDialog");
 
+    if (!dialog.open) {
+      resolve();
+      return;
+    }
+
+    dialog.addEventListener("close", () => {
+      // tunggu 1 frame setelah dialog benar-benar hilang
+      requestAnimationFrame(() => resolve());
+    }, { once: true });
+
+    dialog.close();
+  });
+}
+  
   function submitEdit() {
   const newDate = document.getElementById("editLeaveDate").value;
   const btn = document.getElementById("editSaveBtn");
