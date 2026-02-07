@@ -253,7 +253,7 @@ function submitLeave() {
   apiFetch("/leave", {
   method: "POST",
   headers: { "Content-Type": "application/json" },
-  body: JSON.stringify({ leave_date })
+  body: JSON.stringify({ leaveDate })
   })
     .then(() => {
   showLoader("Request submitted", "success");
