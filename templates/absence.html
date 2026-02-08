@@ -180,27 +180,25 @@ function showError(message) {
 </script>
 
 {% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  if (typeof hideLoader === "function") hideLoader(100);
-
-  const category = "{{ messages[0][0] }}";
-  const message  = {{ messages[0][1] | tojson }};
-
-  Swal.fire({
-    title: category === "error" ? "Unable to proceed" : "Success",
-    text: message,
-    imageUrl: category === "error"
-      ? "/static/error.svg"
-      : "/static/success.svg",
-    imageWidth: "80%",
-    imageHeight: "80%",
-    allowOutsideClick: false
-  });
-});
-</script>
-{% endif %}
+  {% if messages %}
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        {% for category, message in messages %}
+          Swal.fire({
+            title: "{{ 'Unable to proceed' if category == 'error' else 'Success' }}",
+            text: "{{ message }}",
+            imageUrl: "{{ '/static/error.svg' if category == 'error' else '/static/success.svg' }}",
+            imageWidth: 140,
+            imageHeight: 140,
+            confirmButtonText: "OK",
+            customClass: {
+              popup: "my-swal-popup"
+            }
+          });
+        {% endfor %}
+      });
+    </script>
+  {% endif %}
 {% endwith %}
         
   <script>
