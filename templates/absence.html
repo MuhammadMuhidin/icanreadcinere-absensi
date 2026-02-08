@@ -167,6 +167,16 @@ function hideLoader(delay = 0) {
     document.getElementById("actionLoader").classList.remove("show");
   }, delay);
 }
+function showError(message) {
+  hideLoader(); // ⬅️ WAJIB: loader ditutup dulu
+  Swal.fire({
+    imageUrl: "/static/error.svg",
+    imageWidth: "100%",
+    imageHeight: "100%",
+    title: "Unable to proceed",
+    text: message
+  });
+}
 </script>
 
 <script>
@@ -260,8 +270,19 @@ function hideLoader(delay = 0) {
               navigator.geolocation.clearWatch(watchId); // hentikan watch
             }
         }, function(err) {
-          hideLoader();
-          Swal.fire("❌ Failed get your location!", err.message, "error");
+          let message = "Failed to get your location.";
+        switch (err.code) {
+        case err.PERMISSION_DENIED:
+          message = "Location permission was denied.";
+          break;
+        case err.POSITION_UNAVAILABLE:
+          message = "Location information is unavailable.";
+          break;
+        case err.TIMEOUT:
+          message = "Location request timed out. Please try again.";
+          break;
+        }
+          showError(err);
         },
         {
         enableHighAccuracy: true, // Pakai GPS + Wi-Fi untuk akurasi tinggi
@@ -269,8 +290,7 @@ function hideLoader(delay = 0) {
         maximumAge: 0             // Jangan pakai cache koordinat lama
       });
       } else {
-        hideLoader();
-        Swal.fire("❌ Error", "Browser not supported GPS.", "error");
+        showError(err);
       }
     });
   }
