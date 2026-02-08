@@ -259,8 +259,8 @@ document.addEventListener("DOMContentLoaded", () => {
               document.getElementById("aksi").value = aksiValue;
               showLoader(
                 aksiValue === "Check In"
-                ? "✅ Data verified. Your check-in is being recorded…"
-                : "✅ Data verified. Your check-out is being recorded…"
+                ? "🤖 now, duncan is sending check-in data to server… please wait"
+                : "🤖 now, duncan is sending check-out data to server… please wait"
               );
               sessionStorage.setItem("lastAttendanceAction", aksiValue);
               document.forms[0].submit();
@@ -469,12 +469,12 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   if (targetCell) {
-    targetCell.classList.add("pulse");
+    targetCell.classList.add("flash-pop");
 
     // bersihkan setelah animasi
     setTimeout(() => {
-      targetCell.classList.remove("pulse");
-    }, 1700);
+      targetCell.classList.remove("flash-pop");
+    }, 2000);
   }
 
   // hapus flag supaya hanya sekali
