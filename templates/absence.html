@@ -282,7 +282,7 @@ function showError(message) {
           message = "Location request timed out. Please try again.";
           break;
         }
-          showError(err);
+          showError(message);
         },
         {
         enableHighAccuracy: true, // Pakai GPS + Wi-Fi untuk akurasi tinggi
