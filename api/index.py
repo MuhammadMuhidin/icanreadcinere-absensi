@@ -741,12 +741,16 @@ def check_missed_attendance():
 
     user = session["userid"]
     last_date, checkin, checkout = get_latest_absen_for_user(user)
+    today = datetime.now(TZ).strftime("%Y-%m-%d")
 
     if not last_date:
         return {
             "show": True,
             "message": "You have not completed your attendance yet."
         }
+
+    if last_date == today and checkin and not checkout:
+        return {"show": False}
 
     if checkin and checkout:
         return {"show": False}
