@@ -59,35 +59,6 @@ R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
 TZ = pytz.timezone("Asia/Jakarta")
 
 # =====================
-# PATCH START: MISSED ATTENDANCE CHECK
-# =====================
-def get_attendance_by_date(username, target_date: date):
-    sb = get_supabase()
-    res = (
-        sb.table(T("log_absen"))
-        .select("aksi, waktu")
-        .eq("nama", username)
-        .eq("tanggal", target_date.strftime("%Y-%m-%d"))
-        .execute()
-    )
-
-    checkin = checkout = None
-    for r in res.data or []:
-        if r["aksi"].lower() == "check in":
-            checkin = r["waktu"]
-        elif r["aksi"].lower() == "check out":
-            checkout = r["waktu"]
-
-    return checkin, checkout
-
-
-def is_incomplete_attendance(checkin, checkout):
-    return (checkin and not checkout) or (checkout and not checkin)
-# =====================
-# PATCH END
-# =====================
-
-# =====================
 # HELPER PREFIX TABLE
 # =====================
 DB_PREFIX = os.getenv("DB_PREFIX", "")
@@ -766,33 +737,30 @@ def edit_leave(id):
 @app.route("/api/check-missed-attendance")
 def check_missed_attendance():
     if "userid" not in session:
-        return {"show": False}, 401
+        return {"show": False}
 
     user = session["userid"]
-    today = datetime.now(TZ).date()
-    yesterday = today - timedelta(days=1)
+    last_date, checkin, checkout = get_latest_absen_for_user(user)
 
-    # ambil data kemarin
-    y_checkin, y_checkout = get_attendance_by_date(user, yesterday)
+    if not last_date:
+        return {
+            "show": True,
+            "message": "You have not completed your attendance yet."
+        }
 
-    # jika kemarin tidak incomplete → stop
-    if not is_incomplete_attendance(y_checkin, y_checkout):
+    if checkin and checkout:
         return {"show": False}
 
-    # ambil data hari ini
-    t_checkin, t_checkout = get_attendance_by_date(user, today)
-
-    # jika hari ini sudah ada aktivitas → stop & auto reset
-    if t_checkin or t_checkout:
-        return {"show": False}
+    missing = []
+    if not checkin:
+        missing.append("Check In")
+    if not checkout:
+        missing.append("Check Out")
 
     return {
         "show": True,
-        "message":(
-            "We detected that you did not complete your"
-            " check-in or check-out yesterday."
+        "message": (
+            f"We noticed that your most recent attendance on {last_date} is incomplete. "
+            f"You’re missing: {', '.join(missing)}. Don’t forget to check in or check out."
         )
     }
-# =====================
-# PATCH END
-# =====================
