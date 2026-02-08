@@ -569,3 +569,12 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   color: var(--muted);
 }
 
+.dark-mode {
+  --card: rgba(30, 41, 59, 0.95);   /* background kartu loader */
+  --primary: #60a5fa;             /* bar animasi */
+  --text: #f1f5f9;                /* teks loader */
+}
+
+.dark-mode .action-loader {
+  background: rgba(2, 6, 23, 0.55);
+}
