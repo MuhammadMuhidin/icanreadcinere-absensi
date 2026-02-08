@@ -271,19 +271,7 @@ function showError(message) {
             }
         }, function(err) {
           hideLoader();
-          let message = "Failed to get your location.";
-        switch (err.code) {
-        case err.PERMISSION_DENIED:
-          message = "Location permission was denied.";
-          break;
-        case err.POSITION_UNAVAILABLE:
-          message = "Location information is unavailable.";
-          break;
-        case err.TIMEOUT:
-          message = "Location request timed out. Please try again.";
-          break;
-        }
-          showError(message);
+          Swal.fire("❌ Failed get your location!", err.message, "error");
         },
         {
         enableHighAccuracy: true, // Pakai GPS + Wi-Fi untuk akurasi tinggi
@@ -291,7 +279,8 @@ function showError(message) {
         maximumAge: 0             // Jangan pakai cache koordinat lama
       });
       } else {
-        showError("Your browser does not support GPS location.");
+        hideLoader();
+        Swal.fire("❌ Error", "Browser not supported GPS.", "error");
       }
     });
   }
