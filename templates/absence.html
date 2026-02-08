@@ -257,11 +257,6 @@ document.addEventListener("DOMContentLoaded", () => {
               document.getElementById("latitude").value = pos.coords.latitude;
               document.getElementById("longitude").value = pos.coords.longitude;
               document.getElementById("aksi").value = aksiValue;
-              showLoader(
-                aksiValue === "Check In"
-                ? "🤖 now, duncan is sending check-in data to server… please wait"
-                : "🤖 now, duncan is sending check-out data to server… please wait"
-              );
               sessionStorage.setItem("lastAttendanceAction", aksiValue);
               document.forms[0].submit();
               submitted = true;       // supaya gak submit lagi
