@@ -183,16 +183,17 @@ function showError(message) {
 {% if messages %}
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  // pastikan loader mati sebelum Swal flash
   hideLoader();
   {% for category, message in messages %}
-    Swal.fire({
-      title: "{{ 'Unable to proceed' if category == 'error' else 'Success' }}",
-      text: "{{ message }}",
-      imageUrl: "{{ '/static/error.svg' if category == 'error' else '/static/success.svg' }}",
-      imageWidth: "80%",
-      imageHeight: "80%"
-    });
+    {% if category == 'error' %}
+      Swal.fire({
+        title: "Unable to proceed",
+        text: "{{ message }}",
+        imageUrl: "/static/error.svg",
+        imageWidth: "80%",
+        imageHeight: "80%"
+      });
+    {% endif %}
   {% endfor %}
 });
 </script>
@@ -256,6 +257,12 @@ document.addEventListener("DOMContentLoaded", () => {
               document.getElementById("latitude").value = pos.coords.latitude;
               document.getElementById("longitude").value = pos.coords.longitude;
               document.getElementById("aksi").value = aksiValue;
+              showLoader(
+                aksiValue === "Check In"
+                ? "✅ Data verified. Your check-in is being recorded…"
+                : "✅ Data verified. Your check-out is being recorded…"
+              );
+              sessionStorage.setItem("lastAttendanceAction", aksiValue);
               document.forms[0].submit();
               submitted = true;       // supaya gak submit lagi
               navigator.geolocation.clearWatch(watchId); // hentikan watch
@@ -441,6 +448,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (err) {
     console.error("Missed attendance check error:", err);
   }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const action = sessionStorage.getItem("lastAttendanceAction");
+  if (!action) return;
+
+  let targetCell = null;
+
+  // Cari cell berdasarkan aksi
+  document.querySelectorAll("table tr").forEach(tr => {
+    const label = tr.children[0]?.textContent || "";
+    if (action === "Check In" && label.includes("Check In")) {
+      targetCell = tr.children[1];
+    }
+    if (action === "Check Out" && label.includes("Check Out")) {
+      targetCell = tr.children[1];
+    }
+  });
+
+  if (targetCell) {
+    targetCell.classList.add("pulse");
+
+    // bersihkan setelah animasi
+    setTimeout(() => {
+      targetCell.classList.remove("pulse");
+    }, 1700);
+  }
+
+  // hapus flag supaya hanya sekali
+  sessionStorage.removeItem("lastAttendanceAction");
 });
 </script>
 </body>
