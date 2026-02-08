@@ -184,7 +184,7 @@ function showError(message) {
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   // pastikan loader mati sebelum Swal flash
-  if (typeof hideLoader === "function") hideLoader();
+  hideLoader();
   {% for category, message in messages %}
     Swal.fire({
       title: "{{ 'Unable to proceed' if category == 'error' else 'Success' }}",
