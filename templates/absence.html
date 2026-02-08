@@ -185,14 +185,13 @@ function showError(message) {
 document.addEventListener("DOMContentLoaded", () => {
   // pastikan loader mati sebelum Swal flash
   if (typeof hideLoader === "function") hideLoader();
-
   {% for category, message in messages %}
     Swal.fire({
       title: "{{ 'Unable to proceed' if category == 'error' else 'Success' }}",
       text: "{{ message }}",
       imageUrl: "{{ '/static/error.svg' if category == 'error' else '/static/success.svg' }}",
-      imageWidth: 200,
-      imageHeight: 200
+      imageWidth: "80%",
+      imageHeight: "80%'
     });
   {% endfor %}
 });
