@@ -395,33 +395,24 @@ function uploadFotoProfil(input) {
    PATCH: MISSED ATTENDANCE SWAL
    ===================== */
 document.addEventListener("DOMContentLoaded", async () => {
-  const today = new Date().toISOString().slice(0, 10);
-  const flagKey = "missed_attendance_" + today;
-
-  // sudah pernah tampil hari ini → stop
-  if (localStorage.getItem(flagKey)) return;
-
   try {
     const res = await fetch("/api/check-missed-attendance", {
       cache: "no-store"
     });
-
     if (!res.ok) return;
-
     const data = await res.json();
-
-    if (data.show) {
-      Swal.fire({
-        imageUrl: "/static/reminder.svg",
-        imageWidth: "80%",
-        imageHeight: "80%",
-        title: "⚠️ Reminder",
-        text: data.message
-      }).then(() => {
-        // tandai sudah tampil hari ini
-        localStorage.setItem(flagKey, "1");
-      });
-    }
+    if (!data.show) return;
+    Swal.fire({
+      title: "⚠️ Reminder",
+      html: data.message,
+      imageUrl: "/static/reminder.svg",
+      imageWidth: "80%",
+      imageHeight: "80%",
+      timer: 10000,
+      timerProgressBar: true,
+      showConfirmButton: false,
+      allowOutsideClick: false
+    });
   } catch (err) {
     console.error("Missed attendance check error:", err);
   }
