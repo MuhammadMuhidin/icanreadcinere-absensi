@@ -179,27 +179,35 @@ function showError(message) {
 }
 </script>
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <script>
-      document.addEventListener("DOMContentLoaded", () => {
-        {% for category, message in messages %}
-          Swal.fire({
-            title: "{{ 'Unable to proceed' if category == 'error' else 'Success' }}",
-            text: "{{ message }}",
-            imageUrl: "{{ '/static/error.svg' if category == 'error' else '/static/success.svg' }}",
-            imageWidth: 140,
-            imageHeight: 140,
-            confirmButtonText: "OK",
-            customClass: {
-              popup: "my-swal-popup"
-            }
-          });
-        {% endfor %}
-      });
-    </script>
-  {% endif %}
-{% endwith %}
+<script>
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, msg in messages %}
+        Swal.fire({
+          icon: "{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}",
+          title: "{{ msg }}",
+          position: 'center',
+          showConfirmButton: false,
+          timer: 5000,
+          width: '75%',
+          customClass: {
+            popup: 'my-swal-popup'
+          },
+          didOpen: () => {
+            {% if category == 'success' %}
+              confetti({
+                particleCount: 150,
+                spread: 70,
+                origin: { y: 0.6 }
+              });
+            {% endif %}
+          }
+        });
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+</script>
+        
         
   <script>
   function submitGPS(aksiValue) {
