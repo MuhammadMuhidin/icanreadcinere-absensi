@@ -179,34 +179,25 @@ function showError(message) {
 }
 </script>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
 <script>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, msg in messages %}
-        Swal.fire({
-          icon: "{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}",
-          title: "{{ msg }}",
-          position: 'center',
-          showConfirmButton: false,
-          timer: 5000,
-          width: '75%',
-          customClass: {
-            popup: 'my-swal-popup'
-          },
-          didOpen: () => {
-            {% if category == 'success' %}
-              confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-              });
-            {% endif %}
-          }
-        });
-      {% endfor %}
-    {% endif %}
-  {% endwith %}
+document.addEventListener("DOMContentLoaded", () => {
+  // pastikan loader mati sebelum Swal flash
+  if (typeof hideLoader === "function") hideLoader();
+  {% for category, message in messages %}
+    Swal.fire({
+      title: "{{ 'Unable to proceed' if category == 'error' else 'Success' }}",
+      text: "{{ message }}",
+      imageUrl: "{{ '/static/error.svg' if category == 'error' else '/static/success.svg' }}",
+      imageWidth: "80%",
+      imageHeight: "80%"
+    });
+  {% endfor %}
+});
 </script>
+{% endif %}
+{% endwith %}
 
   <script>
   function submitGPS(aksiValue) {
@@ -270,8 +261,19 @@ function showError(message) {
               navigator.geolocation.clearWatch(watchId); // hentikan watch
             }
         }, function(err) {
-          hideLoader();
-          Swal.fire("❌ Failed get your location!", err.message, "error");
+          let message = "Failed to get your location.";
+        switch (err.code) {
+        case err.PERMISSION_DENIED:
+          message = "Location permission was denied.";
+          break;
+        case err.POSITION_UNAVAILABLE:
+          message = "Location information is unavailable.";
+          break;
+        case err.TIMEOUT:
+          message = "Location request timed out. Please try again.";
+          break;
+        }
+          showError(message);
         },
         {
         enableHighAccuracy: true, // Pakai GPS + Wi-Fi untuk akurasi tinggi
@@ -279,8 +281,7 @@ function showError(message) {
         maximumAge: 0             // Jangan pakai cache koordinat lama
       });
       } else {
-        hideLoader();
-        Swal.fire("❌ Error", "Browser not supported GPS.", "error");
+        showError("Your browser does not support GPS location.");
       }
     });
   }
