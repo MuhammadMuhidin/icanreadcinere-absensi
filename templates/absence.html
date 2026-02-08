@@ -191,8 +191,8 @@ document.addEventListener("DOMContentLoaded", () => {
       title: "{{ 'Unable to proceed' if category == 'error' else 'Success' }}",
       text: "{{ message }}",
       imageUrl: "{{ '/static/error.svg' if category == 'error' else '/static/success.svg' }}",
-      imageWidth: 50%,
-      imageHeight: 50%
+      imageWidth: "50%",
+      imageHeight: "50%"
     });
   {% endfor %}
 });
