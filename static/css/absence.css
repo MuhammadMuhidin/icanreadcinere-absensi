@@ -553,3 +553,19 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   color: var(--text);
   letter-spacing: .2px;
 }
+
+/* ================= ACTION ================= */
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* ================= LOADING ================= */
+.loading {
+  padding: 18px;
+  text-align: center;
+  font-size: 14px;
+  color: var(--muted);
+}
+
