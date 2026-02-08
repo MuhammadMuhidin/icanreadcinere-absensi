@@ -749,7 +749,7 @@ def check_missed_attendance():
             "message": "You have not completed your attendance yet."
         }
 
-    if last_date == today and checkin and not checkout:
+    if last_date == today:
         return {"show": False}
 
     if checkin and checkout:
