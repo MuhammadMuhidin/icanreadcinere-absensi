@@ -760,7 +760,7 @@ def check_missed_attendance():
     return {
         "show": True,
         "message": (
-            f"We noticed that your most recent attendance on {last_date} is incomplete. "
-            f"You’re missing: {', '.join(missing)}. Don’t forget to check in or check out."
+            f"We noticed that your most recent attendance on <b>{last_date}</b> is incomplete. "
+            f"You’re missing: <b>{', '.join(missing)}</b>. Don’t forget to check in or check out."
         )
     }
