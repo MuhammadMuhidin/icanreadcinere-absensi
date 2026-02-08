@@ -147,11 +147,27 @@
 
   <input type="file" id="uploadPhoto" accept="image/*" style="display:none;" onchange="uploadFotoProfil(this)">
 
-  <!-- Loader -->
-  <div class="loading-overlay" id="loading">
-    <div class="loading-spinner"></div>
-    <div class="loading-text"></div>
+<div id="actionLoader" class="action-loader">
+  <div class="loader-card">
+    <div class="loader-icon">
+      <span></span><span></span><span></span>
+    </div>
+    <div id="loaderText" class="loader-text">Processing…</div>
   </div>
+</div>
+
+<script>
+function showLoader(text) {
+  const el = document.getElementById("actionLoader");
+  document.getElementById("loaderText").innerHTML = text;
+  el.classList.add("show");
+}
+function hideLoader(delay = 0) {
+  setTimeout(() => {
+    document.getElementById("actionLoader").classList.remove("show");
+  }, delay);
+}
+</script>
 
 <script>
   {% with messages = get_flashed_messages(with_categories=true) %}
@@ -226,13 +242,11 @@
       }).then((result) => {
         if (!result.isConfirmed) return;
 
-      const loading = document.getElementById("loading");
-      loading.style.display = "flex";
-      loading.querySelector("div:last-child").innerHTML =
-      aksiValue === 'Check In'
-        ? '🤖 Duncan is preparing <br>your Check In, please wait..'
-        : '🤖 Duncan is confirming <br>your Check Out, please wait...';
-
+      showLoader(
+        aksiValue === "Check In"
+        ? "🐨 Molly is preparing your Check In…"
+        : "🐨 Molly is confirming your Check Out…"
+      );
       let submitted = false;
 
       if (navigator.geolocation) {
@@ -246,7 +260,7 @@
               navigator.geolocation.clearWatch(watchId); // hentikan watch
             }
         }, function(err) {
-          loading.style.display = "none";
+          hideLoader();
           Swal.fire("❌ Failed get your location!", err.message, "error");
         },
         {
@@ -255,7 +269,7 @@
         maximumAge: 0             // Jangan pakai cache koordinat lama
       });
       } else {
-        loading.style.display = "none";
+        hideLoader();
         Swal.fire("❌ Error", "Browser not supported GPS.", "error");
       }
     });
