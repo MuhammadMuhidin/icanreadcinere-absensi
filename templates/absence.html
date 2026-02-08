@@ -404,7 +404,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (!data.show) return;
     Swal.fire({
       title: "⚠️ Reminder",
-      text: data.message,
+      html: data.message,
       imageUrl: "/static/reminder.svg",
       imageWidth: "80%",
       imageHeight: "80%",
