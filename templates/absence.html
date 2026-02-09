@@ -27,7 +27,7 @@
       <div class="aura-ring">
         <div class="profile-wrapper">
           <img src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
-            alt="Foto Profil" class="profile-pic" onclick="document.getElementById('uploadPhoto').click()">>
+            alt="Foto Profil" class="profile-pic" onclick="document.getElementById('uploadPhoto').click()">
         </div>
         <span class="status-dot" id="statusDot"></span>
       </div>
@@ -167,36 +167,41 @@ function hideLoader(delay = 0) {
     document.getElementById("actionLoader").classList.remove("show");
   }, delay);
 }
+function showError(message) {
+  hideLoader(); // ⬅️ WAJIB: loader ditutup dulu
+  Swal.fire({
+    imageUrl: "/static/error.svg",
+    imageWidth: "100%",
+    imageHeight: "100%",
+    title: "Unable to proceed",
+    text: message
+  });
+}
 </script>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% if messages %}
 <script>
-  {% with messages = get_flashed_messages(with_categories=true) %}
-    {% if messages %}
-      {% for category, msg in messages %}
-        Swal.fire({
-          icon: "{{ 'success' if category == 'success' else 'error' if category == 'error' else 'info' }}",
-          title: "{{ msg }}",
-          position: 'center',
-          showConfirmButton: false,
-          timer: 5000,
-          width: '75%',
-          customClass: {
-            popup: 'my-swal-popup'
-          },
-          didOpen: () => {
-            {% if category == 'success' %}
-              confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-              });
-            {% endif %}
-          }
-        });
-      {% endfor %}
+document.addEventListener("DOMContentLoaded", () => {
+  hideLoader();
+  {% for category, message in messages %}
+    {% if category == 'error' %}
+      Swal.fire({
+        title: "{{ message }}",
+        imageUrl: "/static/error.svg",
+        imageWidth: "80%",
+        imageHeight: "80%",
+        timer: 3000,
+        timerProgressBar: true,
+        showConfirmButton: false,
+        allowOutsideClick: false
+      });
     {% endif %}
-  {% endwith %}
+  {% endfor %}
+});
 </script>
+{% endif %}
+{% endwith %}
 
   <script>
   function submitGPS(aksiValue) {
@@ -255,13 +260,25 @@ function hideLoader(delay = 0) {
               document.getElementById("latitude").value = pos.coords.latitude;
               document.getElementById("longitude").value = pos.coords.longitude;
               document.getElementById("aksi").value = aksiValue;
+              sessionStorage.setItem("lastAttendanceAction", aksiValue);
               document.forms[0].submit();
               submitted = true;       // supaya gak submit lagi
               navigator.geolocation.clearWatch(watchId); // hentikan watch
             }
         }, function(err) {
-          hideLoader();
-          Swal.fire("❌ Failed get your location!", err.message, "error");
+          let message = "Failed to get your location.";
+        switch (err.code) {
+        case err.PERMISSION_DENIED:
+          message = "Location permission was denied.";
+          break;
+        case err.POSITION_UNAVAILABLE:
+          message = "Location information is unavailable.";
+          break;
+        case err.TIMEOUT:
+          message = "Location request timed out. Please try again.";
+          break;
+        }
+          showError(message);
         },
         {
         enableHighAccuracy: true, // Pakai GPS + Wi-Fi untuk akurasi tinggi
@@ -269,8 +286,7 @@ function hideLoader(delay = 0) {
         maximumAge: 0             // Jangan pakai cache koordinat lama
       });
       } else {
-        hideLoader();
-        Swal.fire("❌ Error", "Browser not supported GPS.", "error");
+        showError("Your browser does not support GPS location.");
       }
     });
   }
@@ -430,6 +446,37 @@ document.addEventListener("DOMContentLoaded", async () => {
   } catch (err) {
     console.error("Missed attendance check error:", err);
   }
+});
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const action = sessionStorage.getItem("lastAttendanceAction");
+  if (!action) return;
+
+  let targetCell = null;
+
+  // Cari cell berdasarkan aksi
+  document.querySelectorAll("table tr").forEach(tr => {
+    const label = tr.children[0]?.textContent || "";
+    if (action === "Check In" && label.includes("Check In")) {
+      targetCell = tr.children[1];
+    }
+    if (action === "Check Out" && label.includes("Check Out")) {
+      targetCell = tr.children[1];
+    }
+  });
+
+  if (targetCell) {
+    targetCell.classList.add("flash-pop");
+
+    // bersihkan setelah animasi
+    setTimeout(() => {
+      targetCell.classList.remove("flash-pop");
+    }, 2000);
+  }
+
+  // hapus flag supaya hanya sekali
+  sessionStorage.removeItem("lastAttendanceAction");
 });
 </script>
 </body>
