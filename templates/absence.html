@@ -270,6 +270,17 @@ document.addEventListener("DOMContentLoaded", () => {
         showCancelButton: true,
         confirmButtonText: 'Yes',
         cancelButtonText: 'Cancel',
+        didOpen: () => {
+          const cards = Swal.getPopup().querySelectorAll('.mood-card');
+      
+          cards.forEach(card => {
+            card.addEventListener('click', () => {
+              cards.forEach(c => c.classList.remove('active'));
+              card.classList.add('active');
+              card.querySelector('input').checked = true;
+            });
+          });
+        },
         preConfirm: () => {
           const notes = document.getElementById('inputNotes').value.trim();
           const moodEl = document.querySelector('input[name="mood"]:checked');
