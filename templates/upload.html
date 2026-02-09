@@ -46,11 +46,20 @@
           <div id="cutiForm" style="display:none">
             <div class="mb-3">
               <label class="form-label">Employee Name</label>
-              <input type="text" name="nama" class="form-control">
+              <select name="userid" class="form-select" id="karyawanSelect">
+                <option value="">-- Select Employee --</option>
+                <option value="Hanny">Hanny</option>
+                <option value="Dini">Dini</option>
+                <option value="Mita">Mita</option>
+                <option value="Fiya">Fiya</option>
+                <option value="Nadhira">Nadhira</option>
+                <option value="Immanuel">Immanuel</option>
+                <option value="Lintang">Lintang</option>
+              </select>
             </div>
             <div class="mb-3">
               <label class="form-label">Leave Balance</label>
-              <input type="number" name="sisa" class="form-control">
+              <input type="number" name="sisa" class="form-control" id="sisaCuti" readonly>
             </div>
           </div>
         
@@ -105,5 +114,33 @@ jenis.addEventListener("change", () => {
       toggle.textContent = isDark ? "☀️" : "🌙";
     });
   </script>
+<script>
+const selectKaryawan = document.getElementById("karyawanSelect");
+const sisaInput = document.getElementById("sisaCuti");
+
+selectKaryawan.addEventListener("change", () => {
+  const userid = selectKaryawan.value;
+  sisaInput.value = "";
+
+  if (!userid) return;
+
+  sisaInput.placeholder = "Loading...";
+
+  fetch(`/api/sisa-cuti?userid=${userid}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.sisa !== undefined) {
+        sisaInput.value = data.sisa;
+      } else {
+        sisaInput.value = 0;
+      }
+      sisaInput.placeholder = "";
+    })
+    .catch(() => {
+      sisaInput.value = "";
+      sisaInput.placeholder = "Error";
+    });
+});
+</script>
 </body>
 </html>
