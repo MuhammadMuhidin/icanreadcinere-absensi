@@ -404,6 +404,8 @@ def upload():
     if session.get("userid") not in ["Mita", "Hanny"]:
         return redirect("/")
 
+    sb = get_supabase()
+
     if request.method == "POST":
         password = request.form.get("password")
         jenis = request.form.get("jenis")
@@ -411,8 +413,6 @@ def upload():
         if password != "nbpwd31":
             flash("Wrong password!", "error")
             return redirect("/upload")
-
-        sb = get_supabase()
 
         try:
             # === BANNER / NEWS ===
@@ -481,7 +481,14 @@ def upload():
 
         return redirect("/upload")
 
-    return render_template("upload.html")
+    today = date.today().isoformat()
+    scheduled_news = (
+    sb.table(T("news"))
+    .select("content, published_at")
+    .gt("published_at", today)
+    .execute()
+    ).data
+    return render_template("upload.html",scheduled_news=scheduled_news)
 
 @app.route("/__checkdb")
 def checkdb():
