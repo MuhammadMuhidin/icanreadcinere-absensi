@@ -611,27 +611,28 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 /* Matikan scroll di popup */
 .swal2-html-container {
   overflow: hidden !important;
+}
 
-  /* pengaman global agar padding tidak bikin overflow */
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
+.swal2-html-container *,
+.swal2-html-container *::before,
+.swal2-html-container *::after {
+  box-sizing: border-box;
+}
 
-   /* 1. Samakan padding popup */
+.swal2-textarea {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  background: rgba(255,255,255,.9);
+  color: #0f172a;
+}
+
   .swal2-popup {
     padding-left: 20px !important;
     padding-right: 20px !important;
   }
 
-  /* 2. Matikan margin bawaan textarea Swal */
-  .swal2-textarea {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box;
-  }
-
-  /* 3. Wrapper konten */
   .swal2-html-container > div {
     max-width: 420px;
     margin: 0 auto;
@@ -754,7 +755,12 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 }
 
 .swal2-textarea::placeholder {
-  color: #64748b;
+  color: #64748b !important;
+  opacity: 1 !important;
+}
+
+.dark-mode .swal2-textarea::placeholder {
+  color: #cbd5f5 !important;
 }
 
 .premium-swal .swal2-title {
