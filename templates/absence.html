@@ -284,6 +284,12 @@ document.addEventListener("DOMContentLoaded", () => {
         cancelButtonText: 'Cancel',
         didOpen: () => {
   const popup = Swal.getPopup();
+  const textarea = popup.querySelector('.swal2-textarea');
+
+  if (textarea) {
+    textarea.value = "";
+    textarea.dispatchEvent(new Event('input'));
+    }
   const cards = popup.querySelectorAll('.mood-card');
   const feedback = popup.querySelector('#moodFeedback');
 
