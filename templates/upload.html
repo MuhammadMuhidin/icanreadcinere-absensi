@@ -131,6 +131,8 @@ selectKaryawan.addEventListener("change", () => {
     .then(data => {
       if (data.sisa !== undefined) {
         sisaInput.value = data.sisa;
+        sisaInput.readOnly = false;
+        sisaInput.focus();
       } else {
         sisaInput.value = 0;
       }
