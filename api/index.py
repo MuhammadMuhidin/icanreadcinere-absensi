@@ -768,3 +768,12 @@ def check_missed_attendance():
             f"Missing: <b>{', '.join(missing)}</b>. Don’t forget to complete it."
         )
     }
+
+@app.route("/api/sisa-cuti")
+def api_sisa_cuti():
+    nama = request.args.get("nama")
+    if not nama:
+        return jsonify({"error": "nama required"}), 400
+
+    sisa = get_sisa_cuti(nama)
+    return jsonify({"sisa": sisa})
