@@ -685,94 +685,70 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
       transform: scale(0.97);
   }
 
-/* ===============================
-   PREMIUM CHECK-IN MODAL PATCH
-   =============================== */
-
-/* Popup container */
-.swal2-popup {
-  border-radius: 22px !important;
-  padding: 24px 22px !important;
+/* ===== PREMIUM SWAL ===== */
+.premium-swal {
+  border-radius: 20px !important;
+  padding: 22px 22px 20px !important;
   box-shadow:
-    0 8px 24px rgba(0,0,0,0.08),
-    0 24px 64px rgba(0,0,0,0.12) !important;
+    0 1px 2px rgba(0,0,0,.06),
+    0 18px 40px rgba(0,0,0,.18) !important;
+  backdrop-filter: blur(6px);
 }
 
-/* Title */
-.swal2-title {
-  font-size: 22px !important;
-  font-weight: 600 !important;
-  letter-spacing: -0.3px;
-  margin-bottom: 18px !important;
-  color: #0f172a;
-}
+.premium-swal .swal2-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: .2px;
+  text-shadow: none;
+    }
 
-/* Textarea */
-.swal2-textarea {
-  border-radius: 14px !important;
-  border: 1px solid #e5e7eb !important;
-  background: #f8fafc !important;
-  font-size: 14px !important;
-  padding: 14px !important;
-}
-
-.swal2-textarea::placeholder {
-  color: #94a3b8;
-}
-
-/* Mood cards */
-.mood-card {
-  background: #ffffff;
-  border: 1px solid rgba(0,0,0,0.06);
-  border-radius: 16px;
+.premium-swal .mood-card {
+  border: 1px solid rgba(15,23,42,.08);
+  background: rgba(255,255,255,.75);
+  border-radius: 14px;
   padding: 14px 16px;
-  transition: all 0.18s cubic-bezier(.4,0,.2,1);
+  transition: all .15s cubic-bezier(.4,0,.2,1);
 }
 
-.mood-card span:last-child {
-  font-size: 15px;
-  color: #0f172a;
-}
-
-/* Active state */
-.mood-card.active {
+.premium-swal .mood-card.active {
   box-shadow:
-    0 4px 12px rgba(0,0,0,0.08),
-    0 12px 32px rgba(0,0,0,0.12);
-  transform: scale(1.02);
+    0 1px 2px rgba(0,0,0,.06),
+    0 10px 22px rgba(0,0,0,.12);
+  transform: scale(1.03);
 }
 
-/* Happy (soft green gradient) */
-.mood-happy.active {
-  background: linear-gradient(135deg, #eafbf2, #f6fffa);
-  border-color: rgba(34,197,94,0.45);
+/* soft gradient per mood */
+.premium-swal .mood-happy.active {
+  background: linear-gradient(180deg,#ecfdf5,#f6fffa);
+  border-color: rgba(34,197,94,.35);
 }
 
-/* Neutral */
-.mood-neutral.active {
-  background: linear-gradient(135deg, #eef4ff, #f8fbff);
-  border-color: rgba(59,130,246,0.45);
+.premium-swal .mood-neutral.active {
+  background: linear-gradient(180deg,#eff6ff,#f8fbff);
+  border-color: rgba(59,130,246,.35);
 }
 
-/* Sad */
-.mood-sad.active {
-  background: linear-gradient(135deg, #fff1e8, #fff7f2);
-  border-color: rgba(249,115,22,0.45);
+.premium-swal .mood-sad.active {
+  background: linear-gradient(180deg,#fff7ed,#fffaf5);
+  border-color: rgba(249,115,22,.35);
 }
 
-/* Buttons */
-.swal2-confirm {
-  background: linear-gradient(180deg, #7c7cf4, #6366f1) !important;
+.premium-swal .swal2-confirm {
+  background: linear-gradient(180deg,#2563eb,#1e40af) !important;
   border-radius: 14px !important;
-  padding: 12px 28px !important;
-  font-weight: 600 !important;
-  box-shadow: 0 8px 20px rgba(99,102,241,0.35) !important;
+  padding: 10px 20px !important;
+  font-weight: 600;
+  box-shadow:
+    0 1px 2px rgba(0,0,0,.08),
+    0 10px 22px rgba(37,99,235,.35);
 }
 
-.swal2-cancel {
-  background: #e5e7eb !important;
-  color: #374151 !important;
+.premium-swal .swal2-cancel {
+  background: rgba(148,163,184,.15) !important;
+  color: #0f172a !important;
   border-radius: 14px !important;
-  padding: 12px 26px !important;
-  font-weight: 500 !important;
+}
+
+.premium-swal * {
+  transition: all .15s cubic-bezier(.4,0,.2,1);
 }
