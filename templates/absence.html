@@ -7,6 +7,30 @@
   <link rel="stylesheet" href="static/css/absence.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+<style>
+/* Paksa popup benar-benar di tengah */
+.swal2-popup {
+  display: flex !important;
+  flex-direction: column;
+  justify-content: center !important;
+}
+
+/* Matikan scroll di popup */
+.swal2-html-container {
+  margin: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Biar konten tidak bikin tinggi berlebih */
+.swal2-content {
+  padding: 0 !important;
+}
+
+/* Optional: batasi tinggi textarea supaya tidak dorong layout */
+.swal2-textarea {
+  max-height: 80px;
+}
+</style>
 </head>
 <body>
 <div class="half-circle"></div>
@@ -285,6 +309,9 @@ document.addEventListener("DOMContentLoaded", () => {
   </div>
 </div>
         `,
+        heightAuto: false,
+        scrollbarPadding: false,
+        allowOutsideClick: false,
         showCancelButton: true,
         confirmButtonText: 'Yes',
         cancelButtonText: 'Cancel',
