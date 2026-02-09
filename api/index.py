@@ -781,7 +781,7 @@ def api_sisa_cuti():
     if sisa is None:
         return jsonify({
             "found": False,
-            "message": "initial balance not found, please contact admin!"
+            "message": "initial balance not found!"
         })
 
     return jsonify({
