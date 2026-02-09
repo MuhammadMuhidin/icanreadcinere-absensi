@@ -46,7 +46,7 @@
           <div id="cutiForm" style="display:none">
             <div class="mb-3">
               <label class="form-label">Employee Name</label>
-              <select name="userid" class="form-select" id="karyawanSelect">
+              <select name="userid" class="form-select" id="nama">
                 <option value="">-- Select Employee --</option>
                 <option value="Hanny">Hanny</option>
                 <option value="Dini">Dini</option>
@@ -59,7 +59,7 @@
             </div>
             <div class="mb-3">
               <label class="form-label">Leave Balance</label>
-              <input type="number" name="sisa" class="form-control" id="sisaCuti" readonly>
+              <input type="number" name="sisa" class="form-control" id="sisa" readonly>
             </div>
           </div>
         
@@ -115,8 +115,8 @@ jenis.addEventListener("change", () => {
     });
   </script>
 <script>
-const selectKaryawan = document.getElementById("karyawanSelect");
-const sisaInput = document.getElementById("sisaCuti");
+const selectKaryawan = document.getElementById("nama");
+const sisaInput = document.getElementById("sisa");
 
 selectKaryawan.addEventListener("change", () => {
   const userid = selectKaryawan.value;
