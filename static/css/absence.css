@@ -291,6 +291,7 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 
 .dark-mode .swal2-title,
 .dark-mode .swal2-content,
+.dark-mode .swal2-textarea,
 .dark-mode .swal2-html-container {
   color: #ffffff !important;
 }
