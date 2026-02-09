@@ -208,29 +208,98 @@ document.addEventListener("DOMContentLoaded", () => {
     Swal.fire({
         title: `${aksiValue} now?`,
         html: `
-          <div style="text-align:left; font-size:16px;">
-            <label for="inputNotes" style="font-weight:bold; margin-bottom:6px; display:block;">📝 Add a note (optional)</label>
-            <textarea id="inputNotes" class="swal2-textarea" placeholder="Write your note here..." style="width:90%; height:80px; font-size:14px; overflow-y: auto;"></textarea>
+<div style="
+  max-width:420px;
+  width:100%;
+  margin:0 auto;
+  text-align:left;
+  font-size:14px;
+">
 
-            <div style="margin-top:20px;">
-              <label style="font-weight:bold; display:block; margin-bottom:10px;">How are you feeling today?</label>
-              <div style="display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-around;">
-                <label style="display: flex; align-items: center; gap: 6px;">
-                  <input type="radio" name="mood" value="Happy">
-                  <span style="font-size: 20px;">😊</span> <span style="font-size: 14px;">Happy</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px;">
-                  <input type="radio" name="mood" value="Neutral" checked>
-                  <span style="font-size: 20px;">😐</span> <span style="font-size: 14px;">Neutral</span>
-                </label>
-                <label style="display: flex; align-items: center; gap: 6px;">
-                  <input type="radio" name="mood" value="Sad">
-                  <span style="font-size: 20px;">😢</span> <span style="font-size: 14px;">Sad</span>
-                </label>
-              </div>
-            </div>
-          </div>
+  <!-- Notes -->
+  <label for="inputNotes"
+         style="font-weight:600; margin-bottom:6px; display:block;">
+    📝 Add a note (optional)
+  </label>
+
+  <textarea
+    id="inputNotes"
+    class="swal2-textarea"
+    placeholder="Write your note here..."
+    style="
+      width:100%;
+      max-width:100%;
+      height:80px;
+      font-size:14px;
+      border-radius:8px;
+      padding:10px;
+      resize:none;
+    ">
+  </textarea>
+
+  <!-- Mood -->
+  <div style="margin-top:20px;">
+    <label style="font-weight:600; display:block; margin-bottom:12px;">
+      How are you feeling today?
+    </label>
+
+    <div style="display:flex; flex-direction:column; gap:10px;">
+
+      <label style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:10px 12px;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+        cursor:pointer;
+        width:100%;
+        max-width:100%;
+      ">
+        <input type="radio" name="mood" value="Happy" style="accent-color:#22c55e;">
+        <span style="font-size:20px;">😊</span>
+        <span style="font-weight:500;">Happy</span>
+      </label>
+
+      <label style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:10px 12px;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+        cursor:pointer;
+        width:100%;
+        max-width:100%;
+      ">
+        <input type="radio" name="mood" value="Neutral" checked style="accent-color:#3b82f6;">
+        <span style="font-size:20px;">😐</span>
+        <span style="font-weight:500;">Neutral</span>
+      </label>
+
+      <label style="
+        display:flex;
+        align-items:center;
+        gap:12px;
+        padding:10px 12px;
+        border:1px solid #e5e7eb;
+        border-radius:10px;
+        cursor:pointer;
+        width:100%;
+        max-width:100%;
+      ">
+        <input type="radio" name="mood" value="Sad" style="accent-color:#f97316;">
+        <span style="font-size:20px;">😢</span>
+        <span style="font-weight:500;">Sad</span>
+      </label>
+
+    </div>
+  </div>
+</div>
         `,
+        heightAuto: false,
+        scrollbarPadding: false,
+        allowOutsideClick: false,
         showCancelButton: true,
         confirmButtonText: 'Yes',
         cancelButtonText: 'Cancel',
