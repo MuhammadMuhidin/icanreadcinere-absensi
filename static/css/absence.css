@@ -716,3 +716,8 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   outline: none !important;
   box-shadow: none !important;
 }
+
+.swal2-title {
+  white-space: nowrap;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+}
