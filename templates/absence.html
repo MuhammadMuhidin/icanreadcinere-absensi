@@ -298,6 +298,16 @@ document.addEventListener("DOMContentLoaded", () => {
     Neutral: "Alright 🙂 Wishing you a smooth day.",
     Sad: "Thanks for sharing. Take it easy today."
   };
+  // === SET DEFAULT MESSAGE SAAT LOAD ===
+const activeCard =
+  popup.querySelector('.mood-card.active') ||
+  popup.querySelector('.mood-card input:checked')?.closest('.mood-card');
+
+if (activeCard) {
+  const mood = activeCard.querySelector('input').value;
+  feedback.textContent = messages[mood] || "";
+  feedback.style.opacity = 1;
+    }
 
   cards.forEach(card => {
     card.addEventListener('click', () => {
