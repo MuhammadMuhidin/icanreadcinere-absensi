@@ -281,16 +281,16 @@ document.addEventListener("DOMContentLoaded", () => {
             });
           });
         },
-        preConfirm: () => {
-          const notes = document.getElementById('inputNotes').value.trim();
-          const moodEl = document.querySelector('input[name="mood"]:checked');
-          const mood = moodEl ? moodEl.value : "😐 Neutral";
-
-          document.getElementById("notes").value = notes;
-          document.getElementById("mood").value = mood;
-
-         return true;
-        }
+      preConfirm: () => {
+        const popup = Swal.getPopup();
+        const notesEl = popup.querySelector('.swal2-textarea');
+        const moodEl = popup.querySelector('input[name="mood"]:checked');
+      
+        document.getElementById("notes").value = notesEl?.value.trim() || "";
+        document.getElementById("mood").value = moodEl?.value || "Neutral";
+      
+        return true;
+      }
       }).then((result) => {
         if (!result.isConfirmed) return;
 
@@ -525,17 +525,6 @@ document.addEventListener("DOMContentLoaded", () => {
   // hapus flag supaya hanya sekali
   sessionStorage.removeItem("lastAttendanceAction");
 });
-</script>
-<script>
-  const cards = document.querySelectorAll('.mood-card');
-
-  cards.forEach(card => {
-    card.addEventListener('click', () => {
-      cards.forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-      card.querySelector('input').checked = true;
-    });
-  });
 </script>
 </body>
 </html>
