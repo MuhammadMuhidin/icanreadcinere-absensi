@@ -187,3 +187,32 @@
     body.dark-mode .background-overlay {
       background: rgba(0, 0, 0, 0.6); /* overlay gelap */
     }
+
+/* === Scheduled News (Light Mode) === */
+.scheduled-news {
+  background-color: #e7f7fb;
+  color: #0f2e3d;
+  border: none;
+  border-radius: 14px;
+}
+
+/* === Scheduled News (Dark Mode) === */
+body.dark-mode .scheduled-news {
+  background-color: #0f2533;   /* biru gelap */
+  color: #d6f1ff;              /* teks lembut */
+}
+
+/* judul / strong */
+body.dark-mode .scheduled-news strong {
+  color: #ffffff;
+}
+
+/* list item */
+body.dark-mode .scheduled-news li {
+  color: #cbe9f7;
+}
+
+/* tanggal publish */
+body.dark-mode .scheduled-news small {
+  color: #9fc7da;
+}
