@@ -607,3 +607,32 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   font-weight: 700;
 }
+
+/* Matikan scroll di popup */
+.swal2-html-container {
+  overflow: hidden !important;
+
+  /* pengaman global agar padding tidak bikin overflow */
+  *, *::before, *::after {
+    box-sizing: border-box;
+  }
+
+   /* 1. Samakan padding popup */
+  .swal2-popup {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+
+  /* 2. Matikan margin bawaan textarea Swal */
+  .swal2-textarea {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  /* 3. Wrapper konten */
+  .swal2-html-container > div {
+    max-width: 420px;
+    margin: 0 auto;
+  }
