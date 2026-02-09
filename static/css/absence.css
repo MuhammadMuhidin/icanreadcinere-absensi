@@ -752,3 +752,14 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 .premium-swal * {
   transition: all .15s cubic-bezier(.4,0,.2,1);
 }
+
+.swal2-textarea::placeholder {
+  color: #64748b;
+}
+
+.premium-swal .swal2-title {
+  font-size: 14px !important;
+  font-weight: 600;
+  letter-spacing: .2px;
+  opacity: .95;
+}
