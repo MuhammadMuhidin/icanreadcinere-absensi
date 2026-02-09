@@ -220,6 +220,8 @@ def get_sisa_cuti(userid):
 
         if res.data:
             return res.data[0]["sisa"]
+            
+        return 0
 
     except Exception as e:
         print("GET CUTI ERROR:", e)
