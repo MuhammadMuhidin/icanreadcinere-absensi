@@ -660,7 +660,7 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   /* state terpilih */
   .mood-card.active {
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    transform: scale(1.02);
+    transform: scale(0.97);
   }
 
   /* warna per mood */
@@ -677,7 +677,6 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   .mood-sad.active {
     border-color:#f97316;
     background:rgba(249,115,22,0.12);
-      transform: scale(0.97);
   }
 
 /* ================= TEXTAREA DARK MODE ================= */
