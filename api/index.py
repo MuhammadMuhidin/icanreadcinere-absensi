@@ -430,7 +430,7 @@ def upload():
                     flash("You are not allowed", "error")
                     return redirect("/upload")
 
-                nama = request.form.get("nama")
+                nama = request.form.get("userid")
                 sisa = request.form.get("sisa")
 
                 if not nama or sisa is None:
