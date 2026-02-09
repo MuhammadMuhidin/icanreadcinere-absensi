@@ -295,25 +295,10 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   color: #ffffff !important;
 }
 
-/* YES */
-.swal2-confirm {
-  background: linear-gradient(180deg,#2563eb,#1e40af) !important;
-  color: #fff !important;
-  border-radius: 12px;
-}
-
-/* CANCEL */
-.swal2-cancel {
-  background: rgba(255,255,255,.12) !important;
-  color: #e5e7eb !important;
-  border-radius: 12px;
-}
-
 .dark-mode .swal2-confirm:hover,
 .dark-mode .swal2-cancel:hover {
   background-color: #666 !important;
 }
-
 
    /* Dark mode toggle button */
 .dark-mode-toggle {
@@ -693,13 +678,3 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
     background:rgba(249,115,22,0.12);
       transform: scale(0.97);
   }
-
-.swal2-html-container > div {
-  max-width: 360px;
-  margin: 0 auto;
-}
-
-.swal2-textarea {
-  padding: 12px 14px !important;
-  border-radius: 12px;
-}
