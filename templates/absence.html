@@ -61,7 +61,13 @@
     </tr>
     <tr>
       <td>🏖️ Paid Leave Balance</td>
-      <td>{{ sisa }}</td>
+      <td>
+      {% if sisa is not none %}
+      {{ sisa }}
+      {% else %}
+      Not Found ⚠️
+      {% endif %}
+      </td>
     </tr>
   </table>
   <div style="margin: 16px 0; text-align: center;">

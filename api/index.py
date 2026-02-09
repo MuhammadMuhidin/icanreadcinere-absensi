@@ -219,12 +219,14 @@ def get_sisa_cuti(userid):
         )
 
         if res.data:
-            return res.data[0]["sisa"]
+            return int(res.data[0]["sisa"])
+            
+        return None
 
     except Exception as e:
         print("GET CUTI ERROR:", e)
 
-    return "no leave balance, contact your supervisor"
+    return None
 
 def load_log():
     try:
@@ -430,7 +432,7 @@ def upload():
                     flash("You are not allowed", "error")
                     return redirect("/upload")
 
-                nama = request.form.get("nama")
+                nama = request.form.get("userid")
                 sisa = request.form.get("sisa")
 
                 if not nama or sisa is None:
@@ -768,3 +770,21 @@ def check_missed_attendance():
             f"Missing: <b>{', '.join(missing)}</b>. Don’t forget to complete it."
         )
     }
+
+@app.route("/api/sisa-cuti")
+def api_sisa_cuti():
+    nama = request.args.get("userid")
+    if not nama:
+        return jsonify({"error": "nama required"}), 400
+
+    sisa = get_sisa_cuti(nama)
+    if sisa is None:
+        return jsonify({
+            "found": False,
+            "message": "initial balance not found!"
+        })
+
+    return jsonify({
+        "found": True,
+        "sisa": sisa
+    })
