@@ -291,21 +291,15 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 
 .dark-mode .swal2-title,
 .dark-mode .swal2-content,
+.dark-mode .swal2-textarea,
 .dark-mode .swal2-html-container {
   color: #ffffff !important;
-}
-
-.dark-mode .swal2-confirm,
-.dark-mode .swal2-cancel {
-  background-color: #444 !important;
-  color: #fff !important;
 }
 
 .dark-mode .swal2-confirm:hover,
 .dark-mode .swal2-cancel:hover {
   background-color: #666 !important;
 }
-
 
    /* Dark mode toggle button */
 .dark-mode-toggle {
@@ -611,27 +605,28 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 /* Matikan scroll di popup */
 .swal2-html-container {
   overflow: hidden !important;
+}
 
-  /* pengaman global agar padding tidak bikin overflow */
-  *, *::before, *::after {
-    box-sizing: border-box;
-  }
+.swal2-html-container *,
+.swal2-html-container *::before,
+.swal2-html-container *::after {
+  box-sizing: border-box;
+}
 
-   /* 1. Samakan padding popup */
+.swal2-textarea {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box;
+  background: rgba(255,255,255,.9);
+  color: #0f172a;
+}
+
   .swal2-popup {
     padding-left: 20px !important;
     padding-right: 20px !important;
   }
 
-  /* 2. Matikan margin bawaan textarea Swal */
-  .swal2-textarea {
-    margin-left: 0 !important;
-    margin-right: 0 !important;
-    width: 100% !important;
-    box-sizing: border-box;
-  }
-
-  /* 3. Wrapper konten */
   .swal2-html-container > div {
     max-width: 420px;
     margin: 0 auto;
@@ -665,7 +660,7 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   /* state terpilih */
   .mood-card.active {
     box-shadow: 0 6px 18px rgba(0,0,0,0.12);
-    transform: scale(1.02);
+    transform: scale(0.97);
   }
 
   /* warna per mood */
@@ -682,5 +677,47 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   .mood-sad.active {
     border-color:#f97316;
     background:rgba(249,115,22,0.12);
-      transform: scale(0.97);
   }
+
+/* ================= TEXTAREA DARK MODE ================= */
+.dark-mode .swal2-textarea {
+  background: rgba(40, 40, 40) !important; /* sama persis popup */
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
+}
+
+.dark-mode .swal2-textarea::placeholder {
+  color: rgba(248,250,252,0.6) !important;
+}
+
+/* Lebar popup */
+.swal2-popup {
+  width: calc(100% - 24px) !important; /* 12px kiri-kanan */
+  max-width: 420px !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+}
+
+/* Container konten */
+.swal2-html-container {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+/* Semua card/mood full width */
+.mood-card {
+  width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+
+/* ===== NETRALISIR FOCUS TEXTAREA ===== */
+.swal2-textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.swal2-title {
+  white-space: nowrap;
+  font-size: clamp(1.4rem, 5vw, 2rem);
+}
