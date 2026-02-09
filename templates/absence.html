@@ -212,6 +212,9 @@ document.addEventListener("DOMContentLoaded", () => {
   <script>
   function submitGPS(aksiValue) {
     Swal.fire({
+        customClass: {
+          popup: 'premium-swal'
+        },
         title: `${aksiValue} now?`,
         html: `
 <div style="
@@ -243,7 +246,7 @@ document.addEventListener("DOMContentLoaded", () => {
   <!-- Mood -->
   <div style="margin-top:20px;">
     <label style="font-weight:600; display:block; margin-bottom:12px;">
-      How are you feeling today?
+  Your mood today
     </label>
 
     <div style="display:flex; flex-direction:column; gap:12px;">
@@ -266,6 +269,16 @@ document.addEventListener("DOMContentLoaded", () => {
         <span style="font-weight:500;">Sad</span>
       </label>
 
+      <p id="moodFeedback" style="
+  margin-top:12px;
+  font-size:13px;
+  color:#64748b;
+  opacity:0;
+  transition: opacity .15s cubic-bezier(.4,0,.2,1);
+">
+  Nice 😊 Hope today goes well.
+</p>
+
     </div>
   </div>
 </div>
@@ -277,16 +290,28 @@ document.addEventListener("DOMContentLoaded", () => {
         confirmButtonText: 'Yes',
         cancelButtonText: 'Cancel',
         didOpen: () => {
-          const cards = Swal.getPopup().querySelectorAll('.mood-card');
-      
-          cards.forEach(card => {
-            card.addEventListener('click', () => {
-              cards.forEach(c => c.classList.remove('active'));
-              card.classList.add('active');
-              card.querySelector('input').checked = true;
-            });
-          });
-        },
+  const popup = Swal.getPopup();
+  const cards = popup.querySelectorAll('.mood-card');
+  const feedback = popup.querySelector('#moodFeedback');
+
+  const messages = {
+    Happy: "Nice 😊 Hope today goes well.",
+    Neutral: "Alright 🙂 Wishing you a smooth day.",
+    Sad: "Thanks for sharing. Take it easy today."
+  };
+
+  cards.forEach(card => {
+    card.addEventListener('click', () => {
+      cards.forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      card.querySelector('input').checked = true;
+
+      const mood = card.querySelector('input').value;
+      feedback.textContent = messages[mood] || "";
+      feedback.style.opacity = 1;
+    });
+  });
+        }
       preConfirm: () => {
         const popup = Swal.getPopup();
         const notesEl = popup.querySelector('.swal2-textarea');
