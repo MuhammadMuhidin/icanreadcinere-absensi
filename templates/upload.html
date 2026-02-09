@@ -31,8 +31,12 @@
             <label class="form-label">Type</label>
             <select name="jenis" class="form-select" required id="jenis">
               <option value="">-- Choose --</option>
-              <option value="banner">News / Banner</option>
-              <option value="cuti">Leave Balance</option>
+               {% if session.userid == "Hanny" %}
+                <option value="banner">News / Banner</option>
+                <option value="cuti">Leave Balance</option>
+               {% elif session.userid == "Mita" %}
+                <option value="banner">News / Banner</option>
+               {% endif %}
             </select>
           </div>
         
