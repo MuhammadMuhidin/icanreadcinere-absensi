@@ -682,7 +682,9 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 
 /* ================= TEXTAREA DARK MODE ================= */
 .dark-mode .swal2-textarea {
-  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  background: rgba(40, 40, 40) !important; /* sama persis popup */
+  color: #ffffff !important;
+  border: 1px solid rgba(255,255,255,0.15) !important;
 }
 
 .dark-mode .swal2-textarea::placeholder {
@@ -693,8 +695,8 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 .swal2-popup {
   width: calc(100% - 24px) !important; /* 12px kiri-kanan */
   max-width: 420px !important;
-  padding-left: 5% !important;
-  padding-right: 5% !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
 }
 
 /* Container konten */
