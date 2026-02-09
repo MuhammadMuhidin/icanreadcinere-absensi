@@ -771,7 +771,7 @@ def check_missed_attendance():
 
 @app.route("/api/sisa-cuti")
 def api_sisa_cuti():
-    nama = request.args.get("nama")
+    nama = request.args.get("userid")
     if not nama:
         return jsonify({"error": "nama required"}), 400
 
