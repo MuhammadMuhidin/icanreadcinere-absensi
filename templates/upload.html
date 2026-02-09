@@ -40,11 +40,43 @@
             </select>
           </div>
         
-          <!-- Banner -->
-          <div class="mb-3" id="bannerForm" style="display:none">
-            <label class="form-label">Content News</label>
-            <textarea name="content" class="form-control" rows="5"></textarea>
+        <!-- Banner Content -->
+        <div class="mb-3" id="bannerForm" style="display:none">
+          <label class="form-label">Content News</label>
+          <textarea name="content" class="form-control" rows="4" id="bannerContent"></textarea>
+        
+          <!-- Publish Options -->
+          <div class="mt-3">
+            <label class="form-label fw-semibold">Publish Option</label>
+        
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="publish_mode" id="publishNow" value="now" checked>
+              <label class="form-check-label" for="publishNow">
+                Publish now
+              </label>
+            </div>
+        
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="radio" name="publish_mode" id="publishSchedule" value="schedule">
+              <label class="form-check-label" for="publishSchedule">
+                Schedule publish
+              </label>
+            </div>
+        
+            <!-- Schedule datetime -->
+            <input
+              type="datetime-local"
+              name="published_at"
+              id="publishedAt"
+              class="form-control mt-2"
+              style="display:none"
+            >
+        
+            <small class="text-muted d-block mt-1">
+              Choose when this banner will become visible to users.
+            </small>
           </div>
+        </div>
         
           <!-- Cuti -->
           <div id="cutiForm" style="display:none">
@@ -147,6 +179,25 @@ selectKaryawan.addEventListener("change", () => {
     alert("Failed to load leave balance");
   });
 });
+</script>
+<script>
+const publishNow = document.getElementById("publishNow");
+const publishSchedule = document.getElementById("publishSchedule");
+const publishedAt = document.getElementById("publishedAt");
+
+function toggleSchedule() {
+  if (publishSchedule.checked) {
+    publishedAt.style.display = "block";
+    publishedAt.required = true;
+  } else {
+    publishedAt.style.display = "none";
+    publishedAt.required = false;
+    publishedAt.value = "";
+  }
+}
+
+publishNow.addEventListener("change", toggleSchedule);
+publishSchedule.addEventListener("change", toggleSchedule);
 </script>
 </body>
 </html>
