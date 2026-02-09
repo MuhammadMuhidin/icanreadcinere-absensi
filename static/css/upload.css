@@ -187,3 +187,30 @@
     body.dark-mode .background-overlay {
       background: rgba(0, 0, 0, 0.6); /* overlay gelap */
     }
+
+/* Light mode */
+.scheduled-news {
+  background-color: #e7f7fb;
+  color: #0f2e3d;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+/* Dark mode */
+body.dark-mode .scheduled-news {
+  background-color: #121e26;   /* benar-benar gelap */
+  color: #e6f6ff;
+}
+
+/* teks */
+body.dark-mode .scheduled-news strong {
+  color: #ffffff;
+}
+body.dark-mode .scheduled-news small {
+  color: #b0d0e0;
+}
+
+/* empty state */
+.empty-scheduled {
+  opacity: 0.85;
+}

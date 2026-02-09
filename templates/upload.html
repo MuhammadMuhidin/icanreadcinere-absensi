@@ -120,9 +120,9 @@
   </div>
 
 <div class="container my-4">
-  <div class="alert alert-info">
+  <div class="scheduled-news">
   {% if scheduled_news and scheduled_news|length > 0 %}
-    <div class="alert alert-info mt-3">
+    <div class="mt-3">
       <strong>
         You have {{ scheduled_news|length }} scheduled banner{{ 's' if scheduled_news|length > 1 else '' }}:
       </strong>
@@ -138,7 +138,7 @@
     </div>
 
   {% else %}
-    <div class="alert alert-secondary mt-3">
+    <div class="empty-scheduled">
       You do not have any scheduled banners.
     </div>
   {% endif %}
