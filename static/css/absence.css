@@ -285,7 +285,7 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 
 /* Tambahan untuk SweetAlert2 saat dark-mode */
 .dark-mode .swal2-popup {
-  background: rgba(40, 40, 40, 0.95) !important;
+  background: rgba(40, 40, 40) !important;
   color: #ffffff !important;
 }
 
