@@ -69,7 +69,6 @@
               name="published_at"
               id="publishedAt"
               class="form-control mt-2"
-              min="{{ today }}"
             >
         
             <small class="text-muted d-block mt-1">
@@ -119,6 +118,28 @@
       </div>
     </div>
   </div>
+
+  {% if scheduled_news and scheduled_news|length > 0 %}
+    <div class="alert alert-info mt-3">
+      <strong>
+        You have {{ scheduled_news|length }} scheduled banner{{ 's' if scheduled_news|length > 1 else '' }}:
+      </strong>
+
+      <ul class="mt-2 mb-0">
+        {% for news in scheduled_news %}
+          <li class="mb-1">
+            <div><strong>Content:</strong> {{ news.content }}</div>
+            <div><small>Will be published on {{ news.published_at }}</small></div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  {% else %}
+    <div class="alert alert-secondary mt-3">
+      You do not have any scheduled banners.
+    </div>
+  {% endif %}
 
 <script>
 const jenis = document.getElementById("jenis");
