@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, jsonify, flash, ses
 from math import radians, cos, sin, sqrt, atan2
 from collections import defaultdict
 from supabase import create_client
-from datetime import datetime
 from io import StringIO
 import os, requests, csv, pytz, json, boto3
 from datetime import datetime, date, timedelta
@@ -419,6 +418,7 @@ def upload():
             # === BANNER / NEWS ===
             if jenis == "banner":
                 content = request.form.get("content", "").strip()
+                publish_mode = request.form.get("publish_mode", "now")
                 if not content:
                     flash("Content cannot be empty", "error")
                     return redirect("/upload")
