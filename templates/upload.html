@@ -126,22 +126,22 @@ selectKaryawan.addEventListener("change", () => {
 
   sisaInput.placeholder = "Loading...";
 
-  fetch(`/api/sisa-cuti?userid=${userid}`)
-    .then(res => res.json())
-    .then(data => {
-      if (typeof data.sisa === "number") {
-        sisaInput.value = data.sisa;
-        sisaInput.readOnly = false;
-        sisaInput.focus();
-      } else {
-        sisaInput.value = 0;
-      }
-      sisaInput.placeholder = "";
-    })
-    .catch(() => {
-      sisaInput.value = "";
-      sisaInput.placeholder = "Error";
-    });
+  fetch(`/api/sisa-cuti?userid=${encodeURIComponent(userid)}`)
+  .then(res => res.json())
+  .then(data => {
+    if (data.found === true) {
+      sisaInput.value = data.sisa;
+      sisaInput.readOnly = false;
+      sisaInput.focus();
+    } else {
+      sisaInput.value = data.message;
+      sisaInput.readOnly = true;
+    }
+  })
+  .catch(() => {
+    sisaInput.value = "";
+    alert("Failed to load leave balance");
+  });
 });
 </script>
 </body>
