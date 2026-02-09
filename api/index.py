@@ -2,7 +2,6 @@ from flask import Flask, render_template, request, redirect, jsonify, flash, ses
 from math import radians, cos, sin, sqrt, atan2
 from collections import defaultdict
 from supabase import create_client
-from datetime import datetime
 from io import StringIO
 import os, requests, csv, pytz, json, boto3
 from datetime import datetime, date, timedelta
@@ -194,9 +193,12 @@ def check_late(checkin_time):
 def get_news():
     try:
         sb = get_supabase()
+        today = date.today().isoformat()
+        
         res = (
             sb.table(T("news"))
             .select("content")
+            .lte("published_at", today)
             .order("updated_at", desc=True)
             .limit(1)
             .execute()
@@ -402,6 +404,8 @@ def upload():
     if session.get("userid") not in ["Mita", "Hanny"]:
         return redirect("/")
 
+    sb = get_supabase()
+
     if request.method == "POST":
         password = request.form.get("password")
         jenis = request.form.get("jenis")
@@ -410,18 +414,38 @@ def upload():
             flash("Wrong password!", "error")
             return redirect("/upload")
 
-        sb = get_supabase()
-
         try:
             # === BANNER / NEWS ===
             if jenis == "banner":
                 content = request.form.get("content", "").strip()
+                publish_mode = request.form.get("publish_mode", "now")
                 if not content:
                     flash("Content cannot be empty", "error")
                     return redirect("/upload")
 
+                today = date.today()
+            
+                if publish_mode == "schedule":
+                    published_at = request.form.get("published_at")
+                    if not published_at:
+                        flash("Publish date is required for schedule", "error")
+                        return redirect("/upload")
+            
+                    schedule_date = date.fromisoformat(published_at)
+            
+                    if schedule_date < today:
+                        flash("Scheduled date must be today or later", "error")
+                        return redirect("/upload")
+            
+                    published_at = schedule_date.isoformat()
+            
+                else:
+                    # publish now → tanggal hari ini
+                    published_at = today.isoformat()
+            
                 sb.table(T("news")).insert({
-                    "content": content
+                    "content": content,
+                    "published_at": published_at
                 }).execute()
 
                 flash("News updated successfully", "success")
@@ -457,7 +481,14 @@ def upload():
 
         return redirect("/upload")
 
-    return render_template("upload.html")
+    today = date.today().isoformat()
+    scheduled_news = (
+    sb.table(T("news"))
+    .select("content, published_at")
+    .gt("published_at", today)
+    .execute()
+    ).data
+    return render_template("upload.html",scheduled_news=scheduled_news)
 
 @app.route("/__checkdb")
 def checkdb():

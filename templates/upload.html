@@ -31,16 +31,51 @@
             <label class="form-label">Type</label>
             <select name="jenis" class="form-select" required id="jenis">
               <option value="">-- Choose --</option>
-              <option value="banner">News / Banner</option>
-              <option value="cuti">Leave Balance</option>
+               {% if session.userid == "Hanny" %}
+                <option value="banner">News / Banner</option>
+                <option value="cuti">Leave Balance</option>
+               {% elif session.userid == "Mita" %}
+                <option value="banner">News / Banner</option>
+               {% endif %}
             </select>
           </div>
         
-          <!-- Banner -->
-          <div class="mb-3" id="bannerForm" style="display:none">
-            <label class="form-label">Content News</label>
-            <textarea name="content" class="form-control" rows="5"></textarea>
+        <!-- Banner Content -->
+        <div class="mb-3" id="bannerForm" style="display:none">
+          <label class="form-label">Content News</label>
+          <textarea name="content" class="form-control" rows="4" id="bannerContent"></textarea>
+        
+          <!-- Publish Options -->
+          <div class="mt-3">
+            <label class="form-label fw-semibold">Publish Option</label>
+        
+            <div class="form-check">
+              <input class="form-check-input" type="radio" name="publish_mode" id="publishNow" value="now" checked>
+              <label class="form-check-label" for="publishNow">
+                Publish now
+              </label>
+            </div>
+        
+            <div class="form-check mt-1">
+              <input class="form-check-input" type="radio" name="publish_mode" id="publishSchedule" value="schedule">
+              <label class="form-check-label" for="publishSchedule">
+                Schedule publish
+              </label>
+            </div>
+        
+            <!-- Schedule date -->
+            <input
+              type="date"
+              name="published_at"
+              id="publishedAt"
+              class="form-control mt-2"
+            >
+        
+            <small class="text-muted d-block mt-1">
+              Choose when this banner will become visible to users.
+            </small>
           </div>
+        </div>
         
           <!-- Cuti -->
           <div id="cutiForm" style="display:none">
@@ -83,6 +118,32 @@
       </div>
     </div>
   </div>
+
+<div class="container my-4">
+  <div class="alert alert-info">
+  {% if scheduled_news and scheduled_news|length > 0 %}
+    <div class="alert alert-info mt-3">
+      <strong>
+        You have {{ scheduled_news|length }} scheduled banner{{ 's' if scheduled_news|length > 1 else '' }}:
+      </strong>
+
+      <ul class="mt-2 mb-0">
+        {% for news in scheduled_news %}
+          <li class="mb-1">
+            <div><strong>Content:</strong> {{ news.content }}</div>
+            <div><small>Will be published on {{ news.published_at }}</small></div>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+  {% else %}
+    <div class="alert alert-secondary mt-3">
+      You do not have any scheduled banners.
+    </div>
+  {% endif %}
+  </div>
+</div>
 
 <script>
 const jenis = document.getElementById("jenis");
@@ -143,6 +204,26 @@ selectKaryawan.addEventListener("change", () => {
     alert("Failed to load leave balance");
   });
 });
+</script>
+<script>
+const publishNow = document.getElementById("publishNow");
+const publishSchedule = document.getElementById("publishSchedule");
+const publishedAt = document.getElementById("publishedAt");
+
+function toggleSchedule() {
+  if (publishSchedule.checked) {
+    publishedAt.style.display = "block";
+    publishedAt.required = true;
+  } else {
+    publishedAt.style.display = "none";
+    publishedAt.required = false;
+    publishedAt.value = "";
+  }
+}
+
+publishNow.addEventListener("change", toggleSchedule);
+publishSchedule.addEventListener("change", toggleSchedule);
+document.addEventListener("DOMContentLoaded", toggleSchedule);
 </script>
 </body>
 </html>
