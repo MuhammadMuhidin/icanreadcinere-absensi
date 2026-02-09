@@ -46,7 +46,7 @@
           <div id="cutiForm" style="display:none">
             <div class="mb-3">
               <label class="form-label">Employee Name</label>
-              <select name="userid" class="form-select" id="nama">
+              <select name="userid" class="form-select" id="userid">
                 <option value="">-- Select Employee --</option>
                 <option value="Hanny">Hanny</option>
                 <option value="Dini">Dini</option>
@@ -129,7 +129,7 @@ selectKaryawan.addEventListener("change", () => {
   fetch(`/api/sisa-cuti?userid=${userid}`)
     .then(res => res.json())
     .then(data => {
-      if (data.sisa !== undefined) {
+      if (typeof data.sisa === "number") {
         sisaInput.value = data.sisa;
         sisaInput.readOnly = false;
         sisaInput.focus();
