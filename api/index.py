@@ -194,9 +194,12 @@ def check_late(checkin_time):
 def get_news():
     try:
         sb = get_supabase()
+        today = date.today().isoformat()
+        
         res = (
             sb.table(T("news"))
             .select("content")
+            .lte("published_at", today)
             .order("updated_at", desc=True)
             .limit(1)
             .execute()
@@ -420,8 +423,29 @@ def upload():
                     flash("Content cannot be empty", "error")
                     return redirect("/upload")
 
+                today = date.today()
+            
+                if publish_mode == "schedule":
+                    published_at = request.form.get("published_at")
+                    if not published_at:
+                        flash("Publish date is required for schedule", "error")
+                        return redirect("/upload")
+            
+                    schedule_date = date.fromisoformat(published_at)
+            
+                    if schedule_date < today:
+                        flash("Scheduled date must be today or later", "error")
+                        return redirect("/upload")
+            
+                    published_at = schedule_date.isoformat()
+            
+                else:
+                    # publish now → tanggal hari ini
+                    published_at = today.isoformat()
+            
                 sb.table(T("news")).insert({
-                    "content": content
+                    "content": content,
+                    "published_at": published_at
                 }).execute()
 
                 flash("News updated successfully", "success")
