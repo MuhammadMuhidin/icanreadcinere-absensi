@@ -199,7 +199,7 @@ def get_news():
             sb.table(T("news"))
             .select("content")
             .lte("published_at", today)
-            .order("updated_at", desc=True)
+            .order("published_at", desc=True)
             .limit(1)
             .execute()
         )
