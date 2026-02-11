@@ -199,7 +199,7 @@ def get_news():
             sb.table(T("news"))
             .select("content")
             .lte("published_at", today)
-            .order("updated_at", desc=True)
+            .order("published_at", desc=True)
             .limit(1)
             .execute()
         )
@@ -819,3 +819,72 @@ def api_sisa_cuti():
         "found": True,
         "sisa": sisa
     })
+
+@app.route("/api/check-period")
+def check_period():
+    if session.get("userid") != "Hanny":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    sb = get_supabase()
+    res = (
+        sb.table(T("log_absen"))
+        .select("tanggal")
+        .execute()
+    )
+
+    if not res.data:
+        return jsonify({"periods": []})
+
+    periods = set()
+    for row in res.data:
+        tgl = isoparse(row["tanggal"])
+        periods.add(tgl.strftime("%Y-%m"))
+
+    sorted_periods = sorted(periods, reverse=True)
+
+    return jsonify({
+        "periods": sorted_periods
+    })
+
+@app.route("/download-absen")
+def download_absen():
+    if session.get("userid") != "Hanny":
+        return "Unauthorized", 403
+
+    periode = request.args.get("periode")
+    if not periode:
+        return "Periode wajib dipilih", 400
+
+    start = datetime.strptime(periode + "-01", "%Y-%m-%d")
+
+    if start.month == 12:
+        end = datetime(start.year + 1, 1, 1)
+    else:
+        end = datetime(start.year, start.month + 1, 1)
+
+    sb = get_supabase()
+    res = (
+        sb.table(T("log_absen"))
+        .select("tanggal, waktu, nama, aksi")
+        .gte("tanggal", start.isoformat())
+        .lt("tanggal", end.isoformat())
+        .order("tanggal", desc=False)
+        .order("waktu", desc=False)
+        .execute()
+    )
+
+    if not res.data:
+        return "Data tidak ditemukan", 404
+
+    output = StringIO()
+    writer = csv.DictWriter(output, fieldnames=res.data[0].keys(), delimiter=";")
+    writer.writeheader()
+    writer.writerows(res.data)
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=file_absensi_{periode}.csv"
+        },
+    )

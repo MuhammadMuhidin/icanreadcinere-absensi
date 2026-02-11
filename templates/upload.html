@@ -119,6 +119,34 @@
     </div>
   </div>
 
+{% if session.userid == "Hanny" %}
+<div class="container my-4">
+  <div class="card shadow">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Download Absen</h5>
+    </div>
+    <div class="card-body">
+      <form method="GET" action="/download-absen">
+        <div class="mb-3">
+          <label class="form-label">Period</label>
+          <select name="periode" id="periodeSelect" class="form-select" required>
+            <option value="">-- Choose Period --</option>
+            {% for p in available_periods %}
+              <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">
+          ⬇️ Download
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
 <div class="container my-4">
   <div class="scheduled-news">
   {% if scheduled_news and scheduled_news|length > 0 %}
@@ -224,6 +252,52 @@ function toggleSchedule() {
 publishNow.addEventListener("change", toggleSchedule);
 publishSchedule.addEventListener("change", toggleSchedule);
 document.addEventListener("DOMContentLoaded", toggleSchedule);
+</script>
+<script>
+const periodeSelect = document.getElementById("periodeSelect");
+
+if (periodeSelect) {
+  let loaded = false;
+
+  periodeSelect.addEventListener("click", () => {
+    if (loaded) return;
+
+    fetch("/api/check-period")
+      .then(res => {
+        if (!res.ok) throw new Error("Unauthorized");
+        return res.json();
+      })
+      .then(data => {
+
+        // bersihkan dulu selain placeholder
+        periodeSelect.innerHTML = '<option value="">-- Choose Period --</option>';
+
+        if (!data.periods || data.periods.length === 0) {
+          const opt = document.createElement("option");
+          opt.value = "";
+          opt.textContent = "No data available";
+          periodeSelect.appendChild(opt);
+
+          periodeSelect.disabled = true; // optional: kunci dropdown
+          loaded = true;
+          return;
+        }
+
+        data.periods.forEach(p => {
+          const opt = document.createElement("option");
+          opt.value = p;
+          opt.textContent = p;
+          periodeSelect.appendChild(opt);
+        });
+
+        loaded = true;
+      })
+      .catch(err => {
+        console.error(err);
+        loaded = true; // penting supaya tidak loop
+      });
+  });
+}
 </script>
 </body>
 </html>
