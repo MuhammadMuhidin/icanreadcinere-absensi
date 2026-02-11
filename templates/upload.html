@@ -259,7 +259,7 @@ const periodeSelect = document.getElementById("periodeSelect");
 if (periodeSelect) {
   let loaded = false;
 
-  periodeSelect.addEventListener("focus", () => {
+  periodeSelect.addEventListener("click", () => {
     if (loaded) return;
 
     fetch("/api/check-period")
@@ -268,11 +268,18 @@ if (periodeSelect) {
         return res.json();
       })
       .then(data => {
+
+        // bersihkan dulu selain placeholder
+        periodeSelect.innerHTML = '<option value="">-- Choose Period --</option>';
+
         if (!data.periods || data.periods.length === 0) {
           const opt = document.createElement("option");
           opt.value = "";
-          opt.textContent = "Tidak ada data";
+          opt.textContent = "No data available";
           periodeSelect.appendChild(opt);
+
+          periodeSelect.disabled = true; // optional: kunci dropdown
+          loaded = true;
           return;
         }
 
@@ -287,7 +294,7 @@ if (periodeSelect) {
       })
       .catch(err => {
         console.error(err);
-        alert("Gagal memuat periode");
+        loaded = true; // penting supaya tidak loop
       });
   });
 }
