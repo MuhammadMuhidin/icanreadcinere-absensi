@@ -826,24 +826,16 @@ def check_period():
         return jsonify({"error": "Unauthorized"}), 403
 
     sb = get_supabase()
-    res = (
-        sb.table(T("log_absen"))
-        .select("tanggal")
-        .execute()
-    )
+
+    res = sb.rpc("get_last_periods").execute()
 
     if not res.data:
         return jsonify({"periods": []})
 
-    periods = set()
-    for row in res.data:
-        tgl = isoparse(row["tanggal"])
-        periods.add(tgl.strftime("%Y-%m"))
-
-    sorted_periods = sorted(periods, reverse=True)
+    periods = [row["period"] for row in res.data]
 
     return jsonify({
-        "periods": sorted_periods
+        "periods": periods
     })
 
 @app.route("/download-absen")
