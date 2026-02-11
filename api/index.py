@@ -252,7 +252,7 @@ def sudah_absen_hari_ini(nama, aksi):
     )
     return bool(res.data)
 
-def simpan_log_absen(nama, aksi):
+def simpan_log_absen(user, aksi, late_status, mood, notes):
     now = datetime.now(TZ)
     sb = get_supabase()
     sb.table(T("log_absen")).insert({
@@ -260,6 +260,9 @@ def simpan_log_absen(nama, aksi):
         "aksi": aksi,
         "tanggal": now.strftime("%Y-%m-%d"),
         "waktu": now.strftime("%H:%M:%S"),
+        "deviation": late_status,
+        "mood": mood,
+        "notes": notes
     }).execute()
 
 def get_latest_absen_for_user(username):
@@ -330,6 +333,8 @@ def absence():
 
     if request.method == "POST":
         aksi = request.form.get("aksi")
+        mood = request.form.get("mood")
+        notes = request.form.get("notes")
 
         try:
             lat = float(request.form.get("latitude", "0"))
@@ -357,15 +362,15 @@ def absence():
                     "nama": user,
                     "aksi": aksi,
                     "late_status": late_status,
-                    "mood": request.form.get("mood"),
-                    "notes": request.form.get("notes"),
+                    "mood": mood,
+                    "notes": notes,
                 },
                 timeout=5,
             )
         except Exception:
             pass
             
-        simpan_log_absen(user, aksi)
+        simpan_log_absen(user, aksi, late_status, mood, notes)
         flash("Recorded successfully!", "success")
         return redirect("/absence")
 
@@ -857,7 +862,7 @@ def download_absen():
     sb = get_supabase()
     res = (
         sb.table(T("log_absen"))
-        .select("tanggal, waktu, nama, aksi")
+        .select("tanggal, waktu, nama, aksi, deviation, mood, notes")
         .gte("tanggal", start.isoformat())
         .lt("tanggal", end.isoformat())
         .order("tanggal", desc=False)
