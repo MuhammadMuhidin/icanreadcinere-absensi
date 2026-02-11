@@ -119,6 +119,34 @@
     </div>
   </div>
 
+  {% if session.userid == "Hanny" %}
+<div class="container my-4">
+  <div class="card shadow">
+    <div class="card-header bg-success text-white">
+      <h5 class="mb-0">Download Absen</h5>
+    </div>
+    <div class="card-body">
+      <form method="GET" action="/download-absen">
+        <div class="mb-3">
+          <label class="form-label">Periode</label>
+          <select name="periode" class="form-select" required>
+            <option value="">-- Pilih Periode --</option>
+            {% for p in available_periods %}
+              <option value="{{ p }}">{{ p }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <button type="submit" class="btn btn-success w-100">
+          ⬇️ Download
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
 <div class="container my-4">
   <div class="scheduled-news">
   {% if scheduled_news and scheduled_news|length > 0 %}
