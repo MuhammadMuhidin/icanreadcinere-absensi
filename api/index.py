@@ -874,7 +874,7 @@ def download_absen():
     if not res.data:
         return "Data tidak ditemukan", 404
 
-    output.StringIO()
+    output = StringIO()
     writer = csv.DictWriter(output, fieldnames=res.data[0].keys(), delimiter=";")
     writer.writeheader()
     writer.writerows(res.data)
