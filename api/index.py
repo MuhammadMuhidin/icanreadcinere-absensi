@@ -862,6 +862,7 @@ def download_absen():
     else:
         end = datetime(start.year, start.month + 1, 1)
 
+    sb = get_supabase()
     res = (
         sb.table(T("log_absen"))
         .select("*")
