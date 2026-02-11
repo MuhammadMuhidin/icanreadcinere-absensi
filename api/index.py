@@ -874,8 +874,8 @@ def download_absen():
     if not res.data:
         return "Data tidak ditemukan", 404
 
-    output = StringIO()
-    writer = csv.DictWriter(output, fieldnames=res.data[0].keys())
+    output.StringIO()
+    writer = csv.DictWriter(output, fieldnames=res.data[0].keys(), delimiter=";")
     writer.writeheader()
     writer.writerows(res.data)
 
@@ -883,6 +883,6 @@ def download_absen():
         output.getvalue(),
         mimetype="text/csv",
         headers={
-            "Content-Disposition": f"attachment; filename=absen_{periode}.csv"
+            "Content-Disposition": f"attachment; filename=file_absensi_{periode}.csv"
         },
     )
