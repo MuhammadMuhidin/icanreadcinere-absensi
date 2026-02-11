@@ -863,7 +863,7 @@ def download_absen():
         end = datetime(start.year, start.month + 1, 1)
 
     res = (
-        sb.table(T("absen"))
+        sb.table(T("log_absen"))
         .select("*")
         .gte("tanggal", start.isoformat())
         .lt("tanggal", end.isoformat())
