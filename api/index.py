@@ -255,15 +255,27 @@ def sudah_absen_hari_ini(nama, aksi):
 def simpan_log_absen(user, aksi, late_status, mood, notes):
     now = datetime.now(TZ)
     sb = get_supabase()
-    sb.table(T("log_absen")).insert({
-        "nama": nama,
-        "aksi": aksi,
-        "tanggal": now.strftime("%Y-%m-%d"),
-        "waktu": now.strftime("%H:%M:%S"),
-        "deviation": late_status,
-        "mood": mood,
-        "notes": notes
-    }).execute()
+
+    try:
+        response = sb.table(T("log_absen")).insert({
+            "nama": user,
+            "aksi": aksi,
+            "tanggal": now.strftime("%Y-%m-%d"),
+            "waktu": now.strftime("%H:%M:%S"),
+            "deviation": late_status,
+            "mood": mood,
+            "notes": notes
+        }).execute()
+
+        # Cek apakah benar-benar ada data yang tersimpan
+        if not response.data:
+            raise Exception("Insert failed: no data returned")
+
+        return True
+
+    except Exception as e:
+        # Lempar ulang dengan pesan yang lebih jelas
+        raise Exception(f"Gagal menyimpan absen: {str(e)}")
 
 def get_latest_absen_for_user(username):
     sb = get_supabase()
@@ -356,7 +368,7 @@ def absence():
             late_status = check_late(now)
 
         try:
-            requests.post(
+            response = requests.post(
                 GAS_URL,
                 json={
                     "nama": user,
@@ -367,10 +379,13 @@ def absence():
                 },
                 timeout=5,
             )
-        except Exception:
-            pass
+            response.raise_for_status()
             
-        simpan_log_absen(user, aksi, late_status, mood, notes)
+            simpan_log_absen(user, aksi, late_status, mood, notes)
+        except Exception as e:
+            flash(str(e), "error")
+            return redirect("/absence")
+            
         flash("Recorded successfully!", "success")
         return redirect("/absence")
 
@@ -494,40 +509,6 @@ def upload():
     .execute()
     ).data
     return render_template("upload.html",scheduled_news=scheduled_news)
-
-@app.route("/__checkdb")
-def checkdb():
-    result = {
-        "r2": None,
-        "supabase": None,
-    }
-
-    # === TEST R2 ===
-    try:
-        r2 = get_r2()
-        r2.head_bucket(Bucket=R2_BUCKET)
-        result["r2"] = "CONNECTED"
-    except Exception as e:
-        result["r2"] = f"ERROR: {str(e)}"
-
-    # === TEST SUPABASE ===
-    try:
-        sb = get_supabase()
-        res = table(T("news")).select("id").limit(1).execute()
-
-        if not res.data:
-            result["supabase"] = "CONNECTED (no data)"
-        else:
-            result["supabase"] = "CONNECTED (with data)"
-    except Exception as e:
-        result["supabase"] = f"ERROR: {str(e)}"
-
-    # === FINAL RESPONSE ===
-    status_code = 200
-    if "ERROR" in result["r2"] or "ERROR" in result["supabase"]:
-        status_code = 500
-
-    return result, status_code
 
 @app.route("/paid_leave")
 def paid_leave():
