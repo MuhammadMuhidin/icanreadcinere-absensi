@@ -367,8 +367,16 @@ def absence():
             now = datetime.now(pytz.timezone("Asia/Jakarta")).time()
             late_status = check_late(now)
 
+        # 1. Simpan absensi dulu (core system)
         try:
-            response = requests.post(
+            simpan_log_absen(user, aksi, late_status, mood, notes)
+        except Exception as e:
+            flash(str(e), "error")
+            return redirect("/absence")
+        
+        # 2. Kirim ke GAS (opsional, tidak memblokir)
+        try:
+            requests.post(
                 GAS_URL,
                 json={
                     "nama": user,
@@ -379,13 +387,9 @@ def absence():
                 },
                 timeout=5,
             )
-            response.raise_for_status()
-            
-            simpan_log_absen(user, aksi, late_status, mood, notes)
         except Exception as e:
-            flash(str(e), "error")
-            return redirect("/absence")
-            
+            print("GAS ERROR:", e)  # cukup log, jangan ganggu user
+        
         flash("Recorded successfully!", "success")
         return redirect("/absence")
 
