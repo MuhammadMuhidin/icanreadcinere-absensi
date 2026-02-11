@@ -820,6 +820,32 @@ def api_sisa_cuti():
         "sisa": sisa
     })
 
+@app.route("/api/check-period")
+def check_period():
+    if session.get("userid") != "Hanny":
+        return jsonify({"error": "Unauthorized"}), 403
+
+    sb = get_supabase()
+    res = (
+        sb.table(T("absen"))
+        .select("tanggal")
+        .execute()
+    )
+
+    if not res.data:
+        return jsonify({"periods": []})
+
+    periods = set()
+    for row in res.data:
+        tgl = isoparse(row["tanggal"])
+        periods.add(tgl.strftime("%Y-%m"))
+
+    sorted_periods = sorted(periods, reverse=True)
+
+    return jsonify({
+        "periods": sorted_periods
+    })
+
 @app.route("/download-absen")
 def download_absen():
     if session.get("userid") != "Hanny":
@@ -832,6 +858,7 @@ def download_absen():
     start = datetime.strptime(periode + "-01", "%Y-%m-%d")
     end = start + relativedelta(months=1)
 
+    sb = get_supabase()
     res = (
         sb.table("absen")
         .select("*")
