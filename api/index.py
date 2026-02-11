@@ -860,7 +860,7 @@ def download_absen():
 
     sb = get_supabase()
     res = (
-        sb.table(T("log_absen")
+        sb.table(T("log_absen"))
         .select("*")
         .gte("tanggal", start.isoformat())
         .lt("tanggal", end.isoformat())
