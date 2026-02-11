@@ -827,7 +827,7 @@ def check_period():
 
     sb = get_supabase()
     res = (
-        sb.table(T("absen"))
+        sb.table(T("log_absen"))
         .select("tanggal")
         .execute()
     )
@@ -860,7 +860,7 @@ def download_absen():
 
     sb = get_supabase()
     res = (
-        sb.table("absen")
+        sb.table(T("log_absen")
         .select("*")
         .gte("tanggal", start.isoformat())
         .lt("tanggal", end.isoformat())
