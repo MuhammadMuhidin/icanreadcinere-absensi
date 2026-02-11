@@ -819,3 +819,39 @@ def api_sisa_cuti():
         "found": True,
         "sisa": sisa
     })
+
+@app.route("/download-absen")
+def download_absen():
+    if session.get("userid") != "Hanny":
+        return "Unauthorized", 403
+
+    periode = request.args.get("periode")
+    if not periode:
+        return "Periode wajib dipilih", 400
+
+    start = datetime.strptime(periode + "-01", "%Y-%m-%d")
+    end = start + relativedelta(months=1)
+
+    res = (
+        sb.table("absen")
+        .select("*")
+        .gte("tanggal", start.isoformat())
+        .lt("tanggal", end.isoformat())
+        .execute()
+    )
+
+    if not res.data:
+        return "Data tidak ditemukan", 404
+
+    output = StringIO()
+    writer = csv.DictWriter(output, fieldnames=res.data[0].keys())
+    writer.writeheader()
+    writer.writerows(res.data)
+
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={
+            "Content-Disposition": f"attachment; filename=absen_{periode}.csv"
+        },
+    )
