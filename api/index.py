@@ -856,11 +856,14 @@ def download_absen():
         return "Periode wajib dipilih", 400
 
     start = datetime.strptime(periode + "-01", "%Y-%m-%d")
-    end = start + relativedelta(months=1)
 
-    sb = get_supabase()
+    if start.month == 12:
+        end = datetime(start.year + 1, 1, 1)
+    else:
+        end = datetime(start.year, start.month + 1, 1)
+
     res = (
-        sb.table(T("log_absen"))
+        sb.table(T("absen"))
         .select("*")
         .gte("tanggal", start.isoformat())
         .lt("tanggal", end.isoformat())
