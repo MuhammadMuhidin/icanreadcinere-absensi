@@ -865,9 +865,11 @@ def download_absen():
     sb = get_supabase()
     res = (
         sb.table(T("log_absen"))
-        .select("*")
+        .select("tanggal, waktu, nama, aksi")
         .gte("tanggal", start.isoformat())
         .lt("tanggal", end.isoformat())
+        .order("tanggal", desc=False)
+        .order("waktu", desc=False)
         .execute()
     )
 
