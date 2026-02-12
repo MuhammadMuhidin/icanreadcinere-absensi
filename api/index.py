@@ -30,21 +30,21 @@ def load_users():
 USERS = load_users()
 
 def send_wa(phone, message):
-    token = os.environ.get("FTICR_TOKEN")
+    #token = os.environ.get("FTICR_TOKEN")
     svr_msg = os.environ.get("SVR_MSG")
-    if not token or not phone:
+    if not svr_msg or not phone:
         return
     try:
         requests.post(
             svr_msg,
-            data={
+            json={
                 "to": phone,
                 "msg": message
             },
             timeout=10
         )
     except Exception as e:
-        print("FONNTE ERROR:", e)
+        print("Koyeb ERROR:", e)
 
 # =====================
 # CONSTANT
