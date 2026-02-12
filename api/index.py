@@ -31,18 +31,15 @@ USERS = load_users()
 
 def send_wa(phone, message):
     token = os.environ.get("FTICR_TOKEN")
+    svr_msg = os.environ.get("SVR_MSG")
     if not token or not phone:
         return
     try:
         requests.post(
-            "https://api.fonnte.com/send",
-            headers={
-                "Authorization": token
-            },
+            svr_msg,
             data={
-                "target": phone,
-                "message": message,
-                "delay": 2
+                "to": phone,
+                "msg": message
             },
             timeout=10
         )
