@@ -3,7 +3,7 @@ from math import radians, cos, sin, sqrt, atan2
 from collections import defaultdict
 from supabase import create_client
 from io import StringIO
-import os, requests, csv, pytz, json, boto3
+import os, requests, csv, pytz, json, boto3, queue
 from datetime import datetime, date, timedelta
 from dateutil.parser import isoparse
 
@@ -56,6 +56,23 @@ GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
 TZ = pytz.timezone("Asia/Jakarta")
+
+# =====================
+# SIMPLE EVENT STREAM (SSE)
+# =====================
+subscribers = []
+
+def broadcast_event(data: dict):
+    dead = []
+    for q in subscribers:
+        try:
+            q.put(data)
+        except Exception:
+            dead.append(q)
+
+    for d in dead:
+        if d in subscribers:
+            subscribers.remove(d)
 
 # =====================
 # HELPER PREFIX TABLE
@@ -389,6 +406,12 @@ def absence():
             )
         except Exception as e:
             print("GAS ERROR:", e)  # cukup log, jangan ganggu user
+
+        # 3. send broadcast
+        broadcast_event({
+            "type": aksi,
+            "name": user
+        })
         
         flash("Recorded successfully!", "success")
         return redirect("/absence")
@@ -404,6 +427,24 @@ def absence():
         sisa=get_sisa_cuti(user),
         R2_PUBLIC_BASE_URL=R2_PUBLIC_BASE_URL
     )
+
+@app.route("/stream")
+def stream():
+    if "userid" not in session:
+        return Response(status=401)
+
+    def event_stream():
+        q = queue.Queue()
+        subscribers.append(q)
+        try:
+            while True:
+                data = q.get()
+                yield f"data: {json.dumps(data)}\n\n"
+        except GeneratorExit:
+            if q in subscribers:
+                subscribers.remove(q)
+
+    return Response(event_stream(), mimetype="text/event-stream")
 
 @app.route("/change_photo", methods=["POST"])
 def change_photo():
