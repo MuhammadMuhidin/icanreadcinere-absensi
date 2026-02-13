@@ -92,6 +92,57 @@ window.SESSION_NAME = "{{ SESSION_NAME }}";
 const NAME = window.SESSION_NAME;
 const ROLE = (NAME === "Hanny") ? "manager" : "employee";
 let EDIT_LEAVE_ID = null;
+let POLL_INTERVAL = null;
+let LAST_SNAPSHOT = "";
+
+async function pollStatus() {
+  try {
+    const res = await fetch("/leave");
+    if (!res.ok) return;
+
+    const json = await res.json();
+    const data = json.data || [];
+
+    const snapshot = data
+      .map(d => `${d.id}-${d.status}-${d.updated_at || d.created_at}`)
+      .sort()
+      .join("|");
+
+    if (!LAST_SNAPSHOT) {
+      LAST_SNAPSHOT = snapshot;
+      return;
+    }
+
+    if (snapshot !== LAST_SNAPSHOT) {
+      LAST_SNAPSHOT = snapshot;
+      loadData(true); // reload hanya jika ada perubahan
+    }
+
+  } catch (e) {
+    // silent fail agar tidak ganggu UX
+  }
+}
+
+function startPolling() {
+  if (!POLL_INTERVAL) {
+    POLL_INTERVAL = setInterval(pollStatus, 1000);
+  }
+}
+
+function stopPolling() {
+  if (POLL_INTERVAL) {
+    clearInterval(POLL_INTERVAL);
+    POLL_INTERVAL = null;
+  }
+}
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    startPolling();
+  } else {
+    stopPolling();
+  }
+});
 
 function openEditDialog(id, currentDate) {
   EDIT_LEAVE_ID = id;
@@ -621,6 +672,9 @@ function showError(message) {
   }
   
 loadData();
+if (document.visibilityState === "visible") {
+  startPolling();
+}
 </script>
 
 </body>
