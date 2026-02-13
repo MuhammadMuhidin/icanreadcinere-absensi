@@ -30,13 +30,16 @@ def load_users():
 USERS = load_users()
 
 def send_wa(phone, message):
-    #token = os.environ.get("FTICR_TOKEN")
     svr_msg = os.environ.get("SVR_MSG")
-    if not svr_msg or not phone:
+    api_key = os.environ.get("SEND_API_KEY")
+    if not svr_msg or not api_key or not phone:
         return
     try:
         requests.post(
             svr_msg,
+            headers={
+                "x-api-key": api_key
+            },
             json={
                 "to": phone,
                 "msg": message
