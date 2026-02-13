@@ -566,5 +566,48 @@ document.addEventListener("DOMContentLoaded", () => {
   sessionStorage.removeItem("lastAttendanceAction");
 });
 </script>
+<script>
+/* =====================
+   REALTIME ATTENDANCE BROADCAST
+   ===================== */
+
+(function () {
+  const toast = document.getElementById("checkinToast");
+  if (!toast) return;
+
+  let hideTimer;
+
+  try {
+    const evtSource = new EventSource("/stream");
+
+    evtSource.onmessage = function (event) {
+      const data = JSON.parse(event.data);
+
+      if (data.type === "Check In" || data.type === "Check Out") {
+
+        const actionText =
+          data.type === "Check In"
+            ? "checked in"
+            : "checked out";
+
+        toast.textContent = data.name + " has " + actionText;
+
+        toast.classList.add("show");
+
+        clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => {
+          toast.classList.remove("show");
+        }, 2000);
+      }
+    };
+
+    evtSource.onerror = function () {
+      // silent fail
+    };
+
+  } catch (_) {}
+})();
+</script>
+<div id="checkinToast" class="checkin-toast"></div>
 </body>
 </html>
