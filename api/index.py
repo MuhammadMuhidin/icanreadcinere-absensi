@@ -57,7 +57,7 @@ POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
-REALTIME_TABLE = REALTIME_TABLE = T("log_absen")
+REALTIME_TABLE = T("log_absen")
 TZ = pytz.timezone("Asia/Jakarta")
 
 # =====================
