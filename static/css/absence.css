@@ -725,7 +725,8 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 .checkin-toast {
   position: fixed;
   top: 18px;
-  right: 18px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-12px) scale(0.96);
   background: rgba(16, 185, 129, 0.85);
   color: #fff;
   padding: 10px 16px;
@@ -734,7 +735,6 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
   backdrop-filter: blur(6px);
   box-shadow: 0 8px 24px rgba(0,0,0,0.25);
   opacity: 0;
-  transform: translateY(-12px) scale(0.96);
   transition: opacity .25s ease, transform .25s ease;
   pointer-events: none;
   z-index: 9999;
@@ -743,5 +743,5 @@ text-shadow: 5px 5px 10px rgba(0, 0, 0, 0.3);
 
 .checkin-toast.show {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateX(-50%) translateY(0) scale(1);
 }
