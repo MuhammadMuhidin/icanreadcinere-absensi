@@ -3,7 +3,7 @@ from math import radians, cos, sin, sqrt, atan2
 from collections import defaultdict
 from supabase import create_client
 from io import StringIO
-import os, requests, csv, pytz, json, boto3
+import os, requests, csv, pytz, json, boto3, queue
 from datetime import datetime, date, timedelta
 from dateutil.parser import isoparse
 
@@ -55,7 +55,26 @@ def send_wa(phone, message):
 GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
 TZ = pytz.timezone("Asia/Jakarta")
+
+# =====================
+# SIMPLE EVENT STREAM (SSE)
+# =====================
+subscribers = []
+
+def broadcast_event(data: dict):
+    dead = []
+    for q in subscribers:
+        try:
+            q.put(data)
+        except Exception:
+            dead.append(q)
+
+    for d in dead:
+        if d in subscribers:
+            subscribers.remove(d)
 
 # =====================
 # HELPER PREFIX TABLE
@@ -342,6 +361,7 @@ def absence():
     user = session["userid"]
     date, checkin, checkout = get_latest_absen_for_user(user)
     late_status = ''
+    REALTIME_TABLE = T("log_absen")
 
     if request.method == "POST":
         aksi = request.form.get("aksi")
@@ -389,6 +409,12 @@ def absence():
             )
         except Exception as e:
             print("GAS ERROR:", e)  # cukup log, jangan ganggu user
+
+        # 3. send broadcast
+        broadcast_event({
+            "type": aksi,
+            "name": user
+        })
         
         flash("Recorded successfully!", "success")
         return redirect("/absence")
@@ -402,8 +428,29 @@ def absence():
         checkout=checkout,
         news=get_news(),
         sisa=get_sisa_cuti(user),
-        R2_PUBLIC_BASE_URL=R2_PUBLIC_BASE_URL
+        R2_PUBLIC_BASE_URL=R2_PUBLIC_BASE_URL,
+        REALTIME_TABLE = REALTIME_TABLE,
+        SUPABASE_URL = SUPABASE_URL,
+        SUPABASE_ANON_KEY = SUPABASE_ANON_KEY
     )
+
+@app.route("/stream")
+def stream():
+    if "userid" not in session:
+        return Response(status=401)
+
+    def event_stream():
+        q = queue.Queue()
+        subscribers.append(q)
+        try:
+            while True:
+                data = q.get()
+                yield f"data: {json.dumps(data)}\n\n"
+        except GeneratorExit:
+            if q in subscribers:
+                subscribers.remove(q)
+
+    return Response(event_stream(), mimetype="text/event-stream")
 
 @app.route("/change_photo", methods=["POST"])
 def change_photo():

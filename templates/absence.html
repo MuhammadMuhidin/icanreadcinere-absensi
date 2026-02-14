@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="static/css/absence.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="half-circle"></div>
@@ -566,5 +567,57 @@ document.addEventListener("DOMContentLoaded", () => {
   sessionStorage.removeItem("lastAttendanceAction");
 });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", async function () {
+
+  const toast = document.getElementById("checkinToast");
+  if (!toast) return;
+
+  const SUPABASE_URL = "{{ SUPABASE_URL }}";
+  const SUPABASE_ANON_KEY = "{{ SUPABASE_ANON_KEY }}";
+  const REALTIME_TABLE = "{{ REALTIME_TABLE }}";
+
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
+
+  supabase
+    .channel("attendance-channel")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: REALTIME_TABLE
+      },
+      (payload) => {
+
+        const data = payload.new;
+
+        if (data.nama === "{{ nama }}") return;
+        if (data.aksi === "Check In" || data.aksi === "Check Out") {
+
+          const actionText =
+            data.aksi === "Check In"
+              ? "checked in"
+              : "checked out";
+
+          toast.textContent = data.nama + " has " + actionText;
+
+          toast.classList.add("show");
+
+          setTimeout(() => {
+            toast.classList.remove("show");
+          }, 3000);
+        }
+      }
+    )
+    .subscribe((status) => {
+  console.log("Realtime status:", status);
+});
+});
+</script>
+<div id="checkinToast" class="checkin-toast"></div>
 </body>
 </html>
