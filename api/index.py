@@ -57,7 +57,6 @@ POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
 SUPABASE_URL = os.environ.get("SUPABASE_URL")
 SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
-REALTIME_TABLE = T("log_absen")
 TZ = pytz.timezone("Asia/Jakarta")
 
 # =====================
@@ -362,6 +361,7 @@ def absence():
     user = session["userid"]
     date, checkin, checkout = get_latest_absen_for_user(user)
     late_status = ''
+    REALTIME_TABLE = T("log_absen")
 
     if request.method == "POST":
         aksi = request.form.get("aksi")
