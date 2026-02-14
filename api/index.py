@@ -60,23 +60,6 @@ SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
 TZ = pytz.timezone("Asia/Jakarta")
 
 # =====================
-# SIMPLE EVENT STREAM (SSE)
-# =====================
-subscribers = []
-
-def broadcast_event(data: dict):
-    dead = []
-    for q in subscribers:
-        try:
-            q.put(data)
-        except Exception:
-            dead.append(q)
-
-    for d in dead:
-        if d in subscribers:
-            subscribers.remove(d)
-
-# =====================
 # HELPER PREFIX TABLE
 # =====================
 DB_PREFIX = os.getenv("DB_PREFIX", "")
@@ -433,24 +416,6 @@ def absence():
         SUPABASE_URL = SUPABASE_URL,
         SUPABASE_ANON_KEY = SUPABASE_ANON_KEY
     )
-
-@app.route("/stream")
-def stream():
-    if "userid" not in session:
-        return Response(status=401)
-
-    def event_stream():
-        q = queue.Queue()
-        subscribers.append(q)
-        try:
-            while True:
-                data = q.get()
-                yield f"data: {json.dumps(data)}\n\n"
-        except GeneratorExit:
-            if q in subscribers:
-                subscribers.remove(q)
-
-    return Response(event_stream(), mimetype="text/event-stream")
 
 @app.route("/change_photo", methods=["POST"])
 def change_photo():
