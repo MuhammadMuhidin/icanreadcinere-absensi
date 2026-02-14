@@ -392,12 +392,6 @@ def absence():
             )
         except Exception as e:
             print("GAS ERROR:", e)  # cukup log, jangan ganggu user
-
-        # 3. send broadcast
-        broadcast_event({
-            "type": aksi,
-            "name": user
-        })
         
         flash("Recorded successfully!", "success")
         return redirect("/absence")
