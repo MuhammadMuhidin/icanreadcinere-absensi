@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="static/css/absence.css">
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 <div class="half-circle"></div>
@@ -567,46 +568,54 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 <script>
-/* =====================
-   REALTIME ATTENDANCE BROADCAST
-   ===================== */
+document.addEventListener("DOMContentLoaded", async function () {
 
-(function () {
   const toast = document.getElementById("checkinToast");
   if (!toast) return;
 
-  let hideTimer;
+  const SUPABASE_URL = "{{ SUPABASE_URL }}";
+  const SUPABASE_ANON_KEY = "{{ SUPABASE_ANON_KEY }}";
+  const REALTIME_TABLE = "{{ REALTIME_TABLE }}";
 
-  try {
-    const evtSource = new EventSource("/stream");
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+  );
 
-    evtSource.onmessage = function (event) {
-      const data = JSON.parse(event.data);
+  supabase
+    .channel("attendance-channel")
+    .on(
+      "postgres_changes",
+      {
+        event: "INSERT",
+        schema: "public",
+        table: REALTIME_TABLE
+      },
+      (payload) => {
 
-      if (data.type === "Check In" || data.type === "Check Out") {
+        const data = payload.new;
 
-        const actionText =
-          data.type === "Check In"
-            ? "checked in"
-            : "checked out";
+        if (data.nama === "{{ nama }}") return;
+        if (data.aksi === "Check In" || data.aksi === "Check Out") {
 
-        toast.textContent = data.name + " has " + actionText;
+          const actionText =
+            data.aksi === "Check In"
+              ? "checked in"
+              : "checked out";
 
-        toast.classList.add("show");
+          toast.textContent = data.nama + " has " + actionText;
 
-        clearTimeout(hideTimer);
-        hideTimer = setTimeout(() => {
-          toast.classList.remove("show");
-        }, 2000);
+          toast.classList.add("show");
+
+          setTimeout(() => {
+            toast.classList.remove("show");
+          }, 2000);
+        }
       }
-    };
+    )
+    .subscribe();
 
-    evtSource.onerror = function () {
-      // silent fail
-    };
-
-  } catch (_) {}
-})();
+});
 </script>
 <div id="checkinToast" class="checkin-toast"></div>
 </body>

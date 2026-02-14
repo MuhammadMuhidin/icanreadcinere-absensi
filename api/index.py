@@ -55,6 +55,9 @@ def send_wa(phone, message):
 GAS_URL = os.environ.get("GAS_URL")
 POINTOFFICE = list(map(float, os.getenv("POINTOFFICE").split(",")))
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL")
+SUPABASE_URL = os.environ.get("SUPABASE_URL")
+SUPABASE_ANON_KEY = os.environ.get("SUPABASE_ANON_KEY")
+REALTIME_TABLE = REALTIME_TABLE = T("log_absen")
 TZ = pytz.timezone("Asia/Jakarta")
 
 # =====================
@@ -425,7 +428,10 @@ def absence():
         checkout=checkout,
         news=get_news(),
         sisa=get_sisa_cuti(user),
-        R2_PUBLIC_BASE_URL=R2_PUBLIC_BASE_URL
+        R2_PUBLIC_BASE_URL=R2_PUBLIC_BASE_URL,
+        REALTIME_TABLE = REALTIME_TABLE,
+        SUPABASE_URL = SUPABASE_URL,
+        SUPABASE_ANON_KEY = SUPABASE_ANON_KEY
     )
 
 @app.route("/stream")
