@@ -605,10 +605,10 @@ document.addEventListener("DOMContentLoaded", async function () {
 
           const displayName =
             data.nama === "{{ nama }}"
-              ? "You"
-              : data.nama;
+              ? "You have "
+              : data.nama + " has ";
 
-          toast.textContent = displayName + " has " + actionText;
+          toast.textContent = displayName + actionText;
 
           toast.classList.add("show");
 
