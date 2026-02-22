@@ -595,7 +595,7 @@ document.addEventListener("DOMContentLoaded", async function () {
 
         const data = payload.new;
 
-        if (data.nama === "{{ nama }}") return;
+        //if (data.nama === "{{ nama }}") return;
         if (data.aksi === "Check In" || data.aksi === "Check Out") {
 
           const actionText =
@@ -603,7 +603,12 @@ document.addEventListener("DOMContentLoaded", async function () {
               ? "checked in"
               : "checked out";
 
-          toast.textContent = data.nama + " has " + actionText;
+          const displayName =
+            data.nama === "{{ nama }}"
+              ? "You have "
+              : data.nama + " has ";
+
+          toast.textContent = displayName + actionText;
 
           toast.classList.add("show");
 
