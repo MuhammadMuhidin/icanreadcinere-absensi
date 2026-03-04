@@ -599,3 +599,9 @@ tbody tr td:first-child {
   color: var(--text);
   letter-spacing: .2px;
 }
+
+.completed {
+  font-size:12px;
+  color: var(--muted);
+  font-weight:600;
+}
