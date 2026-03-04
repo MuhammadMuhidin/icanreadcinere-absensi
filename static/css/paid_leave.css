@@ -605,3 +605,11 @@ tbody tr td:first-child {
   color: var(--muted);
   font-weight:600;
 }
+
+.actions {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
