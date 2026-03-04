@@ -533,7 +533,7 @@ function renderTable(data) {
   }
 
   data.forEach(l => {
-    let action = "-";
+    let action = `<span class="completed">COMPLETED</span>`;
 
     if (l.status === "WAITING APPROVAL") {
   let buttons = [];
@@ -599,8 +599,8 @@ function renderTable(data) {
           }
         </td>
         <td>
-          <div class="label">Action</div>
-          <div class="actions">${action}</div>
+        <div class="label">Action</div>
+        <div class="actions">${action}</div>
         </td>
       </tr>
     `;
