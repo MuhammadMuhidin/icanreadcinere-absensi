@@ -521,16 +521,75 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await res.json();
     if (!data.show) return;
     Swal.fire({
-      title: "⚠️ Reminder",
-      html: data.message,
-      imageUrl: "/static/reminder.svg",
-      imageWidth: "80%",
-      imageHeight: "80%",
-      timer: 10000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      allowOutsideClick: false
-    });
+  title: "⚠️ Reminder",
+  html: `
+    <div style="position:relative;">
+      ${data.message}
+      <div id="swalCountdown" style="
+        position:absolute;
+        top:-8px;
+        right:-8px;
+        background:#22c55e;
+        color:white;
+        font-size:11px;
+        font-weight:700;
+        padding:4px 7px;
+        border-radius:999px;
+        box-shadow:0 2px 8px rgba(0,0,0,0.3);
+        transition: all .25s ease;
+      ">
+        10
+      </div>
+    </div>
+
+    <style>
+      @keyframes pulseBadge {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.25); }
+        100% { transform: scale(1); }
+      }
+      .pulse {
+        animation: pulseBadge .6s infinite;
+      }
+    </style>
+  `,
+  imageUrl: "/static/reminder.svg",
+  imageWidth: "80%",
+  imageHeight: "80%",
+  timer: 10000,
+  timerProgressBar: true,
+  showConfirmButton: false,
+  allowOutsideClick: false,
+
+  didOpen: () => {
+    const el = document.getElementById("swalCountdown");
+    let timeLeft = 10;
+
+    const interval = setInterval(() => {
+      timeLeft--;
+
+      if (!el) return;
+
+      el.textContent = timeLeft;
+
+      // === warna berubah ===
+      if (timeLeft <= 3) {
+        el.style.background = "#ef4444"; // merah
+        el.classList.add("pulse");
+      } else if (timeLeft <= 6) {
+        el.style.background = "#f59e0b"; // kuning
+        el.classList.remove("pulse");
+      } else {
+        el.style.background = "#22c55e"; // hijau
+        el.classList.remove("pulse");
+      }
+
+      if (timeLeft <= 0) {
+        clearInterval(interval);
+      }
+    }, 1000);
+  }
+});
   } catch (err) {
     console.error("Missed attendance check error:", err);
   }
