@@ -523,32 +523,38 @@ document.addEventListener("DOMContentLoaded", async () => {
     Swal.fire({
   title: "⚠️ Reminder",
   html: `
-    <div style="position:relative;">
-      ${data.message}
-      <div id="swalCountdown" style="
-        position:absolute;
-        top:-8px;
-        right:-8px;
-        background:#22c55e;
-        color:white;
-        font-size:11px;
-        font-weight:700;
-        padding:4px 7px;
-        border-radius:999px;
-        box-shadow:0 2px 8px rgba(0,0,0,0.3);
-        transition: all .25s ease;
-      ">
-        10
-      </div>
-    </div>
+    ${data.message}
+
+    <div id="swalCountdown" class="swal-countdown">10</div>
 
     <style>
+      /* anchor ke popup */
+      .swal2-popup {
+        position: relative !important;
+      }
+
+      .swal-countdown {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        background: #22c55e;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 4px 7px;
+        border-radius: 999px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        z-index: 9999;
+        transition: all .25s ease;
+      }
+
       @keyframes pulseBadge {
         0% { transform: scale(1); }
         50% { transform: scale(1.25); }
         100% { transform: scale(1); }
       }
-      .pulse {
+
+      .swal-countdown.pulse {
         animation: pulseBadge .6s infinite;
       }
     </style>
@@ -569,24 +575,20 @@ document.addEventListener("DOMContentLoaded", async () => {
       timeLeft--;
 
       if (!el) return;
-
       el.textContent = timeLeft;
 
-      // === warna berubah ===
       if (timeLeft <= 3) {
-        el.style.background = "#ef4444"; // merah
+        el.style.background = "#ef4444";
         el.classList.add("pulse");
       } else if (timeLeft <= 6) {
-        el.style.background = "#f59e0b"; // kuning
+        el.style.background = "#f59e0b";
         el.classList.remove("pulse");
       } else {
-        el.style.background = "#22c55e"; // hijau
+        el.style.background = "#22c55e";
         el.classList.remove("pulse");
       }
 
-      if (timeLeft <= 0) {
-        clearInterval(interval);
-      }
+      if (timeLeft <= 0) clearInterval(interval);
     }, 1000);
   }
 });
