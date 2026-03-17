@@ -521,16 +521,87 @@ document.addEventListener("DOMContentLoaded", async () => {
     const data = await res.json();
     if (!data.show) return;
     Swal.fire({
-      title: "⚠️ Reminder",
-      html: data.message,
-      imageUrl: "/static/reminder.svg",
-      imageWidth: "80%",
-      imageHeight: "80%",
-      timer: 10000,
-      timerProgressBar: true,
-      showConfirmButton: false,
-      allowOutsideClick: false
-    });
+  title: "⚠️ Reminder",
+  html: `
+    ${data.message}
+
+    <div id="swalCountdown" class="swal-countdown">10</div>
+
+    <style>
+      /* anchor ke popup */
+      .swal2-popup {
+        position: relative !important;
+      }
+
+      .swal-countdown {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 26px;
+  height: 26px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: #22c55e;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+
+  border: 2px solid rgba(255,255,255,0.6);
+  border-radius: 50%; /* kunci bulat */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+
+  z-index: 9999;
+  transition: all .25s ease;
+  }
+
+      @keyframes pulseBadge {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.25); }
+        100% { transform: scale(1); }
+      }
+
+      .swal-countdown.pulse {
+        animation: pulseBadge .6s infinite;
+      }
+    </style>
+  `,
+  imageUrl: "/static/reminder.svg",
+  imageWidth: "80%",
+  imageHeight: "80%",
+  timer: 10000,
+  timerProgressBar: true,
+  showConfirmButton: false,
+  allowOutsideClick: false,
+
+  didOpen: () => {
+    const el = document.getElementById("swalCountdown");
+    let timeLeft = 10;
+
+    const interval = setInterval(() => {
+      timeLeft--;
+
+      if (!el) return;
+      el.textContent = timeLeft;
+
+      if (timeLeft <= 3) {
+        el.style.background = "#ef4444";
+        el.classList.add("pulse");
+      } else if (timeLeft <= 6) {
+        el.style.background = "#f59e0b";
+        el.classList.remove("pulse");
+      } else {
+        el.style.background = "#22c55e";
+        el.classList.remove("pulse");
+      }
+
+      if (timeLeft <= 0) clearInterval(interval);
+    }, 1000);
+  }
+});
   } catch (err) {
     console.error("Missed attendance check error:", err);
   }
