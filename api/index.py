@@ -574,13 +574,13 @@ def submit_leave():
     if (leave_date - today).days > 30:
         return "leave date too far in the future", 400
 
-    # 🔑 conflict hanya untuk teacher
-    if not is_non_teacher(user_id):
-        conflict = has_leave_conflict(sb, leave_date_raw)
-        if conflict:
-            return jsonify(
-                message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"
-            ), 409
+    # 🔑 conflict hanya untuk teacher (non active)
+    #if not is_non_teacher(user_id):
+    #    conflict = has_leave_conflict(sb, leave_date_raw)
+    #    if conflict:
+    #        return jsonify(
+    #            message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"
+    #        ), 409
         
     # Insert
     sb.table(T("paid_leave")).insert({
