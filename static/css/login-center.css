@@ -1,4 +1,4 @@
-/* Keep the sign-in form card as the visual centre of the viewport. */
+/* Keep the sign-in form card as the visual centre without sacrificing the full logo. */
 .login-page {
   display: grid !important;
   place-items: center !important;
@@ -26,10 +26,21 @@
   margin: 0 auto;
 }
 
+.login-page.login-layout-scroll {
+  place-items: start center !important;
+  overflow-y: auto;
+}
+
+.login-page.login-layout-scroll .login-panel {
+  align-content: start;
+  transform: none;
+  transition: none;
+}
+
 @media (max-width: 520px) {
   .login-page {
     place-items: center !important;
-    padding: max(16px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom));
+    padding: max(18px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom));
   }
 
   .login-panel {
@@ -39,6 +50,10 @@
 
   .login-brand {
     margin-bottom: 12px;
+  }
+
+  .login-page.login-layout-scroll {
+    place-items: start center !important;
   }
 }
 
@@ -52,7 +67,6 @@
   .login-panel {
     align-content: start;
     transform: none;
-    padding-top: max(10px, env(safe-area-inset-top)) !important;
     transition: none;
   }
 }
