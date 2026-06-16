@@ -1,0 +1,33 @@
+/* Restore the login logo sizing used at commit b5b329b8914cef9838556ec196aeb1578108f7a1. */
+.login-logo {
+  max-width: 250px;
+  width: 100%;
+  height: auto;
+  max-height: none;
+  display: block;
+  margin: 10% auto 0;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  filter: none;
+}
+
+@media (max-width: 520px) {
+  .login-logo {
+    max-width: 250px;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    margin: 10% auto 0;
+  }
+}
+
+html[data-theme="dark"] .login-logo,
+html[data-theme="light"] .login-logo {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  filter: none;
+}
