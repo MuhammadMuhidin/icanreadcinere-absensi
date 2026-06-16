@@ -8,11 +8,13 @@
 }
 
 .login-panel {
+  --login-card-center-offset: 0px;
   display: grid;
   align-content: center;
   width: min(100%, 470px);
   padding: 0 !important;
-  transform: translateY(clamp(-86px, -6.5vh, -56px));
+  transform: translateY(calc(-1 * var(--login-card-center-offset)));
+  transition: transform 180ms ease;
 }
 
 .login-brand {
@@ -33,7 +35,6 @@
   .login-panel {
     align-content: center;
     padding-top: 0 !important;
-    transform: translateY(clamp(-74px, -5.5vh, -48px));
   }
 
   .login-brand {
@@ -52,5 +53,12 @@
     align-content: start;
     transform: none;
     padding-top: max(10px, env(safe-area-inset-top)) !important;
+    transition: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-panel {
+    transition: none;
   }
 }
