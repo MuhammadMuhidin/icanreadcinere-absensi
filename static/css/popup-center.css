@@ -1,4 +1,8 @@
 /* Keep every modal popup precisely centered in the visual viewport. */
+.app-dialog-accent {
+  display: none !important;
+}
+
 dialog.dialog,
 dialog.app-dialog {
   position: fixed !important;
