@@ -9,8 +9,12 @@
   const leaveCards = document.querySelectorAll('section[aria-label="Leave overview"] > a.card');
   if (!Object.values(targets).some(Boolean) && !leaveCards.length) return;
 
+  targets.today?.classList.add('no-detail-arrow');
+  targets.month?.classList.add('no-detail-arrow');
+
   let cache = null;
   let pending = null;
+
   const icons = {
     profile: '<path d="M20 21a8 8 0 0 0-16 0"></path><circle cx="12" cy="7" r="4"></circle>',
     today: '<circle cx="12" cy="12" r="9"></circle><path d="M12 7v5l3 2"></path>',
@@ -48,7 +52,10 @@
     const text = String(value || 'Unknown').replaceAll('_', ' ');
     const lower = text.toLowerCase();
     const kind = lower.includes('approved') || lower.includes('complete') || lower.includes('on time')
-      ? 'success' : lower.includes('waiting') || lower.includes('late') || lower.includes('checked in') ? 'warning' : 'muted';
+      ? 'success'
+      : lower.includes('waiting') || lower.includes('late') || lower.includes('checked in')
+        ? 'warning'
+        : 'muted';
     return `<span class="detail-badge detail-badge-${kind}">${escapeHtml(text)}</span>`;
   }
 
@@ -65,8 +72,7 @@
           <div class="detail-dialog-content" data-detail-content></div>
           <div class="detail-dialog-actions" data-detail-actions></div>
         </div>
-      </dialog>
-    `);
+      </dialog>`);
   }
 
   function openDetail({ title, subtitle, icon, content, actions = [] }) {
@@ -84,7 +90,9 @@
 
   function showLoading(type) {
     openDetail({
-      title: 'Loading details', subtitle: 'Reading the latest records from the server.', icon: type,
+      title: 'Loading details',
+      subtitle: 'Reading the latest records from the server.',
+      icon: type,
       content: '<div class="detail-empty"><div class="spinner" aria-hidden="true"></div><p>Preparing a complete summary.</p></div>',
       actions: [{ id: 'close', label: 'Close' }]
     });
@@ -106,8 +114,9 @@
 
   async function show(type) {
     showLoading(type);
-    try { render(type, await getData()); }
-    catch (error) {
+    try {
+      render(type, await getData());
+    } catch (error) {
       document.getElementById('dashboardDetailDialog')?.close();
       await window.appDialog.error({ title: 'Details could not be loaded', message: error.message });
     }
@@ -116,19 +125,15 @@
   function render(type, data) {
     if (type === 'profile') {
       const item = data.profile;
-      const source = item.auth_source === 'supabase' ? 'Supabase secured' : 'JSON fallback';
       openDetail({
         title: item.user_id,
         subtitle: `${item.title} · ${item.role}`,
         icon: 'profile',
-        content: `
-          <div class="detail-section"><h3 class="detail-section-title">Account</h3>${row('User ID', item.user_id)}${row('Title', item.title)}${row('Role', item.role)}${row('Phone', item.phone || 'Not configured')}</div>
-          <div class="detail-section"><h3 class="detail-section-title">Security</h3>${row('Login source', source)}${row('Supabase table', item.auth_table)}${row('Last login', formatDate(item.last_login_at, true))}<p class="detail-note" style="margin-top:12px">${item.auth_source === 'supabase' ? 'The account credential is managed by Supabase.' : 'This account still uses JSON fallback. Updating the credential will migrate it into Supabase automatically.'}</p></div>
-          <div class="detail-section"><h3 class="detail-section-title">Current overview</h3><div class="detail-grid">${stat('Leave balance', `${item.leave_balance ?? '—'} days`)}${stat('Recorded days', data.month.summary.recorded_days)}${stat('On time', data.month.summary.on_time_days)}${stat('Late', data.month.summary.late_days)}</div></div>`,
+        content: `<div class="detail-section"><h3 class="detail-section-title">Account</h3>${row('User ID', item.user_id)}${row('Title', item.title)}${row('Role', item.role)}${row('Phone', item.phone || 'Not configured')}</div>`,
         actions: [
           { id: 'close', label: 'Close' },
           { id: 'photo', label: 'Change photo', className: 'btn-secondary' },
-          { id: 'security', label: 'Security settings', className: 'btn-primary' }
+          { id: 'security', label: 'Change password', className: 'btn-primary' }
         ]
       });
       return;
@@ -137,10 +142,12 @@
     if (type === 'today') {
       const item = data.today;
       openDetail({
-        title: 'Today’s attendance', subtitle: item.date_label, icon: 'today',
+        title: 'Today’s attendance',
+        subtitle: item.date_label,
+        icon: 'today',
         content: `
-          <div class="detail-section"><h3 class="detail-section-title">Status</h3><div style="margin-bottom:12px">${badge(item.state)}</div><div class="detail-grid">${stat('Check in', item.checkin?.slice(0,5) || '—')}${stat('Check out', item.checkout?.slice(0,5) || '—')}${stat('Duration', duration(item.duration_minutes))}${stat('Expected start', item.expected_start)}</div></div>
-          <div class="detail-section"><h3 class="detail-section-title">Context</h3>${row('Punctuality', item.deviation === 'On time!' ? 'On time' : item.deviation ? `Late ${item.deviation.slice(0,5)}` : 'Not recorded')}${row('Mood', item.mood || 'Not provided')}${row('Database records', item.events?.length || 0)}${item.notes ? `<p class="detail-note" style="margin-top:12px"><strong>Note</strong>\n${escapeHtml(item.notes)}</p>` : ''}</div>`,
+          <div class="detail-section"><h3 class="detail-section-title">Status</h3><div style="margin-bottom:12px">${badge(item.state)}</div><div class="detail-grid">${stat('Check in', item.checkin?.slice(0, 5) || '—')}${stat('Check out', item.checkout?.slice(0, 5) || '—')}${stat('Duration', duration(item.duration_minutes))}${stat('Expected start', item.expected_start)}</div></div>
+          <div class="detail-section"><h3 class="detail-section-title">Recorded context</h3>${row('Punctuality', item.deviation === 'On time!' ? 'On time' : item.deviation ? `Late ${item.deviation.slice(0, 5)}` : 'Not recorded')}${row('Mood', item.mood || 'Not provided')}${row('Database records', item.events?.length || 0)}${item.notes ? `<p class="detail-note" style="margin-top:12px"><strong>Note</strong>\n${escapeHtml(item.notes)}</p>` : ''}</div>`,
         actions: [{ id: 'close', label: 'Close', className: 'btn-primary' }]
       });
       return;
@@ -148,13 +155,17 @@
 
     if (type === 'timeline') {
       const events = data.today.events || [];
-      const items = events.length ? events.map((event) => listItem(
-        event.aksi,
-        [event.deviation === 'On time!' ? 'On time' : event.deviation ? `Late ${event.deviation.slice(0,5)}` : '', event.mood ? `Mood: ${event.mood}` : '', event.notes || ''].filter(Boolean).join(' · '),
-        event.waktu?.slice(0,5) || '—'
-      )).join('') : '<div class="detail-empty">No attendance events have been recorded today.</div>';
+      const items = events.length
+        ? events.map((event) => listItem(
+            event.aksi,
+            [event.deviation === 'On time!' ? 'On time' : event.deviation ? `Late ${event.deviation.slice(0, 5)}` : '', event.mood ? `Mood: ${event.mood}` : '', event.notes || ''].filter(Boolean).join(' · '),
+            event.waktu?.slice(0, 5) || '—'
+          )).join('')
+        : '<div class="detail-empty">No attendance events have been recorded today.</div>';
       openDetail({
-        title: 'Today’s timeline', subtitle: `${data.today.date_label} · ${events.length} database record${events.length === 1 ? '' : 's'}`, icon: 'timeline',
+        title: 'Today’s timeline',
+        subtitle: `${data.today.date_label} · ${events.length} database record${events.length === 1 ? '' : 's'}`,
+        icon: 'timeline',
         content: `<div class="detail-section"><h3 class="detail-section-title">Recorded events</h3><div class="detail-list">${items}</div></div>`,
         actions: [{ id: 'close', label: 'Close', className: 'btn-primary' }]
       });
@@ -165,11 +176,13 @@
       const item = data.month;
       const summary = item.summary;
       openDetail({
-        title: `Attendance · ${item.period}`, subtitle: 'Calculated from every stored attendance record in this period.', icon: 'month',
+        title: `Attendance · ${item.period}`,
+        subtitle: 'Calculated from every stored attendance record in this period.',
+        icon: 'month',
         content: `
           <div class="detail-section"><h3 class="detail-section-title">Performance</h3><div class="detail-grid">${stat('Recorded days', summary.recorded_days)}${stat('Completed days', summary.completed_days)}${stat('On time', summary.on_time_days)}${stat('Late', summary.late_days)}${stat('Incomplete', summary.incomplete_days)}${stat('Late minutes', summary.total_late_minutes)}${stat('Total work', duration(summary.total_work_minutes))}${stat('Average day', duration(summary.average_work_minutes))}</div></div>
-          <div class="detail-section"><h3 class="detail-section-title">Highlights</h3>${row('Longest completed day', item.longest_day ? `${formatDate(item.longest_day.date)} · ${duration(item.longest_day.duration_minutes)}` : 'No completed day')}${row('Latest late arrival', item.latest_late ? `${formatDate(item.latest_late.date)} · ${item.latest_late.deviation.slice(0,5)}` : 'None')}</div>
-          <div class="detail-section"><h3 class="detail-section-title">Recent recorded days</h3><div class="detail-list">${item.recent_days.length ? item.recent_days.map((day) => listItem(formatDate(day.date), `${day.checkin?.slice(0,5) || '—'}–${day.checkout?.slice(0,5) || '—'} · ${day.state.replaceAll('_',' ')}`, duration(day.duration_minutes))).join('') : '<div class="detail-empty">No records in this period.</div>'}</div></div>`,
+          <div class="detail-section"><h3 class="detail-section-title">Highlights</h3>${row('Longest completed day', item.longest_day ? `${formatDate(item.longest_day.date)} · ${duration(item.longest_day.duration_minutes)}` : 'No completed day')}${row('Latest late arrival', item.latest_late ? `${formatDate(item.latest_late.date)} · ${item.latest_late.deviation.slice(0, 5)}` : 'None')}</div>
+          <div class="detail-section"><h3 class="detail-section-title">Recent recorded days</h3><div class="detail-list">${item.recent_days.length ? item.recent_days.map((day) => listItem(formatDate(day.date), `${day.checkin?.slice(0, 5) || '—'}–${day.checkout?.slice(0, 5) || '—'} · ${day.state.replaceAll('_', ' ')}`, duration(day.duration_minutes))).join('') : '<div class="detail-empty">No records in this period.</div>'}</div></div>`,
         actions: [{ id: 'close', label: 'Close' }, { id: 'history', label: 'Open full history', className: 'btn-primary' }]
       });
       return;
@@ -178,10 +191,12 @@
     if (type === 'leave') {
       const item = data.leave;
       openDetail({
-        title: 'Paid leave overview', subtitle: item.next_approved ? `Next approved leave: ${formatDate(item.next_approved.leave_date)}` : 'No upcoming approved leave.', icon: 'leave',
+        title: 'Paid leave overview',
+        subtitle: item.next_approved ? `Next approved leave: ${formatDate(item.next_approved.leave_date)}` : 'No upcoming approved leave.',
+        icon: 'leave',
         content: `
           <div class="detail-section"><h3 class="detail-section-title">Balance and requests</h3><div class="detail-grid">${stat('Balance', `${item.balance ?? '—'} days`)}${stat('Waiting', item.counts.waiting)}${stat('Approved', item.counts.approved)}${stat('Rejected', item.counts.rejected)}${stat('Canceled', item.counts.canceled)}${stat('All requests', item.counts.all)}</div></div>
-          <div class="detail-section"><h3 class="detail-section-title">Recent requests</h3><div class="detail-list">${item.recent_requests.length ? item.recent_requests.map((entry) => listItem(formatDate(entry.leave_date), entry.reason || `Submitted ${formatDate(entry.created_at)}`, entry.status.replace('WAITING APPROVAL','Waiting'))).join('') : '<div class="detail-empty">No leave requests yet.</div>'}</div></div>`,
+          <div class="detail-section"><h3 class="detail-section-title">Recent requests</h3><div class="detail-list">${item.recent_requests.length ? item.recent_requests.map((entry) => listItem(formatDate(entry.leave_date), entry.reason || `Submitted ${formatDate(entry.created_at)}`, entry.status.replace('WAITING APPROVAL', 'Waiting'))).join('') : '<div class="detail-empty">No leave requests yet.</div>'}</div></div>`,
         actions: [{ id: 'close', label: 'Close' }, { id: 'leave', label: 'Open leave page', className: 'btn-primary' }]
       });
       return;
@@ -189,7 +204,9 @@
 
     const item = data.announcements;
     openDetail({
-      title: 'Announcements', subtitle: item.latest ? `Latest published ${formatDate(item.latest.published_at)}` : 'No published announcement.', icon: 'announcement',
+      title: 'Announcements',
+      subtitle: item.latest ? `Latest published ${formatDate(item.latest.published_at)}` : 'No published announcement.',
+      icon: 'announcement',
       content: `
         <div class="detail-section"><h3 class="detail-section-title">Latest</h3>${item.latest ? `<p class="detail-note">${escapeHtml(item.latest.content)}</p>` : '<div class="detail-empty">No announcement available.</div>'}</div>
         <div class="detail-section"><h3 class="detail-section-title">Previous announcements</h3><div class="detail-list">${item.previous.length ? item.previous.map((entry) => listItem(formatDate(entry.published_at), entry.content)).join('') : '<div class="detail-empty">No previous announcements.</div>'}</div></div>`,
@@ -200,7 +217,10 @@
   function activate(element, type, className = 'home-detail-card') {
     if (!element) return;
     element.classList.add(className);
-    if (element.tagName !== 'A') { element.setAttribute('role', 'button'); element.tabIndex = 0; }
+    if (element.tagName !== 'A') {
+      element.setAttribute('role', 'button');
+      element.tabIndex = 0;
+    }
     const open = (event) => {
       if (event.target.closest('button, input, textarea, select, a:not(.home-detail-link), .profile-photo')) return;
       if (element.tagName === 'A') event.preventDefault();
@@ -209,7 +229,8 @@
     element.addEventListener('click', open);
     element.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      event.preventDefault(); open(event);
+      event.preventDefault();
+      open(event);
     });
   }
 
@@ -226,8 +247,14 @@
     if (!action) return;
     const dialog = document.getElementById('dashboardDetailDialog');
     if (action === 'close') dialog.close();
-    if (action === 'photo') { dialog.close(); document.getElementById('profilePhoto')?.click(); }
-    if (action === 'security') { dialog.close(); document.dispatchEvent(new CustomEvent('open-account-security')); }
+    if (action === 'photo') {
+      dialog.close();
+      document.getElementById('profilePhoto')?.click();
+    }
+    if (action === 'security') {
+      dialog.close();
+      document.dispatchEvent(new CustomEvent('open-account-security'));
+    }
     if (action === 'history') window.location.href = `/history?period=${cache?.month?.period || ''}`;
     if (action === 'leave') window.location.href = '/paid_leave';
   });
