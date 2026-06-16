@@ -1,4 +1,5 @@
 import hmac
+import os
 from datetime import datetime, timezone
 
 import bcrypt
@@ -13,7 +14,15 @@ class UserDirectory:
     def __init__(self, client_factory, fallback_users=None, table_name="app_users"):
         self.client_factory = client_factory
         self.fallback_users = fallback_users or {}
-        self.table_name = table_name
+
+        explicit_table = (os.getenv("AUTH_TABLE") or "").strip()
+        suffix = (os.getenv("DB_PREFIX") or "").strip()
+        if explicit_table:
+            self.table_name = explicit_table
+        elif table_name == "app_users":
+            self.table_name = f"app_users{suffix}"
+        else:
+            self.table_name = table_name
 
     @staticmethod
     def _normalise_db(row):
@@ -91,7 +100,10 @@ class UserDirectory:
                     print("USER LAST LOGIN UPDATE ERROR", exc)
                 return user
         except Exception as exc:
-            print("SUPABASE AUTH ERROR — USING JSON FALLBACK", exc)
+            print(
+                f"SUPABASE AUTH ERROR ({self.table_name}) — USING JSON FALLBACK",
+                exc,
+            )
 
         return self._fallback_authenticate(user_id, password)
 
@@ -112,8 +124,46 @@ class UserDirectory:
             if rows:
                 return self._normalise_db(rows[0])
         except Exception as exc:
-            print("SUPABASE USER LOOKUP ERROR — USING JSON FALLBACK", exc)
+            print(
+                f"SUPABASE USER LOOKUP ERROR ({self.table_name}) — USING JSON FALLBACK",
+                exc,
+            )
         return self._normalise_fallback(user_id, self.fallback_users.get(user_id))
+
+    def set_password(self, user_id, new_password, metadata=None):
+        """
+        Store the password in Supabase, creating the row when the account still
+        comes from USERS_JSON. After this succeeds, Supabase becomes authoritative.
+        """
+        if len(str(new_password or "")) < 8:
+            raise ValueError("Password must contain at least 8 characters")
+
+        current = self.get(user_id) or {}
+        metadata = metadata or {}
+        password_hash = bcrypt.hashpw(
+            str(new_password).encode("utf-8"),
+            bcrypt.gensalt(rounds=12),
+        ).decode("utf-8")
+
+        payload = {
+            "user_id": user_id,
+            "password_hash": password_hash,
+            "title": metadata.get("title") or current.get("title") or "Team Member",
+            "phone": metadata.get("phone") if metadata.get("phone") is not None else current.get("phone"),
+            "role": (metadata.get("role") or current.get("role") or "employee").lower(),
+            "is_active": bool(metadata.get("is_active", current.get("is_active", True))),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+        result = (
+            self.client_factory()
+            .table(self.table_name)
+            .upsert(payload, on_conflict="user_id")
+            .execute()
+        )
+        if not result.data:
+            raise RuntimeError("Supabase did not return the updated account")
+        return self._normalise_db(result.data[0])
 
     def all(self):
         """Return active Supabase users plus JSON-only users during migration."""
@@ -138,7 +188,10 @@ class UserDirectory:
                 if user["is_active"]:
                     users[user_id] = user
         except Exception as exc:
-            print("SUPABASE USER LIST ERROR — USING JSON FALLBACK", exc)
+            print(
+                f"SUPABASE USER LIST ERROR ({self.table_name}) — USING JSON FALLBACK",
+                exc,
+            )
 
         for user_id, row in self.fallback_users.items():
             if user_id in seen_in_supabase:
