@@ -1,699 +1,266 @@
-<!DOCTYPE html>
-<html lang="id">
-<head>
-  <meta charset="UTF-8">
-  <title>Absence GPS</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-  <link rel="stylesheet" href="static/css/absence.css">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-</head>
-<body>
-<div class="half-circle"></div>
-<div class="background-overlay"></div>
+{% extends "base.html" %}
 
-<!-- Dark mode toggle button -->
-<button id="darkModeToggle" class="dark-mode-toggle">🌙</button>
+{% block content %}
+<section class="profile-row" aria-label="Signed-in user">
+  <img
+    class="profile-photo"
+    src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
+    alt="{{ nama }} profile photo"
+    id="profilePhoto"
+    title="Change profile photo"
+    onerror="this.src='{{ url_for('static', filename='Logo.png') }}'"
+  >
+  <div class="profile-copy">
+    <p id="greeting">Welcome back</p>
+    <h1>{{ nama }}</h1>
+    <p>{{ title }}</p>
+  </div>
+  <input class="sr-only" type="file" id="profileUpload" accept="image/jpeg,image/png,image/webp">
+</section>
 
-<div style="position: fixed; top: 10px; left: 10px; z-index: 999;">
-<a href="/upload">
-  <img src="{{ url_for('static', filename='Hastag.png') }}" alt="Logo" style="height: 40px; width: auto;">
-</a>
-</div>
+{% if latest_incomplete %}
+  <div class="notice notice-warning" style="margin-top:16px">
+    <div class="notice-icon" aria-hidden="true">⚠</div>
+    <div>
+      <strong>Previous attendance is incomplete</strong>
+      <p>Your attendance on {{ latest_incomplete.date }} has no check-out record. Contact your manager if it needs correction.</p>
+    </div>
+  </div>
+{% endif %}
 
-<h2>Hi, <span id="greeting"></span><br><strong>{{ title }}. {{ nama }} 👋</strong></h2>
+<section class="card card-pad today-card" style="margin-top:16px" aria-labelledby="todayHeading">
+  <div class="today-header">
+    <div>
+      <div class="muted-on-dark" id="todayDate">Today</div>
+      <div class="live-clock" data-live-clock>--:--:--</div>
+    </div>
+    {% if today_session.state == 'not_started' %}
+      <span class="badge" style="background:rgba(255,255,255,.14);color:#fff">Not started</span>
+    {% elif today_session.state == 'checked_in' %}
+      <span class="badge" style="background:rgba(255,255,255,.14);color:#fff">Working now</span>
+    {% else %}
+      <span class="badge" style="background:rgba(255,255,255,.14);color:#fff">Completed</span>
+    {% endif %}
+  </div>
 
-    <div class="profile-container">
-      <div class="aura-ring">
-        <div class="profile-wrapper">
-          <img src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
-            alt="Foto Profil" class="profile-pic" onclick="document.getElementById('uploadPhoto').click()">
+  <div class="today-status">
+    {% if today_session.state == 'not_started' %}
+      <div class="muted-on-dark">TODAY'S STATUS</div>
+      <h2 id="todayHeading">Ready to check in</h2>
+      <p>Record your arrival when you are within the office area.</p>
+    {% elif today_session.state == 'checked_in' %}
+      <div class="muted-on-dark">TODAY'S STATUS</div>
+      <h2 id="todayHeading">You are checked in</h2>
+      <p>Started at {{ today_session.checkin[:5] }}{% if today_session.deviation == 'On time!' %} · On time{% elif today_session.deviation %} · Late by {{ today_session.deviation[:5] }}{% endif %}</p>
+      <p style="margin-top:6px">Working duration: <strong id="liveDuration" data-checkin="{{ today_session.checkin }}">calculating…</strong></p>
+    {% else %}
+      <div class="muted-on-dark">TODAY'S STATUS</div>
+      <h2 id="todayHeading">Attendance completed</h2>
+      <p>{{ today_session.checkin[:5] }}–{{ today_session.checkout[:5] }}{% if today_session.duration_minutes is not none %} · {{ today_session.duration_minutes // 60 }}h {{ today_session.duration_minutes % 60 }}m{% endif %}</p>
+    {% endif %}
+  </div>
+
+  {% if today_session.state != 'completed' %}
+    <div class="today-action">
+      <button
+        class="btn btn-lg btn-block"
+        type="button"
+        id="attendanceAction"
+        data-action="{{ 'Check In' if today_session.state == 'not_started' else 'Check Out' }}"
+      >
+        {{ 'Check In Now' if today_session.state == 'not_started' else 'Check Out' }}
+      </button>
+      <div class="location-hint"><span aria-hidden="true">⌖</span><span>Office GPS validation is required</span></div>
+    </div>
+  {% endif %}
+</section>
+
+<section class="card card-pad" aria-labelledby="timelineHeading">
+  <div class="section-heading">
+    <div>
+      <h2 id="timelineHeading">Today's timeline</h2>
+      <p>Your recorded check-in and check-out.</p>
+    </div>
+  </div>
+  <div class="timeline">
+    <div class="timeline-row">
+      <div class="timeline-icon {{ 'done' if today_session.checkin else '' }}" aria-hidden="true">{{ '✓' if today_session.checkin else '1' }}</div>
+      <div class="timeline-label"><strong>Check in</strong><span>{% if today_session.deviation == 'On time!' %}On time{% elif today_session.deviation %}Late by {{ today_session.deviation[:5] }}{% else %}Not recorded{% endif %}</span></div>
+      <div class="timeline-time">{{ today_session.checkin[:5] if today_session.checkin else '--:--' }}</div>
+    </div>
+    <div class="timeline-row">
+      <div class="timeline-icon {{ 'done' if today_session.checkout else '' }}" aria-hidden="true">{{ '✓' if today_session.checkout else '2' }}</div>
+      <div class="timeline-label"><strong>Check out</strong><span>{{ 'Attendance finished' if today_session.checkout else 'Not recorded' }}</span></div>
+      <div class="timeline-time">{{ today_session.checkout[:5] if today_session.checkout else '--:--' }}</div>
+    </div>
+  </div>
+</section>
+
+<section class="card card-pad" aria-labelledby="summaryHeading">
+  <div class="section-heading">
+    <div>
+      <h2 id="summaryHeading">This month</h2>
+      <p>{{ month_period }} · Based on your existing attendance records.</p>
+    </div>
+    <a href="/history?period={{ month_period }}" class="btn btn-ghost">Details</a>
+  </div>
+  <div class="grid grid-2 grid-md-4">
+    <div class="metric"><span class="metric-value">{{ month_summary.recorded_days }}</span><span class="metric-label">Recorded days</span></div>
+    <div class="metric"><span class="metric-value">{{ month_summary.on_time_days }}</span><span class="metric-label">On time</span></div>
+    <div class="metric"><span class="metric-value">{{ month_summary.late_days }}</span><span class="metric-label">Late</span></div>
+    <div class="metric"><span class="metric-value">{{ month_summary.incomplete_days }}</span><span class="metric-label">Incomplete</span></div>
+  </div>
+</section>
+
+<section class="grid grid-2" aria-label="Leave overview">
+  <a href="/paid_leave" class="card card-pad" style="text-decoration:none">
+    <span class="metric-label">Paid leave balance</span>
+    <span class="metric-value">{{ sisa if sisa is not none else '—' }} <small>days</small></span>
+  </a>
+  <a href="/paid_leave" class="card card-pad" style="text-decoration:none">
+    <span class="metric-label">Waiting approval</span>
+    <span class="metric-value">{{ leave_summary.waiting }}</span>
+  </a>
+</section>
+
+<section class="card card-pad" aria-labelledby="newsHeading">
+  <div class="section-heading">
+    <div>
+      <h2 id="newsHeading">Latest announcement</h2>
+      <p>Information from the centre.</p>
+    </div>
+  </div>
+  <div class="news-content">{{ news.content }}</div>
+  {% if news.published_at %}<div class="news-date">Published {{ news.published_at }}</div>{% endif %}
+</section>
+
+<dialog class="dialog" id="attendanceDialog">
+  <form method="post" id="attendanceForm">
+    <div class="dialog-body">
+      <h2 id="dialogTitle">Record attendance</h2>
+      <p class="dialog-description" id="dialogDescription">Mood and notes are optional. Your location will be checked after confirmation.</p>
+
+      <input type="hidden" name="aksi" id="attendanceType">
+      <input type="hidden" name="latitude" id="latitude">
+      <input type="hidden" name="longitude" id="longitude">
+      <input type="hidden" name="accuracy" id="accuracy">
+
+      <div class="form-group">
+        <span class="form-label">How are you feeling?</span>
+        <div class="mood-options">
+          <label class="mood-option"><input type="radio" name="mood" value="Happy"><span><b>😊</b>Happy</span></label>
+          <label class="mood-option"><input type="radio" name="mood" value="Neutral" checked><span><b>😐</b>Neutral</span></label>
+          <label class="mood-option"><input type="radio" name="mood" value="Sad"><span><b>😔</b>Low</span></label>
         </div>
-        <span class="status-dot" id="statusDot"></span>
+      </div>
+
+      <details>
+        <summary style="cursor:pointer;font-weight:700;font-size:13px">Add a note</summary>
+        <div class="form-group" style="margin-top:10px">
+          <label class="sr-only" for="notes">Attendance note</label>
+          <textarea class="form-control" id="notes" name="notes" maxlength="500" placeholder="Optional note"></textarea>
+        </div>
+      </details>
+
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" id="cancelAttendance">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="confirmAttendance">Continue</button>
       </div>
     </div>
-
-  {% if date %}
-  <table style="width:100%; color:white; border-collapse:collapse; margin-bottom:20px; border-spacing:10px;">
-    <tr>
-      <td>📅 <strong>Last Absence</strong></td>
-      <td><strong> {{ date }} <strong></td>
-    </tr>
-    <tr>
-      <td>⏰ Check In</td>
-      <td>
-        {% if checkin %}
-          {{ checkin }}
-        {% else %}
-          You Haven't Check In
-        {% endif %}
-      </td>
-    </tr>
-    <tr>
-      <td>🏁 Check Out</td>
-      <td>
-        {% if checkout %}
-          {{ checkout }}
-        {% else %}
-          You Haven't Check Out
-        {% endif %}
-      </td>
-    </tr>
-    <tr>
-      <td>🏖️ Paid Leave Balance</td>
-      <td>
-      {% if sisa is not none %}
-      {{ sisa }}
-      {% else %}
-      Not Found ⚠️
-      {% endif %}
-      </td>
-    </tr>
-  </table>
-  <div style="margin: 16px 0; text-align: center;">
-  <a href="/paid_leave" style="
-    position: relative;
-    display: inline-block;
-    padding: 12px 18px;
-    border-radius: 14px;
-    font-size: 16px;
-    font-weight: 600;
-    text-decoration: none;
-    background: linear-gradient(135deg, #2563eb, #1e40af);
-    color: white;
-    box-shadow: 0 8px 20px rgba(0,0,0,0.25);
-  ">
-    🗓️ View & Manage Leave
-    {% if session.userid == "Hanny" %}
-      <span id="leaveBadge" style="
-        display: none;
-        position: absolute;
-        top: -6px;
-        right: -6px;
-        width: 22px;
-        height: 22px;
-        line-height: 22px;
-        background: #ef4444;
-        color: white;
-        font-size: 12px;
-        font-weight: 700;
-        text-align: center;
-        border-radius: 50%;
-        box-shadow: 0 4px 10px rgba(0,0,0,0.25);
-    "></span>
-    {% endif %}
-  </a>
-
-  {% if session.userid == "Hanny" %}
-    <script>
-    async function updateLeaveBadge() {
-      try {
-        const res = await fetch("/api/leave/wait-count", { cache: "no-store" });
-        if (!res.ok) return;
-    
-        const data = await res.json();
-        const badge = document.getElementById("leaveBadge");
-        if (!badge) return;
-    
-        if (data.count > 0) {
-          badge.textContent = data.count;
-          badge.style.display = "inline-block";
-        } else {
-          badge.style.display = "none";
-        }
-      } catch (_) {}
-    }
-    
-    // first load
-    updateLeaveBadge();
-    
-    // polling every 15s
-    setInterval(updateLeaveBadge, 15000);
-    </script>
-  {% endif %}
-    
-  </div>
-  <div class="news-box news-hb">
-    <div class="news-title">📰 Latest News</div>
-    <div class="news-content">{{ news }}</div>
-  </div>
-{% else %}
-  <p style="text-align:center;">Belum ada data absen.</p>
-{% endif %}
-
-  <form method="POST">
-    <input type="hidden" name="latitude" id="latitude">
-    <input type="hidden" name="longitude" id="longitude">
-    <input type="hidden" name="aksi" id="aksi">
-    <input type="hidden" name="notes" id="notes">
-    <input type="hidden" name="mood" id="mood">
-    <button type="button" class="checkin" onclick="submitGPS('Check In')"><img src="{{url_for('static', filename='checkin.png')}}" class="btn-checkinout">Check In</button>
-    <button type="button" class="checkout" onclick="submitGPS('Check Out')"><img src="{{url_for('static', filename='checkout.png')}}" class="btn-checkinout">Check Out</button>
   </form>
+</dialog>
+{% endblock %}
 
-  <input type="file" id="uploadPhoto" accept="image/*" style="display:none;" onchange="uploadFotoProfil(this)">
-
-<div id="actionLoader" class="action-loader">
-  <div class="loader-card">
-    <div class="loader-icon">
-      <span></span><span></span><span></span>
-    </div>
-    <div id="loaderText" class="loader-text">Processing…</div>
-  </div>
-</div>
-
+{% block scripts %}
 <script>
-function showLoader(text) {
-  const el = document.getElementById("actionLoader");
-  document.getElementById("loaderText").innerHTML = text;
-  el.classList.add("show");
-}
-function hideLoader(delay = 0) {
-  setTimeout(() => {
-    document.getElementById("actionLoader").classList.remove("show");
-  }, delay);
-}
-function showError(message) {
-  hideLoader(); // ⬅️ WAJIB: loader ditutup dulu
-  Swal.fire({
-    imageUrl: "/static/error.svg",
-    imageWidth: "100%",
-    imageHeight: "100%",
-    title: "Unable to proceed",
-    text: message
+  const todayDate = document.getElementById('todayDate');
+  todayDate.textContent = new Intl.DateTimeFormat('en-GB', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+  }).format(new Date());
+
+  const hour = new Date().getHours();
+  document.getElementById('greeting').textContent = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  const liveDuration = document.getElementById('liveDuration');
+  function updateDuration() {
+    if (!liveDuration) return;
+    const [hours, minutes, seconds] = liveDuration.dataset.checkin.split(':').map(Number);
+    const start = new Date();
+    start.setHours(hours, minutes, seconds || 0, 0);
+    const diff = Math.max(0, Date.now() - start.getTime());
+    const totalMinutes = Math.floor(diff / 60000);
+    liveDuration.textContent = `${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m`;
+  }
+  updateDuration();
+  setInterval(updateDuration, 30000);
+
+  const dialog = document.getElementById('attendanceDialog');
+  const actionButton = document.getElementById('attendanceAction');
+  const form = document.getElementById('attendanceForm');
+  const actionField = document.getElementById('attendanceType');
+  const confirmButton = document.getElementById('confirmAttendance');
+
+  actionButton?.addEventListener('click', () => {
+    const action = actionButton.dataset.action;
+    actionField.value = action;
+    document.getElementById('dialogTitle').textContent = action;
+    confirmButton.textContent = `Continue to ${action}`;
+    dialog.showModal();
   });
-}
-</script>
+  document.getElementById('cancelAttendance').addEventListener('click', () => dialog.close());
 
-{% with messages = get_flashed_messages(with_categories=true) %}
-{% if messages %}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  hideLoader();
-  {% for category, message in messages %}
-    {% if category == 'error' %}
-      Swal.fire({
-        title: "{{ message }}",
-        imageUrl: "/static/error.svg",
-        imageWidth: "80%",
-        imageHeight: "80%",
-        timer: 3000,
-        timerProgressBar: true,
-        showConfirmButton: false,
-        allowOutsideClick: false
-      });
-    {% endif %}
-  {% endfor %}
-});
-</script>
-{% endif %}
-{% endwith %}
-
-  <script>
-  function submitGPS(aksiValue) {
-    Swal.fire({
-        title: `${aksiValue} now?`,
-        html: `
-<div style="
-  max-width:420px;
-  width:100%;
-  margin:0 auto;
-  text-align:left;
-  font-size:14px;
-">
-
-  <!-- Notes -->
-  <textarea
-    class="swal2-textarea"
-    placeholder="Is there anything you would like to say today?"
-    style="
-      width:100%;
-      height:80px;
-      font-size:14px;
-      border-radius:8px;
-      padding:10px;
-      resize:none;
-    ">
-  </textarea>
-
-  <!-- Mood -->
-  <div style="margin-top:20px;">
-    <label style="font-weight:600; display:block; margin-bottom:12px;">
-  Your mood today
-    </label>
-
-    <div style="display:flex; flex-direction:column; gap:12px;">
-
-      <label class="mood-card mood-happy">
-        <input type="radio" name="mood" value="Happy">
-        <span style="font-size:22px;">😊</span>
-        <span style="font-weight:500;">Happy</span>
-      </label>
-
-      <label class="mood-card mood-neutral active">
-        <input type="radio" name="mood" value="Neutral" checked>
-        <span style="font-size:22px;">😐</span>
-        <span style="font-weight:500;">Neutral</span>
-      </label>
-
-      <label class="mood-card mood-sad">
-        <input type="radio" name="mood" value="Sad">
-        <span style="font-size:22px;">😢</span>
-        <span style="font-weight:500;">Sad</span>
-      </label>
-
-      <p id="moodFeedback" style="
-  margin-top:12px;
-  font-size:13px;
-  color:#64748b;
-  opacity:0;
-  transition: opacity .15s cubic-bezier(.4,0,.2,1);
-">
-  Nice 😊 Hope today goes well.
-</p>
-
-    </div>
-  </div>
-</div>
-        `,
-        heightAuto: false,
-        scrollbarPadding: false,
-        allowOutsideClick: false,
-        showCancelButton: true,
-        confirmButtonText: 'Yes',
-        cancelButtonText: 'Cancel',
-        didOpen: () => {
-  const popup = Swal.getPopup();
-  const textarea = popup.querySelector('.swal2-textarea');
-
-  if (textarea) {
-    textarea.value = "";
-    textarea.dispatchEvent(new Event('input'));
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!navigator.geolocation) {
+      alert('This browser does not support location services.');
+      return;
     }
-  const cards = popup.querySelectorAll('.mood-card');
-  const feedback = popup.querySelector('#moodFeedback');
-
-  const messages = {
-    Happy: "Nice 😊 Hope today goes well.",
-    Neutral: "Alright 🙂 Wishing you a smooth day.",
-    Sad: "Thanks for sharing. Take it easy today."
-  };
-  // === SET DEFAULT MESSAGE SAAT LOAD ===
-const activeCard =
-  popup.querySelector('.mood-card.active') ||
-  popup.querySelector('.mood-card input:checked')?.closest('.mood-card');
-
-if (activeCard) {
-  const mood = activeCard.querySelector('input').value;
-  feedback.textContent = messages[mood] || "";
-  feedback.style.opacity = 1;
-    }
-
-  cards.forEach(card => {
-    card.addEventListener('click', () => {
-      cards.forEach(c => c.classList.remove('active'));
-      card.classList.add('active');
-      card.querySelector('input').checked = true;
-
-      const mood = card.querySelector('input').value;
-      feedback.textContent = messages[mood] || "";
-      feedback.style.opacity = 1;
-    });
-  });
-        },
-      preConfirm: () => {
-        const popup = Swal.getPopup();
-        const notesEl = popup.querySelector('.swal2-textarea');
-        const moodEl = popup.querySelector('input[name="mood"]:checked');
-      
-        document.getElementById("notes").value = notesEl?.value.trim() || "";
-        document.getElementById("mood").value = moodEl?.value || "Neutral";
-      
-        return true;
-      }
-      }).then((result) => {
-        if (!result.isConfirmed) return;
-
-      showLoader(
-        aksiValue === "Check In"
-        ? "🐨 Molly is preparing your Check In…"
-        : "🐨 Molly is confirming your Check Out…"
-      );
-      let submitted = false;
-
-      if (navigator.geolocation) {
-        const watchId = navigator.geolocation.watchPosition(function(pos) {
-            if (!submitted) {
-              document.getElementById("latitude").value = pos.coords.latitude;
-              document.getElementById("longitude").value = pos.coords.longitude;
-              document.getElementById("aksi").value = aksiValue;
-              sessionStorage.setItem("lastAttendanceAction", aksiValue);
-              document.forms[0].submit();
-              submitted = true;       // supaya gak submit lagi
-              navigator.geolocation.clearWatch(watchId); // hentikan watch
-            }
-        }, function(err) {
-          let message = "Failed to get your location.";
-        switch (err.code) {
-        case err.PERMISSION_DENIED:
-          message = "Location permission was denied.";
-          break;
-        case err.POSITION_UNAVAILABLE:
-          message = "Location information is unavailable.";
-          break;
-        case err.TIMEOUT:
-          message = "Location request timed out. Please try again.";
-          break;
-        }
-          showError(message);
-        },
-        {
-        enableHighAccuracy: true, // Pakai GPS + Wi-Fi untuk akurasi tinggi
-        timeout: 20000,           // Tunggu maksimal 20 detik
-        maximumAge: 0             // Jangan pakai cache koordinat lama
-      });
-      } else {
-        showError("Your browser does not support GPS location.");
-      }
-    });
-  }
-
-  setTimeout(() => {
-    const popup = document.getElementById("popup");
-    if (popup) {
-      popup.style.opacity = "0";
-    }
-  }, 3000);
-</script>
-
-  <!-- Script Dark Mode -->
-  <script>
-    const toggle = document.getElementById("darkModeToggle");
-
-    // Apply saved preference
-    if (localStorage.getItem("darkMode") === "enabled") {
-      document.body.classList.add("dark-mode");
-      toggle.textContent = "☀️";
-    }
-
-    // Toggle behavior
-    toggle.addEventListener("click", () => {
-      document.body.classList.toggle("dark-mode");
-      const isDark = document.body.classList.contains("dark-mode");
-
-      localStorage.setItem("darkMode", isDark ? "enabled" : "disabled");
-      toggle.textContent = isDark ? "☀️" : "🌙";
-    });
-  </script>
-
-<script>
-const btn = document.querySelector('.dark-mode-toggle');
-
-function shakeWithParticles() {
-  // Tambahkan class shake
-  btn.classList.add('shake');
-
-  // Buat beberapa partikel
-  for (let i = 0; i < 10; i++) {
-    const particle = document.createElement('div');
-    particle.classList.add('particle');
-    document.body.appendChild(particle);
-
-    // Posisi awal partikel di tengah tombol
-    const rect = btn.getBoundingClientRect();
-    particle.style.left = rect.left + rect.width / 2 + 'px';
-    particle.style.top = rect.top + rect.height / 2 + 'px';
-
-    // Gerakan acak keluar
-    const angle = Math.random() * 2 * Math.PI;
-    const distance = 30 + Math.random() * 20;
-    particle.style.setProperty('--x', `${Math.cos(angle) * distance}px`);
-    particle.style.setProperty('--y', `${Math.sin(angle) * distance}px`);
-
-    // Hapus partikel setelah animasi selesai
-    setTimeout(() => particle.remove(), 600);
-  }
-
-  // Hapus shake class
-  setTimeout(() => btn.classList.remove('shake'), 500);
-}
-
-// Jalankan tiap 5 detik
-setInterval(shakeWithParticles, 5000);
-</script>
-
-<script>
-    const hour = new Date().getHours();
-    let greet = "";
-
-    if (hour < 12) {
-      greet = "Good morning!";
-    } else if (hour < 18) {
-      greet = "Good afternoon!";
-    } else if (hour < 21) {
-      greet = "Good evening!";
-    } else {
-      greet = "Good night!";
-    }
-
-    document.getElementById("greeting").textContent = greet;
- </script>
-
-<script>
-  const serverDate = "{{ date }}";
-
-  const checkinRaw = "{{ checkin }}";
-  const checkoutRaw = "{{ checkout }}";
-
-  const checkin = (checkinRaw && checkinRaw !== "None") ? checkinRaw.trim() : "";
-  const checkout = (checkoutRaw && checkoutRaw !== "None") ? checkoutRaw.trim() : "";
-
-  const today = new Date();
-  const yyyy = today.getFullYear();
-  const mm = String(today.getMonth() + 1).padStart(2, '0');
-  const dd = String(today.getDate()).padStart(2, '0');
-  const todayStr = `${yyyy}-${mm}-${dd}`;
-
-  const dot = document.getElementById("statusDot");
-
-  if (serverDate !== todayStr || checkin === "") {
-    dot.classList.add("unchecked");   // abu
-  } else if (checkin !== "" && checkout === "") {
-    dot.classList.add("checked");     // hijau
-  } else if (checkout !== "") {
-    dot.classList.add("checkedout");  // biru + centang
-  }
-</script>
-
-<script>
-function uploadFotoProfil(input) {
-  const file = input.files[0];
-  if (!file) return;
-
-  const fd = new FormData();
-  fd.append('file', file);
-
-  fetch('/change_photo', { method: 'POST', body: fd })
-    .then(res => {
-      const img = document.querySelector('.profile-pic');
-      img.src = img.src.split('?')[0] + '?v=' + Date.now(); // bypass cache
-
-      if (res.status === 200) {
-        Swal.fire("✅ Success", "Profile photo updated!", "success");
-      } else {
-        Swal.fire("❌ Error", "Upload failed!", "error");
-      }
-    })
-    .catch(() => Swal.fire("❌ Error", "Upload gagal", "error"));
-}
-</script>
-<script>
-/* =====================
-   PATCH: MISSED ATTENDANCE SWAL
-   ===================== */
-document.addEventListener("DOMContentLoaded", async () => {
-  try {
-    const res = await fetch("/api/check-missed-attendance", {
-      cache: "no-store"
-    });
-    if (!res.ok) return;
-    const data = await res.json();
-    if (!data.show) return;
-    Swal.fire({
-  title: "⚠️ Reminder",
-  html: `
-    ${data.message}
-
-    <div id="swalCountdown" class="swal-countdown">10</div>
-
-    <style>
-      /* anchor ke popup */
-      .swal2-popup {
-        position: relative !important;
-      }
-
-      .swal-countdown {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-
-  width: 26px;
-  height: 26px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  background: #22c55e;
-  color: white;
-  font-size: 11px;
-  font-weight: 700;
-
-  border: 2px solid rgba(255,255,255,0.6);
-  border-radius: 50%; /* kunci bulat */
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
-
-  z-index: 9999;
-  transition: all .25s ease;
-  }
-
-      @keyframes pulseBadge {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.25); }
-        100% { transform: scale(1); }
-      }
-
-      .swal-countdown.pulse {
-        animation: pulseBadge .6s infinite;
-      }
-    </style>
-  `,
-  imageUrl: "/static/reminder.svg",
-  imageWidth: "80%",
-  imageHeight: "80%",
-  timer: 10000,
-  timerProgressBar: true,
-  showConfirmButton: false,
-  allowOutsideClick: false,
-
-  didOpen: () => {
-    const el = document.getElementById("swalCountdown");
-    let timeLeft = 10;
-
-    const interval = setInterval(() => {
-      timeLeft--;
-
-      if (!el) return;
-      el.textContent = timeLeft;
-
-      if (timeLeft <= 3) {
-        el.style.background = "#ef4444";
-        el.classList.add("pulse");
-      } else if (timeLeft <= 6) {
-        el.style.background = "#f59e0b";
-        el.classList.remove("pulse");
-      } else {
-        el.style.background = "#22c55e";
-        el.classList.remove("pulse");
-      }
-
-      if (timeLeft <= 0) clearInterval(interval);
-    }, 1000);
-  }
-});
-  } catch (err) {
-    console.error("Missed attendance check error:", err);
-  }
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const action = sessionStorage.getItem("lastAttendanceAction");
-  if (!action) return;
-
-  let targetCell = null;
-
-  // Cari cell berdasarkan aksi
-  document.querySelectorAll("table tr").forEach(tr => {
-    const label = tr.children[0]?.textContent || "";
-    if (action === "Check In" && label.includes("Check In")) {
-      targetCell = tr.children[1];
-    }
-    if (action === "Check Out" && label.includes("Check Out")) {
-      targetCell = tr.children[1];
-    }
-  });
-
-  if (targetCell) {
-    targetCell.classList.add("flash-pop");
-
-    // bersihkan setelah animasi
-    setTimeout(() => {
-      targetCell.classList.remove("flash-pop");
-    }, 2000);
-  }
-
-  // hapus flag supaya hanya sekali
-  sessionStorage.removeItem("lastAttendanceAction");
-});
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", async function () {
-
-  const toast = document.getElementById("checkinToast");
-  if (!toast) return;
-
-  const SUPABASE_URL = "{{ SUPABASE_URL }}";
-  const SUPABASE_ANON_KEY = "{{ SUPABASE_ANON_KEY }}";
-  const REALTIME_TABLE = "{{ REALTIME_TABLE }}";
-
-  const supabase = window.supabase.createClient(
-    SUPABASE_URL,
-    SUPABASE_ANON_KEY
-  );
-
-  supabase
-    .channel("attendance-channel")
-    .on(
-      "postgres_changes",
-      {
-        event: "INSERT",
-        schema: "public",
-        table: REALTIME_TABLE
+    dialog.close();
+    window.appLoading.show('Finding your location…', 'Allow location access and keep this page open.');
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        document.getElementById('latitude').value = position.coords.latitude;
+        document.getElementById('longitude').value = position.coords.longitude;
+        document.getElementById('accuracy').value = position.coords.accuracy || 0;
+        window.appLoading.show('Recording attendance…', `Location accuracy ±${Math.round(position.coords.accuracy || 0)} m.`);
+        form.submit();
       },
-      (payload) => {
+      (error) => {
+        window.appLoading.hide();
+        const messages = {
+          1: 'Location permission was denied. Enable location access in your browser settings.',
+          2: 'Your location is currently unavailable. Move to an open area and try again.',
+          3: 'Location detection timed out. Please try again.'
+        };
+        alert(messages[error.code] || 'We could not detect your location.');
+      },
+      { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
+    );
+  });
 
-        const data = payload.new;
-
-        //if (data.nama === "{{ nama }}") return;
-        if (data.aksi === "Check In" || data.aksi === "Check Out") {
-
-          const actionText =
-            data.aksi === "Check In"
-              ? "checked in"
-              : "checked out";
-
-          const displayName =
-            data.nama === "{{ nama }}"
-              ? "You have "
-              : data.nama + " has ";
-
-          toast.textContent = displayName + actionText;
-
-          toast.classList.add("show");
-
-          setTimeout(() => {
-            toast.classList.remove("show");
-          }, 3000);
-        }
-      }
-    )
-    .subscribe((status) => {
-  console.log("Realtime status:", status);
-});
-});
+  const profilePhoto = document.getElementById('profilePhoto');
+  const profileUpload = document.getElementById('profileUpload');
+  profilePhoto.addEventListener('click', () => profileUpload.click());
+  profilePhoto.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') profileUpload.click(); });
+  profilePhoto.tabIndex = 0;
+  profilePhoto.setAttribute('role', 'button');
+  profileUpload.addEventListener('change', async () => {
+    const file = profileUpload.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('file', file);
+    window.appLoading.show('Updating photo…', 'Uploading your new profile photo.');
+    try {
+      const response = await fetch('/change_photo', { method: 'POST', body: formData });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.message || 'Upload failed');
+      profilePhoto.src = URL.createObjectURL(file);
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      window.appLoading.hide();
+      profileUpload.value = '';
+    }
+  });
 </script>
-<div id="checkinToast" class="checkin-toast"></div>
-</body>
-</html>
+{% endblock %}
