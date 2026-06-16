@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/refinement.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/micro-fixes.css', v='20260616-mobile-grid-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css', v='20260616-premium-1') }}">
   <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
   <script type="speculationrules">
     {
@@ -61,10 +62,14 @@
       </a>
       <div class="header-actions">
         {% if can_admin_tools %}
-          <a class="icon-button" href="/upload" aria-label="Open admin tools" title="Admin tools">⚙</a>
+          <a class="icon-button" href="/upload" aria-label="Open admin tools" title="Admin tools">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3.1V3h4v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.6 1H21v4h-.1a1.7 1.7 0 0 0-1.5 1Z"></path></svg>
+          </a>
         {% endif %}
         <button type="button" class="icon-button" data-theme-toggle aria-label="Use dark mode">☾</button>
-        <a class="icon-button" href="/logout" data-no-prefetch aria-label="Sign out" title="Sign out">↪</a>
+        <a class="icon-button" href="/logout" data-no-prefetch aria-label="Sign out" title="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-6"></path></svg>
+        </a>
       </div>
     </header>
 
@@ -103,6 +108,7 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dialog.js', v='20260616-dialog-1') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
