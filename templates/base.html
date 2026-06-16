@@ -17,8 +17,8 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/micro-fixes.css', v='20260616-mobile-grid-2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css', v='20260616-premium-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/popup-center.css', v='20260616-popup-center-1') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/account-details.css', v='20260616-account-details-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/home-card-interactions.css', v='20260616-home-card-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/account-details.css', v='20260616-account-details-3') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/home-card-interactions.css', v='20260616-home-card-2') }}">
   <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
   <script type="speculationrules">
     {
@@ -102,8 +102,6 @@
     {% endif %}
   </nav>
 
-  {% include "account_security_dialog.html" %}
-
   <div id="loadingOverlay" class="loading-overlay" aria-hidden="true" aria-live="assertive">
     <div class="loading-card" role="status">
       <div class="spinner" aria-hidden="true"></div>
@@ -116,8 +114,8 @@
   <script src="{{ url_for('static', filename='js/dialog.js', v='20260616-dialog-1') }}"></script>
   <script src="{{ url_for('static', filename='js/dialog-polish.js', v='20260616-dialog-polish-1') }}"></script>
   <script src="{{ url_for('static', filename='js/api-form.js', v='20260616-api-form-1') }}"></script>
-  <script src="{{ url_for('static', filename='js/home-details.js', v='20260616-home-details-2') }}"></script>
-  <script src="{{ url_for('static', filename='js/account-security-ui.js', v='20260616-account-security-1') }}"></script>
+  <script src="{{ url_for('static', filename='js/home-details.js', v='20260616-home-details-3') }}"></script>
+  <script src="{{ url_for('static', filename='js/account-security-ui.js', v='20260616-account-security-2') }}"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>
