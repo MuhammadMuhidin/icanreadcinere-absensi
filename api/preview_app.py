@@ -22,7 +22,7 @@ def _own_leave_rows(user_id, limit=8):
         return (
             sb()
             .table(T("paid_leave"))
-            .select("id,name,leave_date,status,reason,created_at,updated_at")
+            .select("id,name,leave_date,status,reason,created_at")
             .eq("name", user_id)
             .order("created_at", desc=True)
             .limit(limit)
