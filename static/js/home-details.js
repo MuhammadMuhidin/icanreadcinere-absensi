@@ -28,7 +28,7 @@
 
     element.addEventListener('keydown', (event) => {
       if (event.key !== 'Enter' && event.key !== ' ') return;
-      if (event.target.closest('button, input, textarea, select')) return;
+      if (event.target.closest('button, input, textarea, select, .profile-photo')) return;
       event.preventDefault();
       handler(event);
     });
