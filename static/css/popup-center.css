@@ -3,6 +3,15 @@
   display: none !important;
 }
 
+/* Alert/success/error dialogs must show only their primary action. */
+.app-dialog-cancel[hidden] {
+  display: none !important;
+}
+
+.app-dialog-actions.single {
+  grid-template-columns: 1fr !important;
+}
+
 dialog.dialog,
 dialog.app-dialog {
   position: fixed !important;
