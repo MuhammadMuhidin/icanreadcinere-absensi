@@ -2,6 +2,7 @@ from datetime import date, timedelta
 
 from flask import jsonify, session
 
+import api.app as core_app
 from api.app import (
     T,
     USERS,
@@ -9,12 +10,57 @@ from api.app import (
     attendance_rows,
     balance,
     current_user,
+    day_session,
     grouped,
     now,
     sb,
     today,
     today_session,
 )
+
+
+def _latest_incomplete_like_legacy(user_id):
+    """Match the latest-attendance validation used by commit b5b329b8.
+
+    Only the user's most recent attendance date is evaluated. Older incomplete
+    dates are not searched and therefore do not keep producing a Home warning.
+    """
+    try:
+        rows = (
+            sb()
+            .table(T("log_absen"))
+            .select("id,nama,aksi,tanggal,waktu,deviation,mood,notes")
+            .eq("nama", user_id)
+            .order("tanggal", desc=True)
+            .order("waktu", desc=True)
+            .execute()
+            .data
+            or []
+        )
+    except Exception as exc:
+        print("LATEST ATTENDANCE VALIDATION ERROR", exc)
+        return None
+
+    if not rows:
+        return None
+
+    latest_date = rows[0].get("tanggal")
+    latest_rows = []
+    for row in rows:
+        if row.get("tanggal") != latest_date:
+            break
+        latest_rows.append(row)
+
+    latest_session = day_session(latest_rows, latest_date)
+    if latest_date != today() and latest_session.get("state") == "checked_in":
+        return latest_session
+    return None
+
+
+# Routes declared in api.app resolve this module global at request time.
+# Replacing it here keeps the preview entrypoint compatible with the legacy
+# latest-date validation without reverting the newer attendance state machine.
+core_app.last_incomplete = _latest_incomplete_like_legacy
 
 
 def _own_leave_rows(user_id, limit=8):
