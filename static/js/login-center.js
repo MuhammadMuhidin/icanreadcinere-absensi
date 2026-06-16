@@ -1,31 +1,51 @@
 (() => {
+  const page = document.querySelector('.login-page');
   const panel = document.querySelector('.login-panel');
   const brand = document.querySelector('.login-brand');
-  if (!panel || !brand) return;
+  if (!page || !panel || !brand) return;
+
+  function px(value) {
+    return Number.parseFloat(value) || 0;
+  }
 
   function updateLoginCardCenter() {
-    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    panel.style.setProperty('--login-card-center-offset', '0px');
+    page.classList.remove('login-layout-scroll');
 
-    if (viewportHeight <= 760) {
-      panel.style.setProperty('--login-card-center-offset', '0px');
+    const viewportHeight = window.visualViewport?.height || window.innerHeight;
+    const pageStyles = window.getComputedStyle(page);
+    const paddingTop = px(pageStyles.paddingTop);
+    const paddingBottom = px(pageStyles.paddingBottom);
+    const safeTop = paddingTop + 12;
+    const requiredHeight = panel.scrollHeight + paddingTop + paddingBottom;
+
+    if (viewportHeight <= 760 || requiredHeight > viewportHeight) {
+      page.classList.add('login-layout-scroll');
       return;
     }
 
     const brandStyles = window.getComputedStyle(brand);
-    const marginBottom = Number.parseFloat(brandStyles.marginBottom) || 0;
+    const marginBottom = px(brandStyles.marginBottom);
     const precedingHeight = brand.getBoundingClientRect().height + marginBottom;
-    const offset = Math.max(0, precedingHeight / 2);
+    const desiredOffset = precedingHeight / 2;
 
-    panel.style.setProperty('--login-card-center-offset', `${Math.round(offset)}px`);
+    const naturalTop = panel.getBoundingClientRect().top;
+    const availableShift = Math.max(0, naturalTop - safeTop);
+    const safeOffset = Math.min(desiredOffset, availableShift);
+
+    panel.style.setProperty('--login-card-center-offset', `${Math.round(safeOffset)}px`);
   }
 
   updateLoginCardCenter();
   window.addEventListener('load', updateLoginCardCenter, { once: true });
   window.addEventListener('resize', updateLoginCardCenter, { passive: true });
   window.visualViewport?.addEventListener('resize', updateLoginCardCenter, { passive: true });
+  window.visualViewport?.addEventListener('scroll', updateLoginCardCenter, { passive: true });
   document.fonts?.ready?.then(updateLoginCardCenter);
 
   if ('ResizeObserver' in window) {
-    new ResizeObserver(updateLoginCardCenter).observe(brand);
+    const observer = new ResizeObserver(updateLoginCardCenter);
+    observer.observe(brand);
+    observer.observe(panel);
   }
 })();
