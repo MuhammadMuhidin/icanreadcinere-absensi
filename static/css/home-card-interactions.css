@@ -29,10 +29,9 @@
   pointer-events: none;
 }
 
-.today-card.home-detail-card::after {
-  color: rgba(255,255,255,.84);
-  background: rgba(255,255,255,.12);
-  border-color: rgba(255,255,255,.12);
+.no-detail-arrow::after {
+  display: none !important;
+  content: none !important;
 }
 
 .profile-row:hover::after,
@@ -82,6 +81,10 @@
   .home-detail-link::after {
     opacity: .72;
     transform: none;
+  }
+
+  .no-detail-arrow::after {
+    opacity: 0 !important;
   }
 }
 
