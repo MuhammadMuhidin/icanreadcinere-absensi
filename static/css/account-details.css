@@ -248,6 +248,16 @@
   margin-top: 20px;
 }
 
+.secure-entry {
+  -webkit-text-security: disc;
+  letter-spacing: .05em;
+}
+
+.secure-entry.secure-entry-visible {
+  -webkit-text-security: none;
+  letter-spacing: normal;
+}
+
 .password-strength {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
