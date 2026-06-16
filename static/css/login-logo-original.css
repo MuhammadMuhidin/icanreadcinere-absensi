@@ -1,22 +1,22 @@
-/* Precise, complete sign-in logo. The artwork is never cropped. */
+/* Precise, complete sign-in logo. The artwork is never cropped or shifted outside the viewport. */
 .login-logo-crop {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 100%;
   height: auto;
-  margin: 0 auto 8px;
+  margin: 16px auto 10px;
   overflow: visible;
 }
 
 .login-logo {
   position: static;
   display: block;
-  width: min(224px, 60vw);
-  max-width: 224px;
+  width: min(212px, 58vw);
+  max-width: 212px;
   height: auto;
   max-height: none;
-  margin: -22px auto -18px;
+  margin: 0 auto;
   padding: 0;
   transform: none;
   object-fit: contain;
@@ -42,13 +42,13 @@ html[data-theme="light"] .login-logo {
 
 @media (max-width: 520px) {
   .login-logo-crop {
-    margin-bottom: 6px;
+    margin: 14px auto 8px;
   }
 
   .login-logo {
-    width: min(208px, 58vw);
-    max-width: 208px;
-    margin: -20px auto -16px;
+    width: min(196px, 54vw);
+    max-width: 196px;
+    margin: 0 auto;
   }
 
   .login-brand h1 {
