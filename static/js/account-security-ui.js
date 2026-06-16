@@ -48,8 +48,9 @@
   });
   confirmValue.addEventListener('input', validateMatch);
 
-  form.addEventListener('api-form-success', () => {
+  form.addEventListener('api-form-success', (event) => {
     document.querySelector('[data-secure-strength]').dataset.score = '0';
     document.querySelectorAll('.secure-entry-visible').forEach((input) => input.classList.remove('secure-entry-visible'));
+    document.dispatchEvent(new CustomEvent('account-security-updated', { detail: event.detail }));
   });
 })();
