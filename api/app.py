@@ -7,25 +7,35 @@ from dateutil.parser import isoparse
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, session
 from supabase import create_client
 
+try:
+    from api.user_auth import UserDirectory
+except ImportError:
+    from user_auth import UserDirectory
+
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 app = Flask(__name__, template_folder=os.path.join(ROOT, "templates"), static_folder=os.path.join(ROOT, "static"))
 app.secret_key = os.environ.get("FLASK_SECRET", "dev-secret")
 app.permanent_session_lifetime = timedelta(days=7)
 TZ = pytz.timezone("Asia/Jakarta")
 GAS_URL = os.getenv("GAS_URL")
-USERS = json.loads(os.environ.get("USERS_JSON", "{}"))
 PREFIX = os.getenv("DB_PREFIX", "")
+AUTH_TABLE = os.getenv("AUTH_TABLE", "app_users")
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL", "")
+
+try:
+    FALLBACK_USERS = json.loads(os.environ.get("USERS_JSON", "{}"))
+    if not isinstance(FALLBACK_USERS, dict):
+        FALLBACK_USERS = {}
+except Exception as exc:
+    print("USERS_JSON ERROR", exc)
+    FALLBACK_USERS = {}
+
 _sb = _r2 = None
 
 
 def T(name): return f"{name}{PREFIX}"
 def now(): return datetime.now(TZ)
 def today(): return now().strftime("%Y-%m-%d")
-def manager(uid):
-    data = USERS.get(uid, {})
-    return uid == "Hanny" or str(data.get("role", "")).lower() in {"manager", "admin"} or "manager" in str(data.get("title", "")).lower()
-def admin(uid): return uid in {"Hanny", "Mita"} or manager(uid)
 
 
 def sb():
@@ -35,6 +45,36 @@ def sb():
         if not url or not key: raise RuntimeError("Supabase credentials not set")
         _sb = create_client(url, key)
     return _sb
+
+
+USERS = UserDirectory(sb, FALLBACK_USERS, AUTH_TABLE)
+
+
+def current_user(uid=None):
+    target = uid or session.get("userid")
+    if target and target == session.get("userid") and session.get("role"):
+        return {
+            "user_id": target,
+            "title": session.get("title", "Team Member"),
+            "phone": session.get("phone"),
+            "role": session.get("role", "employee"),
+            "is_active": True,
+            "source": session.get("auth_source", "session"),
+        }
+    return USERS.get(target)
+
+
+def manager(uid):
+    data = current_user(uid) or {}
+    role = str(data.get("role", "")).lower()
+    title = str(data.get("title", "")).lower()
+    return role in {"manager", "admin"} or "manager" in title or uid == "Hanny"
+
+
+def admin(uid):
+    data = current_user(uid) or {}
+    role = str(data.get("role", "")).lower()
+    return role == "admin" or uid in {"Hanny", "Mita"} or manager(uid)
 
 
 def r2():
@@ -169,7 +209,7 @@ def periods():
 
 
 def team_today():
-    names, day = list(USERS), today(); by_name = defaultdict(list)
+    names, day = list(USERS.all()), today(); by_name = defaultdict(list)
     try:
         rows = sb().table(T("log_absen")).select("nama,aksi,tanggal,waktu,deviation,mood,notes").eq("tanggal", day).order("waktu", desc=False).execute().data or []
     except Exception as exc: print("TEAM ERROR", exc); rows = []
@@ -190,24 +230,37 @@ def team_today():
 @app.before_request
 def permanent(): session.permanent = True
 
+
 @app.after_request
 def headers(response):
     if request.endpoint == "login":
         response.headers.update({"Cache-Control":"no-store, no-cache, must-revalidate","Pragma":"no-cache","Expires":"0"})
     return response
 
+
 @app.route("/", methods=["GET","POST"])
 def login():
     if request.method == "POST":
         uid, password = (request.form.get("userid") or "").strip(), request.form.get("password") or ""
-        if uid in USERS and USERS[uid].get("password") == password:
-            session.update(userid=uid,title=USERS[uid].get("title","Team Member")); return redirect("/absence")
+        user = USERS.authenticate(uid, password)
+        if user:
+            session.clear()
+            session.update(
+                userid=user["user_id"],
+                title=user.get("title") or "Team Member",
+                phone=user.get("phone"),
+                role=user.get("role") or "employee",
+                auth_source=user.get("source") or "unknown",
+            )
+            return redirect("/absence")
         flash("Incorrect user ID or password.","error")
     if session.get("userid"): return redirect("/absence")
     return render_template("signin.html",news=news())
 
+
 @app.route("/logout", methods=["GET","POST"])
 def logout(): session.clear(); return redirect("/")
+
 
 @app.route("/absence", methods=["GET","POST"])
 def absence():
@@ -237,6 +290,7 @@ def absence():
                 news=news(),sisa=balance(uid),leave_summary=leave_summary(uid),latest_incomplete=last_incomplete(uid))
     return render_template("absence.html",**data)
 
+
 @app.route("/history")
 def history():
     uid=session.get("userid")
@@ -244,17 +298,20 @@ def history():
     period,days,summary=grouped(uid,request.args.get("period")); data=ctx("history","Attendance history"); data.update(period=period,attendance_rows=days,summary=summary)
     return render_template("history.html",**data)
 
+
 @app.route("/api/me/attendance/history")
 def attendance_history_api():
     uid=session.get("userid")
     if not uid: return jsonify(error="unauthorized"),401
     period,days,summary=grouped(uid,request.args.get("period")); return jsonify(period=period,data=days,summary=summary)
 
+
 @app.route("/api/me/attendance/summary")
 def attendance_summary_api():
     uid=session.get("userid")
     if not uid: return jsonify(error="unauthorized"),401
     period,_,summary=grouped(uid,request.args.get("period")); return jsonify(period=period,summary=summary)
+
 
 @app.route("/change_photo",methods=["POST"])
 def change_photo():
@@ -268,6 +325,7 @@ def change_photo():
     r2().put_object(Bucket=os.getenv("R2_BUCKET"),Key=f"profiles/{uid}.jpg",Body=payload,ContentType=file.mimetype)
     return jsonify(message="Profile photo updated")
 
+
 @app.route("/paid_leave")
 def paid_leave():
     uid=session.get("userid")
@@ -275,14 +333,17 @@ def paid_leave():
     day=now().date(); data=ctx("leave","Paid leave"); data.update(SESSION_NAME=uid,leave_balance=balance(uid),leave_summary=leave_summary(uid),min_leave_date=day.isoformat(),max_leave_date=(day+timedelta(days=30)).isoformat())
     return render_template("paid_leave.html",**data)
 
+
 @app.route("/leave",methods=["GET"])
 def get_leave():
     uid=session.get("userid")
     return (jsonify(data=leave_rows(uid)),200) if uid else (jsonify(error="unauthorized"),401)
 
+
 @app.route("/api/me/leave-summary")
 def leave_summary_api():
     uid=session.get("userid"); return jsonify(leave_summary(uid)) if uid else (jsonify(error="unauthorized"),401)
+
 
 @app.route("/leave",methods=["POST"])
 def submit_leave():
@@ -296,6 +357,7 @@ def submit_leave():
     sb().table(T("paid_leave")).insert(dict(name=uid,leave_date=chosen.isoformat(),status="WAITING APPROVAL")).execute()
     return jsonify(message="Leave request submitted"),201
 
+
 @app.route("/leave/<int:leave_id>/cancel",methods=["PATCH"])
 def cancel_leave(leave_id):
     uid=session.get("userid")
@@ -305,6 +367,7 @@ def cancel_leave(leave_id):
     if row.get("name")!=uid: return jsonify(message="You cannot cancel this request"),403
     if row.get("status")!="WAITING APPROVAL": return jsonify(message="Only waiting requests can be canceled"),400
     sb().table(T("paid_leave")).update({"status":"CANCELED"}).eq("id",leave_id).execute(); return jsonify(message="Leave request canceled")
+
 
 @app.route("/leave/<int:leave_id>/decision",methods=["PATCH"])
 def decide_leave(leave_id):
@@ -322,12 +385,13 @@ def decide_leave(leave_id):
         patch={"status":"APPROVED","reason":None}
     else: patch={"status":"REJECTED","reason":reason}
     sb().table(T("paid_leave")).update(patch).eq("id",leave_id).eq("status","WAITING APPROVAL").execute()
-    phone=USERS.get(name,{}).get("phone")
+    phone=(USERS.get(name) or {}).get("phone")
     if phone:
         try:
-            requests.post(os.getenv("SVR_MSG"),headers={"x-api-key":os.getenv("SEND_API_KEY")},json={"to":phone,"msg":f"Your leave request for {row['leave_date']} is {action.lower()}."},timeout=10)
+            requests.post(os.getenv("SVR_MSG"),headers={"x-api-key":os.getenv("SEND_API_KEY")},json={"to":phone,"msg":f"Your leave request for {row['leave_date']} is {action.lower()}.",},timeout=10)
         except Exception: pass
     return jsonify(message=action.title())
+
 
 @app.route("/leave/<int:leave_id>",methods=["PATCH"])
 def edit_leave(leave_id):
@@ -340,25 +404,30 @@ def edit_leave(leave_id):
     result=sb().table(T("paid_leave")).update({"leave_date":chosen.isoformat()}).eq("id",leave_id).eq("name",uid).eq("status","WAITING APPROVAL").execute()
     return jsonify(message="Leave date updated") if result.data else (jsonify(message="Request cannot be updated"),409)
 
+
 @app.route("/api/leave/wait-count")
 def wait_count():
     if not manager(session.get("userid")): return jsonify(count=0),403
     result=sb().table(T("paid_leave")).select("id",count="exact").eq("status","WAITING APPROVAL").execute(); return jsonify(count=result.count or 0)
+
 
 @app.route("/manager")
 def manager_page():
     if not manager(session.get("userid")): return redirect("/absence")
     data=ctx("manager","Team today"); data.update(dashboard=team_today()); return render_template("manager.html",**data)
 
+
 @app.route("/api/manager/today")
 def team_api(): return jsonify(team_today()) if manager(session.get("userid")) else (jsonify(message="Forbidden"),403)
+
 
 @app.route("/upload",methods=["GET","POST"])
 def upload():
     uid=session.get("userid")
     if not admin(uid): return redirect("/absence")
     if request.method=="POST":
-        if request.form.get("password") != USERS.get(uid,{}).get("password"): flash("Incorrect admin password.","error"); return redirect("/upload")
+        if not USERS.authenticate(uid, request.form.get("password") or ""):
+            flash("Incorrect admin password.","error"); return redirect("/upload")
         kind=request.form.get("jenis")
         try:
             if kind=="banner":
@@ -375,9 +444,10 @@ def upload():
                 result=sb().table(T("balance")).update({"sisa":int(value)}).eq("nama",name).execute(); flash("Leave balance updated." if result.data else "Employee balance was not found.","success" if result.data else "error"); return redirect("/upload?tab=balance")
         except Exception as exc: print("ADMIN ERROR",exc); flash("The operation could not be completed.","error"); return redirect("/upload")
     day=date.today().isoformat(); scheduled=sb().table(T("news")).select("content,published_at").gt("published_at",day).order("published_at",desc=False).execute().data or []
-    employees=sorted(({"name":name,"title":item.get("title","Team Member")} for name,item in USERS.items()),key=lambda x:x["name"])
+    employees=sorted(({"name":name,"title":item.get("title","Team Member")} for name,item in USERS.all().items()),key=lambda x:x["name"])
     data=ctx("admin","Admin tools"); data.update(scheduled_news=scheduled,employees=employees,periods=periods(),selected_tab=request.args.get("tab","announcement"),today=day)
     return render_template("upload.html",**data)
+
 
 @app.route("/api/sisa-cuti")
 def balance_api():
@@ -387,8 +457,10 @@ def balance_api():
     if name!=uid and not manager(uid): return jsonify(error="forbidden"),403
     value=balance(name); return jsonify(found=value is not None,sisa=value,message=None if value is not None else "Initial balance not found")
 
+
 @app.route("/api/check-period")
 def periods_api(): return jsonify(periods=periods()) if manager(session.get("userid")) else (jsonify(error="Unauthorized"),403)
+
 
 @app.route("/api/check-missed-attendance")
 def missed_api():
@@ -396,6 +468,7 @@ def missed_api():
     if not uid: return jsonify(show=False)
     item=last_incomplete(uid)
     return jsonify(show=False) if not item else jsonify(show=True,date=item["date"],missing="Check Out",message=f"Your attendance on {item['date']} has no check-out record.")
+
 
 @app.route("/download-absen")
 def download():
