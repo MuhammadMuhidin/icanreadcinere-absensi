@@ -7,6 +7,13 @@
 
   root.dataset.theme = storedTheme || (systemDark ? "dark" : "light");
 
+  function matchesAndDescendants(scope, selector) {
+    const matches = [];
+    if (scope instanceof Element && scope.matches(selector)) matches.push(scope);
+    if (scope?.querySelectorAll) matches.push(...scope.querySelectorAll(selector));
+    return matches;
+  }
+
   function updateThemeButtons() {
     document.querySelectorAll("[data-theme-toggle]").forEach((button) => {
       const dark = root.dataset.theme === "dark";
@@ -47,7 +54,7 @@
   }
 
   function initialiseToasts(scope = document) {
-    scope.querySelectorAll("[data-auto-dismiss]:not([data-toast-ready])").forEach((toast) => {
+    matchesAndDescendants(scope, "[data-auto-dismiss]:not([data-toast-ready])").forEach((toast) => {
       toast.dataset.toastReady = "true";
       const duration = Number(toast.dataset.autoDismiss || 5000);
       toast.style.setProperty("--toast-duration", `${duration}ms`);
@@ -115,16 +122,14 @@
   }
 
   function revealElements(scope = document) {
-    const candidates = scope.querySelectorAll(
-      ".page-content > section:not([data-reveal-ready]), .page-content > .grid:not([data-reveal-ready]), .list-card:not([data-reveal-ready])"
-    );
-    candidates.forEach((element, index) => {
+    const selector = ".page-content > section:not([data-reveal-ready]), .page-content > .grid:not([data-reveal-ready]), .list-card:not([data-reveal-ready])";
+    matchesAndDescendants(scope, selector).forEach((element, index) => {
       element.dataset.revealReady = "true";
       element.classList.add("reveal-item");
       element.style.setProperty("--reveal-delay", `${Math.min(index * 38, 190)}ms`);
       requestAnimationFrame(() => requestAnimationFrame(() => element.classList.add("is-visible")));
     });
-    scope.querySelectorAll(".metric-value").forEach(animateNumber);
+    matchesAndDescendants(scope, ".metric-value").forEach(animateNumber);
   }
 
   function isPrefetchable(anchor) {
@@ -159,10 +164,22 @@
     }).catch(() => {});
   }
 
-  function prefetchPrimaryNavigation() {
-    const work = () => document.querySelectorAll(".bottom-nav a, .brand-link").forEach(prefetch);
-    if ("requestIdleCallback" in window) requestIdleCallback(work, { timeout: 1800 });
-    else setTimeout(work, 500);
+  function predictivePrefetch() {
+    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || "")) return;
+
+    const preferredPaths = location.pathname === "/absence"
+      ? ["/history", "/paid_leave"]
+      : ["/absence"];
+    const links = preferredPaths
+      .map((path) => document.querySelector(`a[href="${path}"]`))
+      .filter(Boolean);
+
+    const work = () => links.forEach((link, index) => {
+      setTimeout(() => prefetch(link), index * 420);
+    });
+    if ("requestIdleCallback" in window) requestIdleCallback(work, { timeout: 2200 });
+    else setTimeout(work, 900);
   }
 
   function beginNavigation(anchor) {
@@ -171,13 +188,11 @@
     if (destination.href === location.href) return;
     root.classList.remove("navigation-complete");
     root.classList.add("is-navigating");
-    sessionStorage.setItem("app-navigation-pending", "1");
   }
 
   function completeNavigation() {
     root.classList.remove("is-navigating");
     root.classList.add("navigation-complete");
-    sessionStorage.removeItem("app-navigation-pending");
     setTimeout(() => root.classList.remove("navigation-complete"), 420);
   }
 
@@ -249,7 +264,7 @@
   initialiseToasts();
   revealElements();
   enhanceActiveNavigation();
-  prefetchPrimaryNavigation();
+  predictivePrefetch();
   completeNavigation();
   setInterval(updateClock, 1000);
   window.addEventListener("pageshow", completeNavigation);
