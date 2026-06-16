@@ -112,3 +112,6 @@ def dashboard_details():
             "previous": announcements[1:5],
         },
     )
+
+
+import api.account_routes  # noqa: E402,F401
