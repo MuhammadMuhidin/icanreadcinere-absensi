@@ -18,7 +18,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css', v='20260616-premium-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/popup-center.css', v='20260616-popup-center-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/account-details.css', v='20260616-account-details-2') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/login-logo-original.css', v='20260616-login-logo-original-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/login-logo-original.css', v='20260616-login-logo-original-2') }}">
   <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
   <script type="speculationrules">
     {"prefetch":[{"source":"list","urls":["/absence"],"eagerness":"moderate"}]}
@@ -41,7 +41,9 @@
   <main class="login-page">
     <section class="login-panel" aria-labelledby="loginHeading">
       <div class="login-brand">
-        <img src="{{ url_for('static', filename='Logo.png') }}" alt="I Can Read Cinere" class="login-logo">
+        <div class="login-logo-crop">
+          <img src="{{ url_for('static', filename='Logo.png') }}" alt="I Can Read Cinere" class="login-logo">
+        </div>
         <h1 id="loginHeading">Welcome back</h1>
         <p>Access your attendance, leave requests, and daily work records from one secure place.</p>
       </div>
