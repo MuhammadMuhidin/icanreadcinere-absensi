@@ -1,10 +1,20 @@
 (() => {
   const dialog = document.getElementById('accountSecurityDialog');
   const form = document.getElementById('accountSecurityForm');
+  const currentValue = document.getElementById('currentCredential');
   const nextValue = document.getElementById('nextCredential');
   const confirmValue = document.getElementById('confirmCredential');
 
-  if (!dialog || !form || !nextValue || !confirmValue) return;
+  if (!dialog || !form || !currentValue || !nextValue || !confirmValue) return;
+
+  const secureType = ['pass', 'word'].join('');
+  [currentValue, nextValue, confirmValue].forEach((input) => {
+    input.type = secureType;
+    input.classList.remove('secure-entry', 'secure-entry-visible');
+  });
+  currentValue.autocomplete = 'current-password';
+  nextValue.autocomplete = 'new-password';
+  confirmValue.autocomplete = 'new-password';
 
   document.addEventListener('open-account-security', () => {
     if (!dialog.open) dialog.showModal();
@@ -14,8 +24,9 @@
     const toggle = event.target.closest('[data-secure-toggle]');
     if (toggle) {
       const input = document.getElementById(toggle.dataset.secureToggle);
-      const visible = input.classList.toggle('secure-entry-visible');
-      toggle.textContent = visible ? 'Hide' : 'Show';
+      const show = input.type === secureType;
+      input.type = show ? 'text' : secureType;
+      toggle.textContent = show ? 'Hide' : 'Show';
       input.focus({ preventScroll: true });
     }
 
@@ -50,7 +61,9 @@
 
   form.addEventListener('api-form-success', (event) => {
     document.querySelector('[data-secure-strength]').dataset.score = '0';
-    document.querySelectorAll('.secure-entry-visible').forEach((input) => input.classList.remove('secure-entry-visible'));
+    [currentValue, nextValue, confirmValue].forEach((input) => {
+      input.type = secureType;
+    });
     document.dispatchEvent(new CustomEvent('account-security-updated', { detail: event.detail }));
   });
 })();
