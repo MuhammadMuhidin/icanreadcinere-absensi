@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/refinement.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/micro-fixes.css', v='20260616-mobile-grid-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css', v='20260616-premium-1') }}">
   <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
   <script type="speculationrules">
     {"prefetch":[{"source":"list","urls":["/absence"],"eagerness":"moderate"}]}
@@ -22,7 +23,6 @@
 </head>
 <body>
   <div class="navigation-progress" aria-hidden="true"></div>
-  <button type="button" class="icon-button login-theme" data-theme-toggle aria-label="Use dark mode">☾</button>
 
   <div class="toast-stack" aria-live="polite">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -36,32 +36,49 @@
   </div>
 
   <main class="login-page">
-    <section class="login-panel">
+    <section class="login-panel" aria-labelledby="loginHeading">
       <div class="login-brand">
         <img src="{{ url_for('static', filename='Logo.png') }}" alt="I Can Read Cinere" class="login-logo">
-        <h1>Welcome back</h1>
-        <p>Sign in to record and review your attendance.</p>
+        <h1 id="loginHeading">Welcome back</h1>
+        <p>Access your attendance, leave requests, and daily work records from one secure place.</p>
       </div>
 
       <div class="card login-card">
-        <form method="post" id="loginForm">
-          <div class="form-group">
-            <label class="form-label" for="userid">User ID</label>
-            <input class="form-control" id="userid" name="userid" type="text" autocomplete="username" autocapitalize="none" required autofocus>
-          </div>
-          <div class="form-group">
-            <label class="form-label" for="password">Password</label>
-            <div class="input-action">
-              <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
-              <button type="button" id="passwordToggle" aria-label="Show password">Show</button>
-            </div>
-          </div>
-          <button class="btn btn-primary btn-block btn-lg" type="submit" id="loginButton">Sign in</button>
-        </form>
+        <div class="login-card-topbar">
+          <span class="login-security">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10" width="14" height="10" rx="2"></rect><path d="M8 10V7a4 4 0 0 1 8 0v3"></path></svg>
+            Secure staff access
+          </span>
+          <button type="button" class="icon-button" data-theme-toggle aria-label="Use dark mode">☾</button>
+        </div>
 
-        <div class="login-announcement">
-          <strong>Latest announcement</strong>
-          <p>{{ news.content }}</p>
+        <div class="login-form-body">
+          <div class="login-form-intro">
+            <strong>Sign in to continue</strong>
+            <span>Use the staff credentials assigned by the centre.</span>
+          </div>
+
+          <form method="post" id="loginForm">
+            <div class="form-group">
+              <label class="form-label" for="userid">User ID</label>
+              <input class="form-control" id="userid" name="userid" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required autofocus placeholder="Enter your user ID">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="password">Password</label>
+              <div class="input-action">
+                <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required placeholder="Enter your password">
+                <button type="button" id="passwordToggle" aria-label="Show password">Show</button>
+              </div>
+            </div>
+            <button class="btn btn-primary btn-block btn-lg" type="submit" id="loginButton">Sign in securely</button>
+          </form>
+
+          <div class="login-announcement">
+            <strong>Latest announcement</strong>
+            <p>{{ news.content }}</p>
+          </div>
+
+          <p class="login-footnote">Attendance data is available only to authorised I Can Read Cinere staff.</p>
         </div>
       </div>
     </section>
@@ -76,6 +93,7 @@
   </div>
 
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dialog.js', v='20260616-dialog-1') }}"></script>
   <script>
     const password = document.getElementById('password');
     const toggle = document.getElementById('passwordToggle');
@@ -89,7 +107,7 @@
       const button = document.getElementById('loginButton');
       button.disabled = true;
       button.textContent = 'Signing in…';
-      window.appLoading.show('Signing in…', 'Checking your account.');
+      window.appLoading.show('Signing in…', 'Checking your account securely.');
     });
   </script>
 </body>
