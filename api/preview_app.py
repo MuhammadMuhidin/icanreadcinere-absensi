@@ -1,8 +1,20 @@
-from datetime import date
+from datetime import date, timedelta
 
 from flask import jsonify, session
 
-from api.app import T, USERS, app, balance, current_user, grouped, now, sb, today_session
+from api.app import (
+    T,
+    USERS,
+    app,
+    attendance_rows,
+    balance,
+    current_user,
+    grouped,
+    now,
+    sb,
+    today,
+    today_session,
+)
 
 
 def _own_leave_rows(user_id, limit=8):
@@ -65,6 +77,8 @@ def dashboard_details():
     directory_user = USERS.get(user_id) or current_user(user_id) or {}
     period, days, summary = grouped(user_id, now().strftime("%Y-%m"))
     today_data = today_session(user_id)
+    tomorrow = (now().date() + timedelta(days=1)).isoformat()
+    events = attendance_rows(user_id, today(), tomorrow)
     leave_rows = _own_leave_rows(user_id)
     announcements = _recent_news()
     complete_days = [item for item in days if item.get("state") == "completed"]
@@ -83,6 +97,7 @@ def dashboard_details():
         },
         today={
             **today_data,
+            "events": events,
             "expected_start": "09:00" if now().weekday() == 5 else "10:10",
             "weekday": now().strftime("%A"),
             "date_label": now().strftime("%A, %d %B %Y"),
