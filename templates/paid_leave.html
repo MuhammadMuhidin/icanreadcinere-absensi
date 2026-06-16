@@ -207,6 +207,13 @@
     throw new Error(data.message || data.error || 'Something went wrong');
   }
 
+  async function showError(error, title = 'Unable to continue') {
+    await window.appDialog.error({
+      title,
+      message: error?.message || String(error || 'Something went wrong.')
+    });
+  }
+
   async function loadData(silent = false) {
     if (!silent) window.appLoading.show('Loading leave requests…', 'Fetching the latest approval status.');
     try {
@@ -246,8 +253,15 @@
       await apiFetch('/leave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_date: leaveDate }) });
       await Promise.all([loadData(true), refreshSummary()]);
       document.getElementById('requestForm').reset();
-    } catch (error) { alert(error.message); }
-    finally { window.appLoading.hide(); }
+      await window.appDialog.success({
+        title: 'Leave request submitted',
+        message: `Your paid leave request for ${formatDate(leaveDate)} is now waiting for approval.`
+      });
+    } catch (error) {
+      await showError(error, 'Leave request could not be submitted');
+    } finally {
+      window.appLoading.hide();
+    }
   });
 
   document.getElementById('editForm').addEventListener('submit', async (event) => {
@@ -259,37 +273,94 @@
     try {
       await apiFetch(`/leave/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_date: leaveDate }) });
       await loadData(true);
-    } catch (error) { alert(error.message); }
-    finally { window.appLoading.hide(); }
+      await window.appDialog.success({
+        title: 'Leave date updated',
+        message: `The request has been moved to ${formatDate(leaveDate)}.`
+      });
+    } catch (error) {
+      await showError(error, 'Leave date could not be updated');
+    } finally {
+      window.appLoading.hide();
+    }
   });
 
   leaveList.addEventListener('click', async (event) => {
     const button = event.target.closest('[data-action]');
     if (!button) return;
     const { action, id, date } = button.dataset;
+
     if (action === 'edit') {
       document.getElementById('editId').value = id;
       document.getElementById('editDate').value = date;
       document.getElementById('editDialog').showModal();
       return;
     }
-    if (action === 'cancel' && !confirm('Cancel this leave request?')) return;
-    if (action === 'approve' && !confirm('Approve this request and deduct one leave day?')) return;
+
     let reason = '';
-    if (action === 'reject') {
-      reason = prompt('Reason for rejection:') || '';
-      if (!reason.trim()) return;
+    if (action === 'cancel') {
+      const confirmed = await window.appDialog.confirm({
+        title: 'Cancel leave request?',
+        message: 'This request will be marked as canceled and can no longer be approved. You can submit a new request later.',
+        tone: 'danger',
+        icon: 'warning',
+        confirmText: 'Cancel request',
+        confirmClass: 'btn-danger',
+        cancelText: 'Keep request'
+      });
+      if (!confirmed) return;
     }
+
+    if (action === 'approve') {
+      const confirmed = await window.appDialog.confirm({
+        title: 'Approve this leave request?',
+        message: 'The request will be approved and one day will be deducted from the employee’s paid leave balance.',
+        tone: 'success',
+        icon: 'question',
+        confirmText: 'Approve request',
+        confirmClass: 'btn-success',
+        cancelText: 'Review again'
+      });
+      if (!confirmed) return;
+    }
+
+    if (action === 'reject') {
+      reason = await window.appDialog.prompt({
+        title: 'Reject this leave request?',
+        message: 'Provide a clear reason. The employee will see this explanation in their leave history.',
+        tone: 'danger',
+        icon: 'warning',
+        inputLabel: 'Reason for rejection',
+        inputHint: 'Use a short and specific explanation.',
+        placeholder: 'Enter the rejection reason',
+        confirmText: 'Reject request',
+        confirmClass: 'btn-danger',
+        cancelText: 'Go back'
+      });
+      if (!reason) return;
+    }
+
     window.appLoading.show(`${action[0].toUpperCase()}${action.slice(1)}ing request…`, 'Saving the decision.');
     try {
-      if (action === 'cancel') await apiFetch(`/leave/${id}/cancel`, { method: 'PATCH' });
-      else await apiFetch(`/leave/${id}/decision`, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: action === 'approve' ? 'APPROVED' : 'REJECTED', reason })
-      });
+      if (action === 'cancel') {
+        await apiFetch(`/leave/${id}/cancel`, { method: 'PATCH' });
+      } else {
+        await apiFetch(`/leave/${id}/decision`, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: action === 'approve' ? 'APPROVED' : 'REJECTED', reason })
+        });
+      }
       await Promise.all([loadData(true), refreshSummary()]);
-    } catch (error) { alert(error.message); }
-    finally { window.appLoading.hide(); }
+      const resultCopy = {
+        cancel: ['Request canceled', 'The leave request has been canceled.'],
+        approve: ['Request approved', 'The leave request has been approved and the balance has been updated.'],
+        reject: ['Request rejected', 'The request has been rejected with the reason provided.']
+      }[action];
+      await window.appDialog.success({ title: resultCopy[0], message: resultCopy[1] });
+    } catch (error) {
+      await showError(error, 'Decision could not be saved');
+    } finally {
+      window.appLoading.hide();
+    }
   });
 
   statusTabs.addEventListener('click', (event) => {
