@@ -16,6 +16,16 @@
     });
   }
 
+  function syncDialogLayout(dialog) {
+    const actions = dialog.querySelector('.dialog-actions');
+    if (!actions) return;
+    actions.style.display = 'grid';
+    actions.style.gridTemplateColumns = window.matchMedia('(max-width: 520px)').matches
+      ? '1fr'
+      : 'repeat(2, minmax(0, 1fr))';
+    actions.querySelectorAll('.btn').forEach((button) => button.style.width = '100%');
+  }
+
   function enhance(dialog) {
     if (!(dialog instanceof HTMLDialogElement) || dialog.classList.contains('app-dialog') || enhancedDialogs.has(dialog)) return;
     enhancedDialogs.add(dialog);
@@ -31,6 +41,8 @@
       close.textContent = '×';
       body.prepend(close);
     }
+
+    syncDialogLayout(dialog);
 
     dialog.addEventListener('click', (event) => {
       if (event.target === dialog || event.target.closest('[data-form-dialog-close]')) dialog.close();
@@ -50,6 +62,7 @@
     if (!this.classList.contains('app-dialog')) {
       triggers.set(this, document.activeElement);
       enhance(this);
+      syncDialogLayout(this);
     }
     return originalShowModal.call(this);
   };
@@ -57,6 +70,10 @@
   document.addEventListener('click', (event) => {
     if (event.target.closest('[data-theme-toggle]')) requestAnimationFrame(renderThemeIcons);
   });
+
+  window.addEventListener('resize', () => {
+    document.querySelectorAll('dialog.dialog:not(.app-dialog)').forEach(syncDialogLayout);
+  }, { passive: true });
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
