@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#193773">
+  <title>Sign in · I Can Read Cinere</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+</head>
+<body>
+  <button type="button" class="icon-button login-theme" data-theme-toggle aria-label="Use dark mode">☾</button>
+
+  <div class="toast-stack" aria-live="polite">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="toast toast-error" data-auto-dismiss="5000">
+          <div aria-hidden="true">!</div>
+          <div><strong>Sign-in failed</strong><span>{{ message }}</span></div>
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main class="login-page">
+    <section class="login-panel">
+      <div class="login-brand">
+        <img src="{{ url_for('static', filename='Logo.png') }}" alt="I Can Read Cinere" class="login-logo">
+        <h1>Welcome back</h1>
+        <p>Sign in to record and review your attendance.</p>
+      </div>
+
+      <div class="card login-card">
+        <form method="post" id="loginForm">
+          <div class="form-group">
+            <label class="form-label" for="userid">User ID</label>
+            <input class="form-control" id="userid" name="userid" type="text" autocomplete="username" autocapitalize="none" required autofocus>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="password">Password</label>
+            <div class="input-action">
+              <input class="form-control" id="password" name="password" type="password" autocomplete="current-password" required>
+              <button type="button" id="passwordToggle" aria-label="Show password">Show</button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-block btn-lg" type="submit" id="loginButton">Sign in</button>
+        </form>
+
+        <div class="login-announcement">
+          <strong>Latest announcement</strong>
+          <p>{{ news.content }}</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true">
+    <div class="loading-card" role="status">
+      <div class="spinner" aria-hidden="true"></div>
+      <strong data-loading-title>Signing in…</strong>
+      <p data-loading-description>Checking your account.</p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script>
+    const password = document.getElementById('password');
+    const toggle = document.getElementById('passwordToggle');
+    toggle.addEventListener('click', () => {
+      const show = password.type === 'password';
+      password.type = show ? 'text' : 'password';
+      toggle.textContent = show ? 'Hide' : 'Show';
+      toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
+    });
+    document.getElementById('loginForm').addEventListener('submit', () => {
+      document.getElementById('loginButton').disabled = true;
+      window.appLoading.show('Signing in…', 'Checking your account.');
+    });
+  </script>
+</body>
+</html>
