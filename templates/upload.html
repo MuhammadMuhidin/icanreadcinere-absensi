@@ -92,7 +92,7 @@
   <div class="section-heading">
     <div><h2>Export attendance</h2><p>Download the existing raw attendance records as CSV.</p></div>
   </div>
-  <form method="get" action="/download-absen">
+  <form method="get" action="/download-absen" id="exportForm" novalidate>
     <div class="form-group">
       <label class="form-label" for="exportPeriod">Period</label>
       <select class="form-control" id="exportPeriod" name="periode" required>
@@ -101,7 +101,7 @@
       </select>
       {% if not periods %}<span class="form-hint">No periods were returned by the database function.</span>{% endif %}
     </div>
-    <button class="btn btn-primary btn-block" type="submit" {% if not periods %}disabled{% endif %}>Download CSV</button>
+    <button class="btn btn-primary btn-block" id="exportButton" type="submit" {% if not periods %}disabled{% endif %}>Download CSV</button>
   </form>
 </section>
 {% endif %}
@@ -121,6 +121,7 @@
     url.searchParams.set('tab', target);
     history.replaceState(null, '', url);
   }
+
   tabs.addEventListener('click', (event) => {
     const tab = event.target.closest('.tab');
     if (tab) activatePanel(tab.dataset.panel);
@@ -130,18 +131,21 @@
   const publishRadios = document.querySelectorAll('input[name="publish_mode"]');
   const scheduleGroup = document.getElementById('scheduleGroup');
   const publishedAt = document.getElementById('publishedAt');
+
   function updateSchedule() {
     const scheduled = document.querySelector('input[name="publish_mode"]:checked')?.value === 'schedule';
     scheduleGroup.hidden = !scheduled;
     publishedAt.required = scheduled;
     if (!scheduled) publishedAt.value = '';
   }
+
   publishRadios.forEach((radio) => radio.addEventListener('change', updateSchedule));
   updateSchedule();
 
   const employeeSelect = document.getElementById('employeeSelect');
   const balanceInput = document.getElementById('leaveBalance');
   const balanceHint = document.getElementById('balanceHint');
+
   employeeSelect?.addEventListener('change', async () => {
     balanceInput.value = '';
     balanceInput.disabled = true;
@@ -149,6 +153,7 @@
       balanceHint.textContent = 'Choose an employee first.';
       return;
     }
+
     balanceHint.textContent = 'Loading current balance…';
     try {
       const response = await fetch(`/api/sisa-cuti?userid=${encodeURIComponent(employeeSelect.value)}`, { cache: 'no-store' });
@@ -162,8 +167,101 @@
     }
   });
 
-  document.querySelectorAll('.admin-panel form').forEach((form) => {
+  document.querySelectorAll('.admin-panel form:not(#exportForm)').forEach((form) => {
     form.addEventListener('submit', () => window.appLoading.show('Saving…', 'Applying the requested admin change.'));
+  });
+
+  const exportForm = document.getElementById('exportForm');
+  const exportPeriod = document.getElementById('exportPeriod');
+  const exportButton = document.getElementById('exportButton');
+
+  function fileNameFromResponse(response, period) {
+    const disposition = response.headers.get('Content-Disposition') || '';
+    const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+    const basicMatch = disposition.match(/filename="?([^";]+)"?/i);
+    const encoded = utfMatch?.[1] || basicMatch?.[1];
+    if (!encoded) return `attendance_${period}.csv`;
+    try { return decodeURIComponent(encoded); } catch { return encoded; }
+  }
+
+  exportForm?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const period = exportPeriod.value;
+
+    if (!period) {
+      await window.appDialog.alert({
+        title: 'Choose a period',
+        message: 'Select an attendance period before downloading the CSV file.',
+        tone: 'warning',
+        icon: 'warning',
+        confirmText: 'Done'
+      });
+      exportPeriod.focus();
+      return;
+    }
+
+    const originalLabel = exportButton.textContent;
+    exportButton.disabled = true;
+    exportButton.textContent = 'Preparing CSV…';
+    window.appLoading.show('Preparing CSV…', `Checking attendance records for ${period}.`);
+
+    try {
+      const response = await fetch(`/download-absen?periode=${encodeURIComponent(period)}`, {
+        method: 'GET',
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'X-Requested-With': 'XMLHttpRequest' }
+      });
+
+      if (!response.ok) {
+        const message = (await response.text()).trim();
+        if (response.status === 404) {
+          await window.appDialog.alert({
+            title: 'No attendance data',
+            message: `No attendance records were found for ${period}. Choose another period and try again.`,
+            tone: 'warning',
+            icon: 'warning',
+            confirmText: 'Done'
+          });
+          return;
+        }
+        if (response.status === 403) {
+          throw new Error('Your manager session is no longer authorised to export attendance data. Sign in again and retry.');
+        }
+        throw new Error(message || 'The attendance CSV could not be prepared.');
+      }
+
+      const blob = await response.blob();
+      if (!blob.size) {
+        await window.appDialog.alert({
+          title: 'No attendance data',
+          message: `The export for ${period} did not contain any records. Choose another period and try again.`,
+          tone: 'warning',
+          icon: 'warning',
+          confirmText: 'Done'
+        });
+        return;
+      }
+
+      const objectUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = objectUrl;
+      link.download = fileNameFromResponse(response, period);
+      link.hidden = true;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
+    } catch (error) {
+      await window.appDialog.error({
+        title: 'CSV download failed',
+        message: error.message || 'The CSV file could not be downloaded. Try again.'
+      });
+    } finally {
+      window.appLoading.hide();
+      exportButton.disabled = false;
+      exportButton.textContent = originalLabel;
+    }
   });
 </script>
 {% endblock %}
