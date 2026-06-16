@@ -1,12 +1,24 @@
-/* Restore the login logo sizing used at commit b5b329b8914cef9838556ec196aeb1578108f7a1. */
+/* Login logo layout */
+.login-logo-crop {
+  position: relative;
+  width: min(270px, 78vw);
+  height: min(185px, 53vw);
+  margin: 0 auto 4px;
+  overflow: hidden;
+}
+
 .login-logo {
-  max-width: 250px;
-  width: 100%;
+  position: absolute;
+  top: clamp(-170px, -46vw, -150px);
+  left: 50%;
+  width: 135%;
+  max-width: none;
   height: auto;
   max-height: none;
   display: block;
-  margin: 10% auto 0;
+  margin: 0;
   padding: 0;
+  transform: translateX(-50%);
   background: transparent;
   border: 0;
   border-radius: 0;
@@ -14,14 +26,8 @@
   filter: none;
 }
 
-@media (max-width: 520px) {
-  .login-logo {
-    max-width: 250px;
-    width: 100%;
-    height: auto;
-    max-height: none;
-    margin: 10% auto 0;
-  }
+.login-brand h1 {
+  margin-top: 10px;
 }
 
 html[data-theme="dark"] .login-logo,
@@ -30,4 +36,21 @@ html[data-theme="light"] .login-logo {
   border: 0;
   box-shadow: none;
   filter: none;
+}
+
+@media (max-width: 520px) {
+  .login-logo-crop {
+    width: min(250px, 76vw);
+    height: min(172px, 52vw);
+    margin-bottom: 2px;
+  }
+
+  .login-logo {
+    top: clamp(-160px, -45vw, -145px);
+    width: 135%;
+  }
+
+  .login-brand h1 {
+    margin-top: 8px;
+  }
 }
