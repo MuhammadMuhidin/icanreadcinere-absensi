@@ -1,0 +1,82 @@
+/* Keep every modal popup precisely centered in the visual viewport. */
+.app-dialog-accent {
+  display: none !important;
+}
+
+/* Alert/success/error dialogs must show only their primary action. */
+.app-dialog-cancel[hidden] {
+  display: none !important;
+}
+
+.app-dialog-actions.single {
+  grid-template-columns: 1fr !important;
+}
+
+dialog.dialog,
+dialog.app-dialog {
+  position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
+  max-width: calc(100vw - 28px);
+  max-height: min(88dvh, 680px);
+  overscroll-behavior: contain;
+  transform-origin: center center;
+}
+
+dialog.dialog[open],
+dialog.app-dialog[open] {
+  margin: auto !important;
+}
+
+/* Form dialogs may contain longer content; scroll only inside the popup. */
+dialog.dialog:not(.app-dialog) {
+  overflow: hidden;
+}
+
+dialog.dialog:not(.app-dialog) .dialog-body,
+dialog.app-dialog .app-dialog-shell {
+  max-height: min(88dvh, 680px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+/* The loading state is also treated as a centered popup. */
+.loading-overlay {
+  align-items: center !important;
+  justify-items: center !important;
+}
+
+.loading-card {
+  margin: auto !important;
+}
+
+@media (max-width: 520px) {
+  dialog.dialog,
+  dialog.app-dialog,
+  dialog.dialog:not(.app-dialog) {
+    inset: 0 !important;
+    width: calc(100vw - 24px) !important;
+    max-width: 440px !important;
+    max-height: calc(100dvh - 32px) !important;
+    margin: auto !important;
+    border-radius: 22px;
+  }
+
+  dialog.dialog:not(.app-dialog) .dialog-body,
+  dialog.app-dialog .app-dialog-shell {
+    max-height: calc(100dvh - 32px);
+  }
+}
+
+@media (max-height: 560px) {
+  dialog.dialog,
+  dialog.app-dialog {
+    max-height: calc(100dvh - 20px) !important;
+  }
+
+  dialog.dialog:not(.app-dialog) .dialog-body,
+  dialog.app-dialog .app-dialog-shell {
+    max-height: calc(100dvh - 20px);
+  }
+}

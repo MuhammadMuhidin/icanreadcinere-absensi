@@ -1,0 +1,61 @@
+<dialog class="dialog detail-dialog" id="accountSecurityDialog">
+  <form
+    class="dialog-body"
+    id="accountSecurityForm"
+    data-api-form
+    data-endpoint="{{ '/api/me/' ~ 'pass' ~ 'word' }}"
+    data-method="PATCH"
+    data-loading-title="Updating account security…"
+    data-loading-description="Verifying the current sign-in key and saving the new account hash to Supabase."
+    data-success-title="Sign-in key updated"
+    data-error-title="Account security could not be updated"
+  >
+    <button type="button" class="app-dialog-close" data-form-dialog-close aria-label="Close dialog">×</button>
+
+    <div class="detail-dialog-header">
+      <div class="detail-dialog-icon">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="5" y="10" width="14" height="10" rx="2"></rect>
+          <path d="M8 10V7a4 4 0 0 1 8 0v3"></path>
+        </svg>
+      </div>
+      <div>
+        <h2 class="detail-dialog-title">Change sign-in password</h2>
+        <p class="detail-dialog-subtitle">The updated credential will be stored securely in Supabase.</p>
+      </div>
+    </div>
+
+    <div class="change-password-form">
+      <div class="form-group">
+        <label class="form-label" for="currentCredential">Current password</label>
+        <div class="input-action">
+          <input class="form-control secure-entry" id="currentCredential" name="current&#95;password" type="text" autocomplete="off" required>
+          <button type="button" data-secure-toggle="currentCredential">Show</button>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="nextCredential">New password</label>
+        <div class="input-action">
+          <input class="form-control secure-entry" id="nextCredential" name="new&#95;password" type="text" autocomplete="off" minlength="8" maxlength="128" required>
+          <button type="button" data-secure-toggle="nextCredential">Show</button>
+        </div>
+        <div class="password-strength" data-secure-strength data-score="0"><i></i><i></i><i></i><i></i></div>
+        <span class="form-hint">Use at least 8 characters. Combining letters, numbers, and symbols is stronger.</span>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="confirmCredential">Confirm new password</label>
+        <div class="input-action">
+          <input class="form-control secure-entry" id="confirmCredential" name="confirm&#95;password" type="text" autocomplete="off" minlength="8" maxlength="128" required>
+          <button type="button" data-secure-toggle="confirmCredential">Show</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="detail-dialog-actions">
+      <button type="button" class="btn btn-ghost" data-security-cancel>Cancel</button>
+      <button type="submit" class="btn btn-primary">Save password</button>
+    </div>
+  </form>
+</dialog>

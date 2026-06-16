@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="page-heading">
+  <h1>Team today</h1>
+  <p>Current attendance status for {{ dashboard.date }}.</p>
+</section>
+
+<section class="grid grid-2 grid-md-4" aria-label="Team attendance summary">
+  <div class="metric"><span class="metric-value">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
+  <div class="metric"><span class="metric-value">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
+  <div class="metric"><span class="metric-value">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
+  <div class="metric"><span class="metric-value">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
+</section>
+
+<section class="card card-pad">
+  <div class="section-heading">
+    <div><h2>Needs attention</h2><p>Working, late and not-started records are prioritised.</p></div>
+    <button type="button" class="btn btn-ghost" id="refreshTeam">Refresh</button>
+  </div>
+
+  <div class="tabs" id="teamTabs" style="margin-bottom:14px">
+    <button type="button" class="tab active" data-status="attention">Attention</button>
+    <button type="button" class="tab" data-status="all">All</button>
+    <button type="button" class="tab" data-status="completed">Completed</button>
+    <button type="button" class="tab" data-status="on_leave">Leave</button>
+  </div>
+
+  <div class="list team-list" id="teamList">
+    {% for person in dashboard.people %}
+      <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
+        <div>
+          <h3>{{ person.name }}</h3>
+          <p>
+            {% if person.status == 'checked_in' %}Checked in {{ person.checkin[:5] }}
+            {% elif person.status == 'completed' %}{{ person.checkin[:5] }}–{{ person.checkout[:5] }}
+            {% elif person.status == 'on_leave' %}Approved leave today
+            {% else %}No check-in recorded{% endif %}
+          </p>
+        </div>
+        <div class="team-status">
+          {% if person.status == 'checked_in' %}<span class="badge badge-info badge-dot">Working</span>
+          {% elif person.status == 'completed' %}<span class="badge badge-success badge-dot">Completed</span>
+          {% elif person.status == 'on_leave' %}<span class="badge badge-muted badge-dot">Leave</span>
+          {% else %}<span class="badge badge-warning badge-dot">Not started</span>{% endif %}
+          {% if person.deviation == 'On time!' %}<span>On time</span>{% elif person.deviation %}<span>Late {{ person.deviation[:5] }}</span>{% endif %}
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="card card-pad">
+  <div class="section-heading">
+    <div><h2>Punctuality</h2><p>Based only on check-ins recorded today.</p></div>
+  </div>
+  <div class="grid grid-2">
+    <div class="metric"><span class="metric-value">{{ dashboard.counts.on_time }}</span><span class="metric-label">On time</span></div>
+    <div class="metric"><span class="metric-value">{{ dashboard.counts.late }}</span><span class="metric-label">Late</span></div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const teamList = document.getElementById('teamList');
+  const teamTabs = document.getElementById('teamTabs');
+  let activeFilter = 'attention';
+
+  function applyTeamFilter() {
+    teamList.querySelectorAll('[data-team-status]').forEach((card) => {
+      const status = card.dataset.teamStatus;
+      const late = card.dataset.deviation && card.dataset.deviation !== 'On time!';
+      const visible = activeFilter === 'all'
+        || (activeFilter === 'attention' && (status === 'checked_in' || status === 'not_started' || late))
+        || status === activeFilter;
+      card.hidden = !visible;
+    });
+  }
+
+  teamTabs.addEventListener('click', (event) => {
+    const tab = event.target.closest('.tab');
+    if (!tab) return;
+    teamTabs.querySelectorAll('.tab').forEach((item) => item.classList.remove('active'));
+    tab.classList.add('active');
+    activeFilter = tab.dataset.status;
+    applyTeamFilter();
+  });
+  applyTeamFilter();
+
+  document.getElementById('refreshTeam').addEventListener('click', () => window.location.reload());
+</script>
+{% endblock %}

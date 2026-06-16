@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#193773">
+  <title>{{ page_title }} · I Can Read Cinere</title>
+  <script>
+    (() => {
+      const saved = localStorage.getItem('theme');
+      const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (dark ? 'dark' : 'light');
+    })();
+  </script>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/refinement.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/micro-fixes.css', v='20260616-mobile-grid-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css', v='20260616-premium-1') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/popup-center.css', v='20260616-popup-center-2') }}">
+  {% if active_page == 'home' %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/account-details.css', v='20260616-account-details-3') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/home-card-interactions.css', v='20260616-home-card-3') }}">
+  {% endif %}
+  <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
+  <script type="speculationrules">
+    {
+      "prefetch": [{
+        "source": "list",
+        "urls": [
+          "/absence",
+          "/history",
+          "/paid_leave"{% if is_manager %},
+          "/manager"{% endif %}{% if can_admin_tools %},
+          "/upload"{% endif %}
+        ],
+        "eagerness": "moderate"
+      }]
+    }
+  </script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <div class="navigation-progress" aria-hidden="true"></div>
+
+  <div class="toast-stack" aria-live="polite" aria-atomic="true">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="toast toast-{{ 'success' if category == 'success' else 'error' }}" data-auto-dismiss="5000">
+          <div aria-hidden="true">{{ '✓' if category == 'success' else '!' }}</div>
+          <div>
+            <strong>{{ 'Saved successfully' if category == 'success' else 'Unable to continue' }}</strong>
+            <span>{{ message }}</span>
+          </div>
+        </div>
+      {% endfor %}
+    {% endwith %}
+  </div>
+
+  <main class="app-shell">
+    <header class="app-header">
+      <a href="/absence" class="brand-link" aria-label="I Can Read Cinere attendance home">
+        <span class="brand-mark" aria-hidden="true">ICR</span>
+        <span class="brand-copy">
+          <span class="brand-name">I Can Read Cinere</span>
+          <span class="brand-page">{{ page_title }}</span>
+        </span>
+      </a>
+      <div class="header-actions">
+        {% if can_admin_tools %}
+          <a class="icon-button" href="/upload" aria-label="Open admin tools" title="Admin tools">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3.1V3h4v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.6 1H21v4h-.1a1.7 1.7 0 0 0-1.5 1Z"></path></svg>
+          </a>
+        {% endif %}
+        <button type="button" class="icon-button" data-theme-toggle aria-label="Use dark mode">☾</button>
+        <a class="icon-button" href="/logout" data-no-prefetch aria-label="Sign out" title="Sign out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-6"></path></svg>
+        </a>
+      </div>
+    </header>
+
+    <div class="page-content" data-page-content>
+      {% block content %}{% endblock %}
+    </div>
+  </main>
+
+  <nav class="bottom-nav" aria-label="Primary navigation">
+    <a href="/absence" class="nav-item {{ 'active' if active_page == 'home' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 19.5z"/><path d="M9 21v-7h6v7"/></svg>
+      <span>Home</span>
+    </a>
+    <a href="/history" class="nav-item {{ 'active' if active_page == 'history' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5M12 7v5l3 2"/></svg>
+      <span>History</span>
+    </a>
+    <a href="/paid_leave" class="nav-item {{ 'active' if active_page == 'leave' else '' }}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 10h18"/></svg>
+      <span>Leave</span>
+    </a>
+    {% if is_manager %}
+      <a href="/manager" class="nav-item {{ 'active' if active_page == 'manager' else '' }}">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 1-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <span>Team</span>
+      </a>
+    {% endif %}
+  </nav>
+
+  <div id="loadingOverlay" class="loading-overlay" aria-hidden="true" aria-live="assertive">
+    <div class="loading-card" role="status">
+      <div class="spinner" aria-hidden="true"></div>
+      <strong data-loading-title>Working…</strong>
+      <p data-loading-description>Please keep this page open.</p>
+    </div>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/dialog.js', v='20260616-dialog-2') }}"></script>
+  <script src="{{ url_for('static', filename='js/dialog-polish.js', v='20260616-dialog-polish-1') }}"></script>
+  {% if active_page == 'home' %}
+    <script src="{{ url_for('static', filename='js/api-form.js', v='20260616-api-form-1') }}"></script>
+    <script src="{{ url_for('static', filename='js/home-details.js', v='20260616-home-details-5') }}"></script>
+    <script src="{{ url_for('static', filename='js/account-security-ui.js', v='20260616-account-security-3') }}"></script>
+  {% endif %}
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,458 @@
+/* Premium presentation layer: mature surfaces, dialogs and sign-in composition. */
+:root {
+  --premium-shadow: 0 28px 80px rgba(9, 17, 31, .22), 0 8px 24px rgba(9, 17, 31, .10);
+  --premium-border: color-mix(in srgb, var(--border) 86%, transparent);
+}
+
+/* ---------- Header polish ---------- */
+.header-actions {
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+  box-shadow: 0 8px 24px rgba(16, 38, 80, .06);
+}
+
+.header-actions .icon-button {
+  width: 40px;
+  height: 40px;
+  border: 0;
+  box-shadow: none;
+  background: transparent;
+}
+
+.header-actions .icon-button:hover {
+  background: var(--surface-soft);
+  box-shadow: none;
+}
+
+.icon-button svg {
+  width: 20px;
+  height: 20px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* ---------- Mature cards and sections ---------- */
+.page-content > section.card,
+.page-content > .card {
+  border-color: var(--premium-border);
+}
+
+.section-heading h2,
+.page-heading h1 {
+  text-wrap: balance;
+}
+
+.section-heading p,
+.page-heading p,
+.dialog-description,
+.login-brand p {
+  text-wrap: pretty;
+}
+
+.metric {
+  border-color: color-mix(in srgb, var(--border) 84%, transparent);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--surface-soft) 88%, var(--surface)), var(--surface-soft));
+}
+
+/* ---------- Shared application dialog ---------- */
+.app-dialog {
+  width: min(calc(100% - 28px), 430px);
+  max-height: min(88dvh, 680px);
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 26px;
+  overflow: hidden;
+  color: var(--text);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 98%, white), var(--surface));
+  box-shadow: var(--premium-shadow);
+}
+
+html[data-theme="dark"] .app-dialog {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--surface) 94%, #1d2c46), var(--surface));
+}
+
+.app-dialog::backdrop {
+  background: rgba(3, 9, 20, .64);
+  backdrop-filter: blur(10px) saturate(.9);
+}
+
+.app-dialog-shell {
+  position: relative;
+  padding: 26px;
+}
+
+.app-dialog-accent {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 4px;
+  background: linear-gradient(90deg, var(--info), color-mix(in srgb, var(--info) 58%, var(--brand)));
+}
+
+.app-dialog[data-tone="danger"] .app-dialog-accent {
+  background: linear-gradient(90deg, var(--danger), color-mix(in srgb, var(--danger) 65%, var(--accent)));
+}
+
+.app-dialog[data-tone="warning"] .app-dialog-accent {
+  background: linear-gradient(90deg, var(--warning), #f0a020);
+}
+
+.app-dialog[data-tone="success"] .app-dialog-accent {
+  background: linear-gradient(90deg, var(--success), #35a66d);
+}
+
+.app-dialog-head {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  gap: 15px;
+  align-items: center;
+}
+
+.app-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 17px;
+  color: var(--info);
+  background: color-mix(in srgb, var(--info) 11%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--info) 17%, var(--border));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.38);
+}
+
+.app-dialog[data-tone="danger"] .app-dialog-icon {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--danger) 18%, var(--border));
+}
+
+.app-dialog[data-tone="warning"] .app-dialog-icon {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--warning) 18%, var(--border));
+}
+
+.app-dialog[data-tone="success"] .app-dialog-icon {
+  color: var(--success);
+  background: color-mix(in srgb, var(--success) 10%, var(--surface));
+  border-color: color-mix(in srgb, var(--success) 18%, var(--border));
+}
+
+.app-dialog-icon svg {
+  width: 25px;
+  height: 25px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.app-dialog-title {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.2;
+  letter-spacing: -.025em;
+  font-weight: 780;
+}
+
+.app-dialog-message {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.62;
+  white-space: pre-line;
+}
+
+.app-dialog-field {
+  margin-top: 18px;
+}
+
+.app-dialog-field[hidden] { display: none; }
+
+.app-dialog-input {
+  min-height: 104px;
+}
+
+.app-dialog-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.app-dialog-actions.single {
+  grid-template-columns: 1fr;
+}
+
+.app-dialog-actions .btn {
+  min-height: 48px;
+}
+
+.app-dialog-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--surface-soft);
+  color: var(--muted);
+  cursor: pointer;
+  transition: transform var(--duration-fast), color var(--duration-fast), background var(--duration-fast);
+}
+
+.app-dialog-close:hover {
+  color: var(--text);
+  background: color-mix(in srgb, var(--muted) 10%, var(--surface-soft));
+}
+
+.app-dialog-close:active { transform: scale(.92); }
+
+/* ---------- Existing form dialogs ---------- */
+.dialog:not(.app-dialog) {
+  width: min(calc(100% - 28px), 460px);
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  border-radius: 26px;
+  overflow: hidden;
+  box-shadow: var(--premium-shadow);
+}
+
+.dialog:not(.app-dialog)::backdrop {
+  background: rgba(3, 9, 20, .64);
+  backdrop-filter: blur(10px) saturate(.9);
+}
+
+.dialog:not(.app-dialog) .dialog-body {
+  padding: 26px;
+}
+
+.dialog:not(.app-dialog) h2 {
+  font-size: 21px;
+  font-weight: 780;
+  letter-spacing: -.026em;
+}
+
+.dialog:not(.app-dialog) .dialog-description {
+  line-height: 1.58;
+}
+
+.dialog:not(.app-dialog) .dialog-actions {
+  padding-top: 4px;
+}
+
+/* ---------- Premium sign-in ---------- */
+.login-page {
+  min-height: 100dvh;
+  padding: 24px;
+  align-items: center;
+  background:
+    radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--info) 14%, transparent), transparent 24rem),
+    radial-gradient(circle at 8% 92%, color-mix(in srgb, var(--accent) 8%, transparent), transparent 22rem),
+    var(--bg);
+}
+
+.login-panel {
+  width: min(100%, 470px);
+  padding: 0;
+  align-content: center;
+}
+
+.login-brand {
+  margin-bottom: 20px;
+}
+
+.login-logo {
+  width: min(190px, 60vw);
+  max-height: 88px;
+}
+
+.login-brand h1 {
+  margin-top: 18px;
+  font-size: clamp(28px, 7vw, 36px);
+  font-weight: 800;
+  letter-spacing: -.045em;
+}
+
+.login-brand p {
+  max-width: 360px;
+  margin: 7px auto 0;
+  line-height: 1.55;
+}
+
+.login-card {
+  padding: 0;
+  overflow: hidden;
+  border-radius: 26px;
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+}
+
+.login-card-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 15px 18px;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  background: color-mix(in srgb, var(--surface-soft) 68%, var(--surface));
+}
+
+.login-security {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 720;
+  letter-spacing: .01em;
+}
+
+.login-security svg {
+  width: 17px;
+  height: 17px;
+  color: var(--success);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.login-card-topbar .icon-button {
+  width: 38px;
+  height: 38px;
+  box-shadow: none;
+  background: var(--surface);
+}
+
+.login-form-body {
+  padding: 22px;
+}
+
+.login-form-intro {
+  margin-bottom: 18px;
+}
+
+.login-form-intro strong {
+  display: block;
+  font-size: 16px;
+  letter-spacing: -.018em;
+}
+
+.login-form-intro span {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.login-card .form-group {
+  margin-bottom: 16px;
+}
+
+.login-card .form-control {
+  min-height: 50px;
+  padding-inline: 14px;
+  border-radius: 14px;
+}
+
+.login-card .btn-lg {
+  min-height: 52px;
+  margin-top: 4px;
+}
+
+.login-announcement {
+  margin: 18px 0 0;
+  padding: 14px 15px;
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--info) 5%, var(--surface-soft));
+}
+
+.login-announcement strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text);
+}
+
+.login-announcement strong::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--info);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--info) 10%, transparent);
+}
+
+.login-footnote {
+  margin: 15px 0 0;
+  color: var(--muted);
+  text-align: center;
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+/* Remove the old floating corner control entirely. */
+.login-theme { display: none !important; }
+
+@media (max-width: 520px) {
+  .login-page {
+    padding: 18px 14px max(22px, env(safe-area-inset-bottom));
+    align-items: start;
+  }
+
+  .login-panel {
+    padding-top: max(26px, env(safe-area-inset-top));
+  }
+
+  .login-brand {
+    margin-bottom: 18px;
+  }
+
+  .login-logo {
+    width: min(160px, 52vw);
+    max-height: 72px;
+  }
+
+  .login-brand h1 {
+    margin-top: 14px;
+    font-size: 30px;
+  }
+
+  .login-form-body {
+    padding: 19px;
+  }
+
+  .app-dialog,
+  .dialog:not(.app-dialog) {
+    width: calc(100% - 16px);
+    max-width: none;
+    margin: auto 8px max(8px, env(safe-area-inset-bottom));
+    border-radius: 24px;
+  }
+
+  .app-dialog-shell,
+  .dialog:not(.app-dialog) .dialog-body {
+    padding: 22px 19px 19px;
+  }
+
+  .app-dialog-actions,
+  .dialog-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .app-dialog-actions .btn,
+  .dialog-actions .btn {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-dialog,
+  .dialog { transition: none !important; }
+}

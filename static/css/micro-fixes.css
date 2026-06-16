@@ -1,0 +1,213 @@
+/* Final polish, mobile layout safety and interaction corrections. */
+.toast { position: relative; }
+.ripple { z-index: 0; }
+
+/* ---------- Mobile-safe document flow ---------- */
+.page-content {
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.page-content > :is(section, .page-heading, .grid, .card) {
+  width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+}
+
+.grid {
+  min-width: 0;
+  grid-auto-flow: row;
+  grid-auto-rows: minmax(min-content, auto);
+  align-items: stretch;
+}
+
+.grid > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Never use percentage height inside an auto-sized grid row. */
+.page-content .grid > .card {
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  align-self: stretch;
+  margin: 0 !important;
+}
+
+.grid > .card + .card {
+  margin-top: 0 !important;
+}
+
+.card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.card-pad,
+.metric,
+.list-card,
+.section-heading > *,
+.profile-copy,
+.timeline-label {
+  min-width: 0;
+}
+
+/* Equal and predictable leave summary cards. */
+.page-content > section[aria-label="Leave overview"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.page-content > section[aria-label="Leave overview"] > .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 136px;
+}
+
+.page-content > section[aria-label="Leave overview"] .metric-label {
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.page-content > section[aria-label="Leave overview"] .metric-value {
+  margin-top: 8px;
+}
+
+/* ---------- Login ---------- */
+.login-page {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+.login-page::before,
+.login-page::after {
+  content: "";
+  position: fixed;
+  z-index: -1;
+  border-radius: 50%;
+  filter: blur(1px);
+  pointer-events: none;
+}
+.login-page::before {
+  width: min(68vw, 620px);
+  aspect-ratio: 1;
+  top: -30%;
+  right: -18%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--info) 14%, transparent), transparent 68%);
+}
+.login-page::after {
+  width: min(60vw, 520px);
+  aspect-ratio: 1;
+  bottom: -32%;
+  left: -20%;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 8%, transparent), transparent 68%);
+}
+.login-panel { padding-block: clamp(34px, 8vh, 76px); }
+.login-brand { animation: login-brand-in 520ms var(--ease-emphasized) both; }
+.login-logo { filter: drop-shadow(0 12px 24px rgba(16,38,80,.10)); }
+.login-card {
+  border-color: color-mix(in srgb, var(--border) 82%, transparent);
+  box-shadow: 0 24px 65px rgba(16,38,80,.13), 0 3px 10px rgba(16,38,80,.05);
+  animation: login-card-in 580ms 70ms var(--ease-emphasized) both;
+}
+.login-announcement { transition: border-color var(--duration-fast), background-color var(--duration-fast); }
+.login-announcement:hover { border-color: color-mix(in srgb, var(--info) 20%, var(--border)); }
+.login-theme { animation: login-theme-in 420ms 180ms var(--ease-emphasized) both; }
+
+@keyframes login-brand-in {
+  from { opacity: 0; transform: translateY(-8px); }
+}
+@keyframes login-card-in {
+  from { opacity: 0; transform: translateY(14px) scale(.985); }
+}
+@keyframes login-theme-in {
+  from { opacity: 0; transform: translateY(-8px) rotate(-12deg); }
+}
+
+.input-action button {
+  font-size: 12px;
+  font-weight: 750;
+  transition: color var(--duration-fast), background-color var(--duration-fast), transform var(--duration-fast);
+}
+.input-action button:hover { color: var(--info); background: color-mix(in srgb, var(--info) 8%, transparent); }
+.input-action button:active { transform: translateY(-50%) scale(.92); }
+
+.list-card-header > div { min-width: 0; }
+.list-card h3,
+.list-card p,
+.news-content,
+.news-date { overflow-wrap: anywhere; }
+
+details > summary {
+  border-radius: 9px;
+  padding: 6px 8px;
+  margin-inline: -8px;
+  transition: background-color var(--duration-fast), color var(--duration-fast);
+}
+details > summary:hover { background: var(--surface-soft); color: var(--info); }
+
+select.form-control { cursor: pointer; }
+textarea.form-control { line-height: 1.5; }
+
+@media (max-width: 520px) {
+  .app-shell {
+    padding-inline: 14px;
+    padding-bottom: calc(var(--nav-height) + max(34px, env(safe-area-inset-bottom)));
+  }
+
+  .app-header {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+
+  .page-content { gap: 16px; }
+
+  .card-pad { padding: 16px; }
+
+  .metric {
+    min-height: 116px;
+    padding: 14px;
+  }
+
+  .page-content > section[aria-label="Leave overview"] > .card {
+    min-height: 132px;
+  }
+
+  .section-heading {
+    gap: 10px;
+  }
+
+  .section-heading .btn {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 350px) {
+  .page-content > section[aria-label="Leave overview"] {
+    grid-template-columns: 1fr;
+  }
+
+  .page-content > section[aria-label="Leave overview"] > .card {
+    min-height: 112px;
+  }
+}
+
+@media (min-width: 760px) {
+  .page-content { gap: 20px; }
+  .login-card { padding: 24px; }
+  .bottom-nav { bottom: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-brand,
+  .login-card,
+  .login-theme { animation: none; }
+}
