@@ -1,0 +1,56 @@
+/* Keep the sign-in form card as the visual centre of the viewport. */
+.login-page {
+  display: grid !important;
+  place-items: center !important;
+  min-height: 100svh;
+  padding: max(20px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  overflow-x: hidden;
+}
+
+.login-panel {
+  display: grid;
+  align-content: center;
+  width: min(100%, 470px);
+  padding: 0 !important;
+  transform: translateY(clamp(-86px, -6.5vh, -56px));
+}
+
+.login-brand {
+  margin-bottom: 14px;
+}
+
+.login-card {
+  width: 100%;
+  margin: 0 auto;
+}
+
+@media (max-width: 520px) {
+  .login-page {
+    place-items: center !important;
+    padding: max(16px, env(safe-area-inset-top)) 14px max(20px, env(safe-area-inset-bottom));
+  }
+
+  .login-panel {
+    align-content: center;
+    padding-top: 0 !important;
+    transform: translateY(clamp(-74px, -5.5vh, -48px));
+  }
+
+  .login-brand {
+    margin-bottom: 12px;
+  }
+}
+
+/* When the keyboard opens or the viewport is short, prioritise access to every field. */
+@media (max-height: 760px) {
+  .login-page {
+    place-items: start center !important;
+    overflow-y: auto;
+  }
+
+  .login-panel {
+    align-content: start;
+    transform: none;
+    padding-top: max(10px, env(safe-area-inset-top)) !important;
+  }
+}
