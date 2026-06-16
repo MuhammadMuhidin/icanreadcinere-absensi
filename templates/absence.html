@@ -19,7 +19,7 @@
 </section>
 
 {% if latest_incomplete %}
-  <div class="notice notice-warning" style="margin-top:16px">
+  <div class="notice notice-warning">
     <div class="notice-icon" aria-hidden="true">⚠</div>
     <div>
       <strong>Previous attendance is incomplete</strong>
@@ -28,7 +28,7 @@
   </div>
 {% endif %}
 
-<section class="card card-pad today-card" style="margin-top:16px" aria-labelledby="todayHeading">
+<section class="card card-pad today-card" aria-labelledby="todayHeading">
   <div class="today-header">
     <div>
       <div class="muted-on-dark" id="todayDate">Today</div>
@@ -209,10 +209,13 @@
   });
   document.getElementById('cancelAttendance').addEventListener('click', () => dialog.close());
 
-  form.addEventListener('submit', (event) => {
+  form.addEventListener('submit', async (event) => {
     event.preventDefault();
     if (!navigator.geolocation) {
-      alert('This browser does not support location services.');
+      await window.appDialog.error({
+        title: 'Location is not supported',
+        message: 'This browser cannot access location services. Open the attendance page in a modern browser with location support.'
+      });
       return;
     }
     dialog.close();
@@ -225,14 +228,17 @@
         window.appLoading.show('Recording attendance…', `Location accuracy ±${Math.round(position.coords.accuracy || 0)} m.`);
         form.submit();
       },
-      (error) => {
+      async (error) => {
         window.appLoading.hide();
         const messages = {
-          1: 'Location permission was denied. Enable location access in your browser settings.',
+          1: 'Location permission was denied. Enable location access for this website in your browser settings, then try again.',
           2: 'Your location is currently unavailable. Move to an open area and try again.',
-          3: 'Location detection timed out. Please try again.'
+          3: 'Location detection timed out. Check that GPS is active and try again.'
         };
-        alert(messages[error.code] || 'We could not detect your location.');
+        await window.appDialog.error({
+          title: error.code === 1 ? 'Location permission required' : 'Location could not be detected',
+          message: messages[error.code] || 'We could not detect your current location.'
+        });
       },
       { enableHighAccuracy: true, timeout: 20000, maximumAge: 0 }
     );
@@ -255,8 +261,15 @@
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.message || 'Upload failed');
       profilePhoto.src = URL.createObjectURL(file);
+      await window.appDialog.success({
+        title: 'Profile photo updated',
+        message: 'Your new photo has been saved successfully.'
+      });
     } catch (error) {
-      alert(error.message);
+      await window.appDialog.error({
+        title: 'Photo could not be updated',
+        message: error.message
+      });
     } finally {
       window.appLoading.hide();
       profileUpload.value = '';
