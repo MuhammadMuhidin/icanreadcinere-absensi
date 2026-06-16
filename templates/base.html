@@ -5,10 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#193773">
   <title>{{ page_title }} · I Can Read Cinere</title>
+  <script>
+    (() => {
+      const saved = localStorage.getItem('theme');
+      const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (dark ? 'dark' : 'light');
+    })();
+  </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/refinement.css') }}">
+  <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
+  <script type="speculationrules">
+    {
+      "prefetch": [{
+        "source": "list",
+        "urls": [
+          "/absence",
+          "/history",
+          "/paid_leave"{% if is_manager %},
+          "/manager"{% endif %}{% if can_admin_tools %},
+          "/upload"{% endif %}
+        ],
+        "eagerness": "moderate"
+      }]
+    }
+  </script>
   {% block head %}{% endblock %}
 </head>
 <body>
+  <div class="navigation-progress" aria-hidden="true"></div>
+
   <div class="toast-stack" aria-live="polite" aria-atomic="true">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
@@ -37,11 +63,13 @@
           <a class="icon-button" href="/upload" aria-label="Open admin tools" title="Admin tools">⚙</a>
         {% endif %}
         <button type="button" class="icon-button" data-theme-toggle aria-label="Use dark mode">☾</button>
-        <a class="icon-button" href="/logout" aria-label="Sign out" title="Sign out">↪</a>
+        <a class="icon-button" href="/logout" data-no-prefetch aria-label="Sign out" title="Sign out">↪</a>
       </div>
     </header>
 
-    {% block content %}{% endblock %}
+    <div class="page-content" data-page-content>
+      {% block content %}{% endblock %}
+    </div>
   </main>
 
   <nav class="bottom-nav" aria-label="Primary navigation">
