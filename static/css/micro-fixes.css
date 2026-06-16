@@ -1,7 +1,87 @@
-/* Final polish and small interaction corrections. */
+/* Final polish, mobile layout safety and interaction corrections. */
 .toast { position: relative; }
 .ripple { z-index: 0; }
 
+/* ---------- Mobile-safe document flow ---------- */
+.page-content {
+  display: grid;
+  grid-auto-flow: row;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 16px;
+  min-width: 0;
+}
+
+.page-content > :is(section, .page-heading, .grid, .card) {
+  width: 100%;
+  min-width: 0;
+  margin: 0 !important;
+}
+
+.grid {
+  min-width: 0;
+  grid-auto-flow: row;
+  grid-auto-rows: minmax(min-content, auto);
+  align-items: stretch;
+}
+
+.grid > * {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* Never use percentage height inside an auto-sized grid row. */
+.page-content .grid > .card {
+  width: 100%;
+  height: auto !important;
+  min-height: 0;
+  align-self: stretch;
+  margin: 0 !important;
+}
+
+.grid > .card + .card {
+  margin-top: 0 !important;
+}
+
+.card {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.card-pad,
+.metric,
+.list-card,
+.section-heading > *,
+.profile-copy,
+.timeline-label {
+  min-width: 0;
+}
+
+/* Equal and predictable leave summary cards. */
+.page-content > section[aria-label="Leave overview"] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  align-items: stretch;
+}
+
+.page-content > section[aria-label="Leave overview"] > .card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 136px;
+}
+
+.page-content > section[aria-label="Leave overview"] .metric-label {
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.page-content > section[aria-label="Leave overview"] .metric-value {
+  margin-top: 8px;
+}
+
+/* ---------- Login ---------- */
 .login-page {
   position: relative;
   isolation: isolate;
@@ -60,10 +140,11 @@
 .input-action button:hover { color: var(--info); background: color-mix(in srgb, var(--info) 8%, transparent); }
 .input-action button:active { transform: translateY(-50%) scale(.92); }
 
-.page-content .grid > .card { height: 100%; }
 .list-card-header > div { min-width: 0; }
 .list-card h3,
-.list-card p { overflow-wrap: anywhere; }
+.list-card p,
+.news-content,
+.news-date { overflow-wrap: anywhere; }
 
 details > summary {
   border-radius: 9px;
@@ -76,7 +157,51 @@ details > summary:hover { background: var(--surface-soft); color: var(--info); }
 select.form-control { cursor: pointer; }
 textarea.form-control { line-height: 1.5; }
 
+@media (max-width: 520px) {
+  .app-shell {
+    padding-inline: 14px;
+    padding-bottom: calc(var(--nav-height) + max(34px, env(safe-area-inset-bottom)));
+  }
+
+  .app-header {
+    margin-inline: -14px;
+    padding-inline: 14px;
+  }
+
+  .page-content { gap: 16px; }
+
+  .card-pad { padding: 16px; }
+
+  .metric {
+    min-height: 116px;
+    padding: 14px;
+  }
+
+  .page-content > section[aria-label="Leave overview"] > .card {
+    min-height: 132px;
+  }
+
+  .section-heading {
+    gap: 10px;
+  }
+
+  .section-heading .btn {
+    flex: 0 0 auto;
+  }
+}
+
+@media (max-width: 350px) {
+  .page-content > section[aria-label="Leave overview"] {
+    grid-template-columns: 1fr;
+  }
+
+  .page-content > section[aria-label="Leave overview"] > .card {
+    min-height: 112px;
+  }
+}
+
 @media (min-width: 760px) {
+  .page-content { gap: 20px; }
   .login-card { padding: 24px; }
   .bottom-nav { bottom: 16px; }
 }
