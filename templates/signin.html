@@ -5,9 +5,22 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#193773">
   <title>Sign in · I Can Read Cinere</title>
+  <script>
+    (() => {
+      const saved = localStorage.getItem('theme');
+      const dark = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+      document.documentElement.dataset.theme = saved || (dark ? 'dark' : 'light');
+    })();
+  </script>
   <link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/refinement.css') }}">
+  <link rel="preload" href="{{ url_for('static', filename='js/app.js') }}" as="script">
+  <script type="speculationrules">
+    {"prefetch":[{"source":"list","urls":["/absence"],"eagerness":"moderate"}]}
+  </script>
 </head>
 <body>
+  <div class="navigation-progress" aria-hidden="true"></div>
   <button type="button" class="icon-button login-theme" data-theme-toggle aria-label="Use dark mode">☾</button>
 
   <div class="toast-stack" aria-live="polite">
@@ -72,7 +85,9 @@
       toggle.setAttribute('aria-label', show ? 'Hide password' : 'Show password');
     });
     document.getElementById('loginForm').addEventListener('submit', () => {
-      document.getElementById('loginButton').disabled = true;
+      const button = document.getElementById('loginButton');
+      button.disabled = true;
+      button.textContent = 'Signing in…';
       window.appLoading.show('Signing in…', 'Checking your account.');
     });
   </script>
