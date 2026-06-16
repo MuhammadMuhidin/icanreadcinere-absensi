@@ -1,0 +1,98 @@
+/* Interactive affordances for dashboard cards without changing the original branding. */
+.profile-row,
+.home-detail-card,
+.home-detail-link {
+  position: relative;
+  cursor: pointer;
+}
+
+.profile-row::after,
+.home-detail-card::after,
+.home-detail-link::after {
+  content: "›";
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 76%, transparent);
+  font-size: 20px;
+  line-height: 1;
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: opacity var(--duration-fast), transform var(--duration-medium) var(--ease-emphasized), background var(--duration-fast);
+  pointer-events: none;
+}
+
+.today-card.home-detail-card::after {
+  color: rgba(255,255,255,.84);
+  background: rgba(255,255,255,.12);
+  border-color: rgba(255,255,255,.12);
+}
+
+.profile-row:hover::after,
+.home-detail-card:hover::after,
+.home-detail-link:hover::after,
+.profile-row:focus-visible::after,
+.home-detail-card:focus-visible::after,
+.home-detail-link:focus-visible::after {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.profile-row:active,
+.home-detail-card:active,
+.home-detail-link:active {
+  transform: scale(.994);
+}
+
+.profile-row {
+  padding: 10px;
+  margin: -10px;
+  border-radius: 18px;
+  transition: background-color var(--duration-fast), transform var(--duration-fast);
+}
+
+.profile-row:hover {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+}
+
+.home-detail-card,
+.home-detail-link {
+  transition: transform var(--duration-fast) var(--ease-standard), border-color var(--duration-fast), box-shadow var(--duration-medium);
+}
+
+.home-detail-card:focus-visible,
+.home-detail-link:focus-visible,
+.profile-row:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--info) 32%, transparent);
+  outline-offset: 3px;
+}
+
+.home-detail-link { text-decoration: none; }
+
+@media (hover: none) {
+  .profile-row::after,
+  .home-detail-card::after,
+  .home-detail-link::after {
+    opacity: .72;
+    transform: none;
+  }
+}
+
+@media (max-width: 520px) {
+  .profile-row::after {
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  .profile-row:hover::after,
+  .profile-row:focus-visible::after {
+    transform: translateY(-50%);
+  }
+}
