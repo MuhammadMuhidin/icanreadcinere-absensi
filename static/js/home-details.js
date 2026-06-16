@@ -66,7 +66,7 @@
         <div class="dialog-body">
           <button type="button" class="app-dialog-close" data-form-dialog-close aria-label="Close dialog">×</button>
           <div class="detail-dialog-header">
-            <div class="detail-dialog-icon"><svg viewBox="0 0 24 24" data-detail-icon></svg></div>
+            <div class="detail-dialog-icon" data-detail-visual><svg viewBox="0 0 24 24" data-detail-icon></svg></div>
             <div><h2 class="detail-dialog-title" data-detail-title></h2><p class="detail-dialog-subtitle" data-detail-subtitle></p></div>
           </div>
           <div class="detail-dialog-content" data-detail-content></div>
@@ -75,12 +75,31 @@
       </dialog>`);
   }
 
-  function openDetail({ title, subtitle, icon, content, actions = [] }) {
+  function openDetail({ title, subtitle, icon, avatar, avatarAlt, content, actions = [] }) {
     ensureDialog();
     const dialog = document.getElementById('dashboardDetailDialog');
+    const visual = dialog.querySelector('[data-detail-visual]');
+
     dialog.querySelector('[data-detail-title]').textContent = title;
     dialog.querySelector('[data-detail-subtitle]').textContent = subtitle || '';
-    dialog.querySelector('[data-detail-icon]').innerHTML = icons[icon] || icons.profile;
+
+    if (avatar) {
+      visual.className = 'detail-dialog-avatar';
+      visual.innerHTML = '';
+      const image = document.createElement('img');
+      image.src = avatar;
+      image.alt = avatarAlt || `${title} profile photo`;
+      image.style.width = '100%';
+      image.style.height = '100%';
+      image.style.display = 'block';
+      image.style.objectFit = 'cover';
+      image.style.borderRadius = 'inherit';
+      visual.appendChild(image);
+    } else {
+      visual.className = 'detail-dialog-icon';
+      visual.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${icons[icon] || icons.profile}</svg>`;
+    }
+
     dialog.querySelector('[data-detail-content]').innerHTML = content;
     const actionsElement = dialog.querySelector('[data-detail-actions]');
     actionsElement.classList.toggle('three', actions.length === 3);
@@ -125,10 +144,14 @@
   function render(type, data) {
     if (type === 'profile') {
       const item = data.profile;
+      const profileImage = document.getElementById('profileImage');
+      const avatar = profileImage?.currentSrc || profileImage?.src || '';
       openDetail({
         title: item.user_id,
         subtitle: `${item.title} · ${item.role}`,
         icon: 'profile',
+        avatar,
+        avatarAlt: `${item.user_id} profile photo`,
         content: `<div class="detail-section"><h3 class="detail-section-title">Account</h3>${row('User ID', item.user_id)}${row('Title', item.title)}${row('Role', item.role)}${row('Phone', item.phone || 'Not configured')}</div>`,
         actions: [
           { id: 'close', label: 'Close' },
