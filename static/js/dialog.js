@@ -118,9 +118,14 @@
     confirmButton.textContent = options.confirmText || (activeMode === 'alert' ? 'Got it' : 'Continue');
     confirmButton.className = `btn ${options.confirmClass || (options.tone === 'danger' ? 'btn-danger' : options.tone === 'success' ? 'btn-success' : 'btn-primary')}`;
 
+    const showCancel = activeMode !== 'alert';
     cancelButton.textContent = options.cancelText || 'Cancel';
-    cancelButton.hidden = activeMode === 'alert';
-    actions.classList.toggle('single', activeMode === 'alert');
+    cancelButton.hidden = !showCancel;
+    cancelButton.disabled = !showCancel;
+    cancelButton.style.display = showCancel ? '' : 'none';
+    cancelButton.setAttribute('aria-hidden', showCancel ? 'false' : 'true');
+    cancelButton.tabIndex = showCancel ? 0 : -1;
+    actions.classList.toggle('single', !showCancel);
 
     const showField = activeMode === 'prompt';
     field.hidden = !showField;
