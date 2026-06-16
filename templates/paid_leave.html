@@ -1,681 +1,325 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Paid Leave</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <link rel="stylesheet" href="static/css/paid_leave.css">
-</head>
+{% extends "base.html" %}
 
-<body>
+{% block content %}
+<section class="page-heading">
+  <h1>{{ 'Leave approvals' if is_manager else 'Paid leave' }}</h1>
+  <p>{{ 'Review pending requests and recent decisions.' if is_manager else 'Request leave and follow its approval status.' }}</p>
+</section>
 
-<div class="card">
-  <div class="header">
-    <h1>Paid Leave</h1>
-    <div class="header-right">
-      <button id="applyBtn" class="btn-primary" onclick="openDialog()">Request</button>
+<section class="grid grid-2 grid-md-4" aria-label="Leave summary">
+  <div class="metric"><span class="metric-value" id="balanceMetric">{{ leave_balance if leave_balance is not none else '—' }}</span><span class="metric-label">My balance</span></div>
+  <div class="metric"><span class="metric-value" id="waitingMetric">{{ leave_summary.waiting }}</span><span class="metric-label">Waiting</span></div>
+  <div class="metric"><span class="metric-value" id="approvedMetric">{{ leave_summary.approved }}</span><span class="metric-label">Approved</span></div>
+  <div class="metric"><span class="metric-value" id="rejectedMetric">{{ leave_summary.rejected }}</span><span class="metric-label">Rejected</span></div>
+</section>
+
+<section class="card card-pad">
+  <div class="section-heading">
+    <div>
+      <h2>{{ 'Requests' if is_manager else 'My requests' }}</h2>
+      <p>{{ 'Waiting requests are shown first.' if is_manager else 'You can edit or cancel a request while it is waiting.' }}</p>
     </div>
+    <button type="button" class="btn btn-primary" id="openRequestDialog">Request leave</button>
   </div>
 
-  <!-- FILTER BAR -->
-<div class="filter-bar">
-  <div class="tabs">
-    <button class="tab active" data-status="ALL">All</button>
-    <button class="tab" data-status="WAITING APPROVAL">Waiting</button>
-    <button class="tab" data-status="APPROVED">Approved</button>
-    <button class="tab" data-status="REJECTED">Rejected</button>
-    <button class="tab" data-status="CANCELED">Canceled</button>
-  </div>
-
-  <select id="yearFilter">
-    <option value="ALL">All Years</option>
-  </select>
-</div>
-  
-<div id="actionLoader" class="action-loader">
-  <div class="loader-card">
-    <div class="loader-icon">
-      <span></span><span></span><span></span>
+  <div class="filter-bar">
+    <div class="tabs" id="statusTabs" aria-label="Filter leave requests by status">
+      <button type="button" class="tab active" data-status="ALL">All</button>
+      <button type="button" class="tab" data-status="WAITING APPROVAL">Waiting</button>
+      <button type="button" class="tab" data-status="APPROVED">Approved</button>
+      <button type="button" class="tab" data-status="REJECTED">Rejected</button>
+      <button type="button" class="tab" data-status="CANCELED">Canceled</button>
     </div>
-    <div id="loaderText" class="loader-text">Processing</div>
+    <label>
+      <span class="sr-only">Filter by leave year</span>
+      <select class="form-control" id="yearFilter">
+        <option value="ALL">All years</option>
+      </select>
+    </label>
   </div>
-</div>
 
-  <table>
-    <thead>
-      <tr>
-        <th>Requested By</th>
-        <th>Submitted</th>
-        <th>Leave Date</th>
-        <th>Status</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody id="leaveTable"></tbody>
-  </table>
-</div>
-
-<dialog id="leaveDialog">
-  <h3>Request for Leave</h3>
-  <input type="date" id="leaveDate">
-  <div class="dialog-actions">
-    <button class="btn-ghost" onclick="closeDialog()">Cancel</button>
-    <button id="submitBtn" class="btn-primary" onclick="submitLeave()">Submit</button>
+  <div id="leaveList" class="list" aria-live="polite">
+    <div class="empty-state"><div class="spinner" aria-hidden="true"></div><p>Loading leave requests…</p></div>
   </div>
+</section>
+
+<dialog class="dialog" id="requestDialog">
+  <form id="requestForm">
+    <div class="dialog-body">
+      <h2>Request paid leave</h2>
+      <p class="dialog-description">Choose one date within the next 30 days.</p>
+      <div class="form-group">
+        <label class="form-label" for="requestDate">Leave date</label>
+        <input class="form-control" type="date" id="requestDate" min="{{ min_leave_date }}" max="{{ max_leave_date }}" required>
+        <span class="form-hint">Available range: {{ min_leave_date }} to {{ max_leave_date }}</span>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" data-close-dialog="requestDialog">Cancel</button>
+        <button type="submit" class="btn btn-primary">Submit request</button>
+      </div>
+    </div>
+  </form>
 </dialog>
 
-<dialog id="editLeaveDialog">
-  <h3>Edit Leave</h3>
-  <input type="date" id="editLeaveDate">
-  <div class="dialog-actions">
-    <button class="btn-ghost" onclick="closeEditDialog()">Cancel</button>
-    <button id="editSaveBtn" class="btn-primary" onclick="submitEdit()">
-       <span class="btn-text">Save</span>
-    </button>
-  </div>
+<dialog class="dialog" id="editDialog">
+  <form id="editForm">
+    <div class="dialog-body">
+      <h2>Change leave date</h2>
+      <p class="dialog-description">Only waiting requests can be changed.</p>
+      <input type="hidden" id="editId">
+      <div class="form-group">
+        <label class="form-label" for="editDate">Leave date</label>
+        <input class="form-control" type="date" id="editDate" min="{{ min_leave_date }}" max="{{ max_leave_date }}" required>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" data-close-dialog="editDialog">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save change</button>
+      </div>
+    </div>
+  </form>
 </dialog>
+{% endblock %}
 
+{% block scripts %}
 <script>
-/* =========================
-   DARK MODE (GLOBAL STYLE)
-   ========================= */
-if (localStorage.getItem("darkMode") === "enabled") {
-    document.body.classList.add("dark-mode");
+  const CURRENT_USER = {{ SESSION_NAME|tojson }};
+  const IS_MANAGER = {{ is_manager|tojson }};
+  const leaveList = document.getElementById('leaveList');
+  const statusTabs = document.getElementById('statusTabs');
+  const yearFilter = document.getElementById('yearFilter');
+  let rawData = [];
+  let activeStatus = 'ALL';
+  let activeYear = String(new Date().getFullYear());
+  let lastSnapshot = '';
+
+  const statusLabels = {
+    'WAITING APPROVAL': 'Waiting approval',
+    'APPROVED': 'Approved',
+    'REJECTED': 'Rejected',
+    'CANCELED': 'Canceled'
+  };
+
+  const statusBadge = {
+    'WAITING APPROVAL': 'badge-warning',
+    'APPROVED': 'badge-success',
+    'REJECTED': 'badge-danger',
+    'CANCELED': 'badge-muted'
+  };
+
+  function escapeHtml(value) {
+    return String(value ?? '').replace(/[&<>'"]/g, (character) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+    })[character]);
   }
-  
-/* =========================
-   PAID LEAVE LOGIC (UNCHANGED)
-   ========================= */
-window.SESSION_NAME = "{{ SESSION_NAME }}";
 
-const NAME = window.SESSION_NAME;
-const ROLE = (NAME === "Hanny") ? "manager" : "employee";
-let EDIT_LEAVE_ID = null;
-let POLL_INTERVAL = null;
-let LAST_SNAPSHOT = "";
+  function formatDate(value, includeTime = false) {
+    if (!value) return '—';
+    const date = new Date(value.includes('T') ? value : `${value}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return escapeHtml(value);
+    return new Intl.DateTimeFormat('en-GB', {
+      day: 'numeric', month: 'short', year: 'numeric',
+      ...(includeTime ? { hour: '2-digit', minute: '2-digit' } : {})
+    }).format(date);
+  }
 
-async function pollStatus() {
-  try {
-    const res = await fetch("/leave");
-    if (!res.ok) return;
+  function renderStatusStep(status) {
+    const finalClass = status === 'APPROVED' ? 'success' : status === 'REJECTED' ? 'danger' : status === 'CANCELED' ? 'muted' : 'active';
+    const waiting = status === 'WAITING APPROVAL';
+    return `<div class="status-step" aria-hidden="true">
+      <i class="active"></i><span class="active"></span>
+      <i class="${waiting ? 'active' : finalClass}"></i><span class="${waiting ? '' : finalClass}"></span>
+      <i class="${waiting ? '' : finalClass}"></i>
+    </div>`;
+  }
 
-    const json = await res.json();
-    const data = json.data || [];
+  function actionButtons(item) {
+    if (item.status !== 'WAITING APPROVAL') return '';
+    const buttons = [];
+    if (item.name === CURRENT_USER) {
+      buttons.push(`<button type="button" class="btn btn-warning" data-action="edit" data-id="${item.id}" data-date="${escapeHtml(item.leave_date)}">Edit</button>`);
+      buttons.push(`<button type="button" class="btn btn-danger" data-action="cancel" data-id="${item.id}">Cancel</button>`);
+    }
+    if (IS_MANAGER) {
+      buttons.push(`<button type="button" class="btn btn-danger" data-action="reject" data-id="${item.id}">Reject</button>`);
+      buttons.push(`<button type="button" class="btn btn-success" data-action="approve" data-id="${item.id}">Approve</button>`);
+    }
+    return buttons.length ? `<div class="list-actions">${buttons.join('')}</div>` : '';
+  }
 
-    const snapshot = data
-      .map(d => `${d.id}-${d.status}-${d.updated_at || d.created_at}`)
-      .sort()
-      .join("|");
+  function renderList() {
+    let data = [...rawData];
+    if (activeStatus !== 'ALL') data = data.filter((item) => item.status === activeStatus);
+    if (activeYear !== 'ALL') data = data.filter((item) => String(new Date(`${item.leave_date}T00:00:00`).getFullYear()) === activeYear);
+    data.sort((a, b) => {
+      const waitingA = a.status === 'WAITING APPROVAL' ? 0 : 1;
+      const waitingB = b.status === 'WAITING APPROVAL' ? 0 : 1;
+      return waitingA - waitingB || new Date(b.created_at) - new Date(a.created_at);
+    });
 
-    if (!LAST_SNAPSHOT) {
-      LAST_SNAPSHOT = snapshot;
+    if (!data.length) {
+      leaveList.innerHTML = `<div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">⌁</div>
+        <h3>${activeStatus === 'WAITING APPROVAL' ? 'No requests are waiting' : 'No leave requests found'}</h3>
+        <p>${activeStatus === 'ALL' && !IS_MANAGER ? 'Submit a request when you need paid leave.' : 'Try another status or year.'}</p>
+      </div>`;
+      updateTabCounts();
       return;
     }
 
-    if (snapshot !== LAST_SNAPSHOT) {
-      LAST_SNAPSHOT = snapshot;
-      loadData(true); // reload hanya jika ada perubahan
-    }
-
-  } catch (e) {
-    // silent fail agar tidak ganggu UX
+    leaveList.innerHTML = data.map((item) => `
+      <article class="list-card">
+        <div class="list-card-header">
+          <div>
+            <h3>${IS_MANAGER ? `${escapeHtml(item.name)} · ` : ''}${formatDate(item.leave_date)}</h3>
+            <p>Submitted ${formatDate(item.created_at, true)}</p>
+          </div>
+          <span class="badge ${statusBadge[item.status] || 'badge-muted'} badge-dot">${statusLabels[item.status] || escapeHtml(item.status)}</span>
+        </div>
+        ${renderStatusStep(item.status)}
+        ${item.status === 'REJECTED' && item.reason ? `<div class="reason-box"><strong>Reason:</strong> ${escapeHtml(item.reason)}</div>` : ''}
+        ${actionButtons(item)}
+      </article>
+    `).join('');
+    updateTabCounts();
   }
-}
 
-function startPolling() {
-  if (!POLL_INTERVAL) {
-    POLL_INTERVAL = setInterval(pollStatus, 1000);
-  }
-}
-
-function stopPolling() {
-  if (POLL_INTERVAL) {
-    clearInterval(POLL_INTERVAL);
-    POLL_INTERVAL = null;
-  }
-}
-
-document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    startPolling();
-  } else {
-    stopPolling();
-  }
-});
-
-function openEditDialog(id, currentDate) {
-  EDIT_LEAVE_ID = id;
-  document.getElementById("editLeaveDate").value = currentDate?.slice(0,10) || "";
-  document.getElementById("editLeaveDialog").showModal();
-}
-  
-function closeEditDialog() {
-  document.getElementById("editLeaveDialog").close();
-}
-  
-function openDialog() {
-  document.getElementById("leaveDialog").showModal();
-}
-  
-function closeDialog() {
-  document.getElementById("leaveDialog").close();
-}
-
-function loadData() {
-  showLoader("Loading data…");
-
-  fetch("/leave")
-    .then(r => r.json())
-    .then(res => {
-      let data = res.data;
-
-      if (ROLE === "manager") {
-        data = data.filter(d =>
-          ["WAITING APPROVAL", "APPROVED", "REJECTED"].includes(d.status) ||
-          (d.status === "CANCELED" && d.name === "Hanny")
-        );
-      } else {
-        data = data.filter(d => d.name === NAME);
-      }
-
-      data.sort((a, b) => {
-        if (a.status === "WAITING APPROVAL" && b.status !== "WAITING APPROVAL") return -1;
-        if (a.status !== "WAITING APPROVAL" && b.status === "WAITING APPROVAL") return 1;
-        return new Date(b.created_at) - new Date(a.created_at);
-      });
-
-      renderTable(data);
-    })
-    .finally(() => {
-      hideLoader();
+  function updateTabCounts() {
+    const yearRows = activeYear === 'ALL' ? rawData : rawData.filter((item) => String(new Date(`${item.leave_date}T00:00:00`).getFullYear()) === activeYear);
+    const counts = { ALL: yearRows.length };
+    yearRows.forEach((item) => counts[item.status] = (counts[item.status] || 0) + 1);
+    statusTabs.querySelectorAll('.tab').forEach((tab) => {
+      const base = tab.dataset.status === 'ALL' ? 'All' : statusLabels[tab.dataset.status];
+      tab.textContent = `${base} (${counts[tab.dataset.status] || 0})`;
     });
-}
-
-/* ================= FILTER STATE ================= */
-let ACTIVE_STATUS = "ALL";
-let ACTIVE_YEAR = new Date().getFullYear().toString();
-let RAW_DATA = [];
-
-/* override ringan tanpa ubah logic */
-const originalRenderTable = renderTable;
-
-renderTable = function(data) {
-  RAW_DATA = data;
-  populateYearFilter(data);
-  applyFilter();
-};
-
-/* ================= YEAR OPTIONS ================= */
-function populateYearFilter(data) {
-  const select = document.getElementById("yearFilter");
-  if (select.options.length > 1) return;
-
-  const years = [...new Set(
-    data
-      .filter(d => d.created_at)
-      .map(d => new Date(d.created_at).getFullYear())
-  )].sort((a,b) => b - a);
-
-  years.forEach(y => {
-    const opt = document.createElement("option");
-    opt.value = y;
-    opt.textContent = y;
-    select.appendChild(opt);
-  });
-
-  select.value = ACTIVE_YEAR;
-}
-
-/* ================= APPLY FILTER ================= */
-function applyFilter() {
-  // 1. filter berdasarkan tahun saja
-  let yearFiltered = [...RAW_DATA];
-
-  if (ACTIVE_YEAR !== "ALL") {
-    yearFiltered = yearFiltered.filter(d =>
-      d.created_at &&
-      new Date(d.created_at).getFullYear().toString() === ACTIVE_YEAR
-    );
   }
 
-  // 2. update count tab (SELALU dari yearFiltered)
-  updateTabCounts(yearFiltered);
-
-  // 3. baru filter status untuk isi table
-  let tableData = [...yearFiltered];
-
-  if (ACTIVE_STATUS !== "ALL") {
-    tableData = tableData.filter(d => d.status === ACTIVE_STATUS);
-  }
-
-  // 4. render table
-  originalRenderTable(tableData);
-  }
-
-/*===== COUNT STATUS =====*/
-  function updateTabCounts(data) {
-  const counts = {
-    ALL: data.length
-  };
-
-  data.forEach(d => {
-    counts[d.status] = (counts[d.status] || 0) + 1;
-  });
-
-  document.querySelectorAll(".tab").forEach(tab => {
-    const status = tab.dataset.status;
-    const count = counts[status] || 0;
-
-    // ambil teks asli (tanpa count lama)
-    const baseLabel = tab.textContent.replace(/\s*\(\d+\)$/, "");
-
-    if (count >= 1) {
-      tab.textContent = `${baseLabel} (${count})`;
-    } else {
-      tab.textContent = baseLabel;
-    }
-  });
-  }
-
-/* ================= TAB CLICK ================= */
-document.querySelectorAll(".tab").forEach(tab => {
-  tab.addEventListener("click", () => {
-    document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
-    tab.classList.add("active");
-
-    ACTIVE_STATUS = tab.dataset.status;
-    applyFilter();
-  });
-});
-
-/* ================= YEAR CHANGE ================= */
-document.getElementById("yearFilter").addEventListener("change", e => {
-  ACTIVE_YEAR = e.target.value;
-  applyFilter();
-});
-  
-function submitLeave() {
-  const leaveDate = document.getElementById("leaveDate").value;
-  if (!leaveDate) return;
-  
-  closeDialog();
-  showLoader("Submitting leave…");
-
-  apiFetch("/leave", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ leave_date: leaveDate })
-  })
-  .then(() => {
-    showLoader("Request submitted", "success");
-    closeDialog();
-    setTimeout(() => {
-      loadData(true); // silent reload
-    }, 400);
-  })
-  .catch(err => {
-    showError(err.message); // ⬅️ Swal di sini
-  })
-  .finally(() => {
-    hideLoader(600); // ⬅️ loader PASTI ditutup
-  });
-}
-
-function submitEdit() {
-  const newDate = document.getElementById("editLeaveDate").value;
-  if (!newDate || !EDIT_LEAVE_ID) return;
-
-  closeEditDialog();
-  showLoader("Saving changes…");
-
-  apiFetch(`/leave/${EDIT_LEAVE_ID}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ leave_date: newDate })
-  })
-  .then(() => {
-    showLoader("Changes saved", "success");
-    setTimeout(() => loadData(true), 400);
-  })
-  .catch(err => {
-    showError(err.message); // ⬅️ Swal error
-  })
-  .finally(() => {
-    hideLoader(600);
-  });
-}
-
-function cancelLeave(id) {
-  Swal.fire({
-    title: "Cancel this request?",
-    text: "This action cannot be undone.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonText: "Yes, cancel it",
-    cancelButtonText: "Back",
-    confirmButtonColor: "#dc2626"
-  }).then(result => {
-    if (!result.isConfirmed) return;
-
-    showLoader("Canceling request…");
-
-    apiFetch(`/leave/${id}/cancel`, { method: "PATCH" })
-      .then(() => {
-        showLoader("Canceled", "success");
-        setTimeout(() => loadData(true), 400);
-      })
-      .catch(err => {
-        showError(err.message); // ⬅️ Swal error
-      })
-      .finally(() => {
-        hideLoader(600);
-      });
-  });
-}
-
-function decision(id, action) {
-  const isApprove = action === "APPROVED";
-
-  // 1️⃣ APPROVE → confirm dulu
-  if (isApprove) {
-    Swal.fire({
-      title: "Approve this request?",
-      text: "This will approve the leave and deduct balance.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonText: "Approve",
-      cancelButtonText: "Back",
-      confirmButtonColor: "#16a34a"
-    }).then(async result => {
-      if (!result.isConfirmed) return;
-
-      showLoader("Approving…");
-
-      try {
-        await apiFetch(`/leave/${id}/decision`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "APPROVED" })
-        });
-
-        showLoader("Approved", "success");
-        setTimeout(() => loadData(true), 400);
-      } catch (err) {
-        showError(err.message); // ⬅️ Swal error
-      } finally {
-        hideLoader(600);
-      }
-    });
-
-    return;
-  }
-
-  // 2️⃣ REJECT → input reason
-  Swal.fire({
-    title: "Reject this request?",
-    input: "textarea",
-    inputLabel: "Reason",
-    inputPlaceholder: "Write the reason here…",
-    inputAttributes: { rows: 4 },
-    showCancelButton: true,
-    confirmButtonText: "Reject",
-    confirmButtonColor: "#dc2626",
-    cancelButtonText: "Back",
-    preConfirm: value => {
-      if (!value || !value.trim()) {
-        Swal.showValidationMessage("Reason is required");
-        return false;
-      }
-      return value.trim();
-    }
-  }).then(async result => {
-    if (!result.isConfirmed) return;
-
-    showLoader("Rejecting…");
-
-    try {
-      await apiFetch(`/leave/${id}/decision`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          action: "REJECTED",
-          reason: result.value
-        })
-      });
-
-      showLoader("Rejected", "success");
-      setTimeout(() => loadData(true), 400);
-    } catch (err) {
-      showError(err.message); // ⬅️ Swal error
-    } finally {
-      hideLoader(700);
-    }
-  });
-}
-
-function renderStepTimeline(status) {
-  const s = status.toLowerCase();
-
-  let activeStep = 0;
-  let finalClass = "step-active";
-  let finalLabel = "Approved";
-  let isWaiting = false;
-
-  // WAITING
-  if (s.includes("waiting")) {
-    activeStep = 1;
-    finalClass = "step-active";
-    finalLabel = "Approved";
-    isWaiting = true;
-  }
-
-  // APPROVED / FINISHED
-  if (s === "approved" || s === "finished") {
-    activeStep = 2;
-    finalClass = "step-success";
-    finalLabel = "Approved";
-  }
-
-  // REJECTED
-  if (s === "rejected") {
-    activeStep = 2;
-    finalClass = "step-danger";
-    finalLabel = "Rejected";
-  }
-
-  // CANCELED
-  if (s === "canceled") {
-    activeStep = 2;
-    finalClass = "step-muted";
-    finalLabel = "Canceled";
-  }
-
-  return `
-    <div class="step-timeline">
-      <div class="step-line">
-        <div class="step-dot ${finalClass}"></div>
-        
-        <div class="step-bar ${
-          activeStep >= 1
-            ? isWaiting
-              ? "step-waiting"
-              : finalClass
-            : ""
-        }"></div>
-
-        <div class="step-dot ${
-          isWaiting ? "is-pulsing" : activeStep >= 1 ? finalClass : ""
-        }"></div>
-
-        <div class="step-bar ${activeStep >= 2 ? finalClass : ""}"></div>
-
-        <div class="step-dot ${activeStep >= 2 ? finalClass : ""}"></div>
-      </div>
-
-      <div class="step-labels">
-        <span>Submitted</span>
-        <span>Waiting</span>
-        <span>${finalLabel}</span>
-      </div>
-    </div>
-  `;
-}
-  
-function renderTable(data) {
-  const tbody = document.getElementById("leaveTable");
-  tbody.innerHTML = "";
-
-  if (!data.length) {
-    tbody.innerHTML =
-      `<tr><td colspan="5" class="loading">No data available</td></tr>`;
-    return;
-  }
-
-  data.forEach(l => {
-    let action = `<span class="completed">COMPLETED</span>`;
-
-    if (l.status === "WAITING APPROVAL") {
-  let buttons = [];
-
-  // EDIT (hanya pemilik request)
-  if (l.name === NAME) {
-    buttons.push(
-      `<button class="btn-warning"
-        onclick="openEditDialog(${l.id}, '${l.leave_date}')">
-        Edit
-      </button>`
-    );
-  }
-
-  // Pemilik pengajuan (termasuk Hanny) → boleh cancel
-  if (l.name === NAME) {
-    buttons.push(
-      `<button class="btn-danger" onclick="cancelLeave(${l.id})">Cancel</button>`
-    );
-  }
-
-  // Hanny → boleh approve / reject siapa pun (termasuk diri sendiri)
-  if (ROLE === "manager") {
-    buttons.push(
-      `<button class="btn-danger" onclick="decision(${l.id}, 'REJECTED')">Reject</button>`
-    );
-    buttons.push(
-      `<button class="btn-success" onclick="decision(${l.id}, 'APPROVED')">Approve</button>`
-    );
-  }
-
-  action = buttons.join(" ");
-  }
-
-    tbody.innerHTML += `
-      <tr class="${l.status.replace(/\s+/g, '-').toLowerCase()}">
-        <td>
-          <div class="label">Requested by</div>
-          <span class="name">${l.name}</span>
-        </td>
-        <td>
-          <div class="label">Submitted</div>
-          ${formatDatePretty(l.created_at)}
-        </td>
-        <td>
-          <div class="label">Leave Date</div>
-          ${formatDatePretty(l.leave_date)}
-        </td>
-        <td>
-          <div class="label">Status</div>
-          <span class="status ${l.status.replace(/\s+/g, '-')}">${l.status}</span>
-          ${renderStepTimeline(l.status)}
-          ${
-            l.status === "REJECTED" && l.reason
-            ? `<div style="
-            margin-top:6px;
-            font-size:12px;
-            color: var(--muted);
-            line-height:1.4;
-            ">
-            <strong>Reason:</strong><br>
-            ${l.reason}</div>`: ""
-          }
-        </td>
-        <td>
-        <div class="label">Action</div>
-        <div class="actions">${action}</div>
-        </td>
-      </tr>
-    `;
-  });
-}
-
-  function formatDatePretty(dbDate) {
-  if (!dbDate || typeof dbDate !== "string") return "-";
-
-  // Ambil YYYY-MM-DD
-  const dateMatch = dbDate.match(/^(\d{4})-(\d{2})-(\d{2})/);
-  if (!dateMatch) return "-";
-
-  const yyyy = dateMatch[1];
-  const mm = dateMatch[2];
-  const dd = String(Number(dateMatch[3]));
-
-  const months = ["Jan","Feb","Mar","Apr","May","Jun",
-                  "Jul","Aug","Sep","Oct","Nov","Dec"];
-  const monthName = months[Number(mm) - 1];
-
-  // Ambil HH:MM jika ada
-  const timeMatch = dbDate.match(/(\d{2}):(\d{2})/);
-  const timePart = timeMatch ? `, ${timeMatch[1]}:${timeMatch[2]}` : "";
-
-  return `${dd} ${monthName} ${yyyy}${timePart}`;
-  }
-
-function showLoader(text, state = "default") {
-  const el = document.getElementById("actionLoader");
-  el.dataset.state = state;
-  document.getElementById("loaderText").textContent = text;
-  el.classList.add("show");
-}
-
-function showError(message) {
-  hideLoader(); // ⬅️ WAJIB: loader ditutup dulu
-  Swal.fire({
-    imageUrl: "/static/error.svg",
-    imageWidth: "100%",
-    imageHeight: "100%",
-    title: "Unable to proceed",
-    text: message
-  });
-}
-
-  function hideLoader(delay = 0) {
-  setTimeout(() => {
-    document.getElementById("actionLoader").classList.remove("show");
-  }, delay);
+  function populateYears() {
+    const years = [...new Set(rawData.map((item) => new Date(`${item.leave_date}T00:00:00`).getFullYear()).filter(Number.isFinite))].sort((a, b) => b - a);
+    yearFilter.innerHTML = '<option value="ALL">All years</option>' + years.map((year) => `<option value="${year}">${year}</option>`).join('');
+    if (years.includes(Number(activeYear))) yearFilter.value = activeYear;
+    else { activeYear = 'ALL'; yearFilter.value = 'ALL'; }
   }
 
   async function apiFetch(url, options = {}) {
-  const res = await fetch(url, options);
-
-  if (res.ok) return res;
-
-  let msg = "Something went wrong";
-  const contentType = res.headers.get("content-type") || "";
-
-  if (contentType.includes("application/json")) {
-    const data = await res.json();
-    msg = data.message || msg;
-  } else {
-    const text = await res.text();
-    if (text) msg = text;
+    const response = await fetch(url, options);
+    if (response.ok) return response;
+    const data = await response.json().catch(async () => ({ message: await response.text() }));
+    throw new Error(data.message || data.error || 'Something went wrong');
   }
-  throw new Error(msg);
+
+  async function loadData(silent = false) {
+    if (!silent) window.appLoading.show('Loading leave requests…', 'Fetching the latest approval status.');
+    try {
+      const response = await apiFetch('/leave', { cache: 'no-store' });
+      const payload = await response.json();
+      rawData = payload.data || [];
+      lastSnapshot = rawData.map((item) => `${item.id}-${item.status}-${item.updated_at || item.created_at}`).sort().join('|');
+      populateYears();
+      renderList();
+    } catch (error) {
+      leaveList.innerHTML = `<div class="empty-state"><div class="empty-icon">!</div><h3>Could not load requests</h3><p>${escapeHtml(error.message)}</p></div>`;
+    } finally {
+      window.appLoading.hide();
+    }
   }
-  
-loadData();
-if (document.visibilityState === "visible") {
-  startPolling();
-}
+
+  async function refreshSummary() {
+    try {
+      const response = await apiFetch('/api/me/leave-summary', { cache: 'no-store' });
+      const summary = await response.json();
+      document.getElementById('balanceMetric').textContent = summary.balance ?? '—';
+      document.getElementById('waitingMetric').textContent = summary.waiting ?? 0;
+      document.getElementById('approvedMetric').textContent = summary.approved ?? 0;
+      document.getElementById('rejectedMetric').textContent = summary.rejected ?? 0;
+    } catch (_) {}
+  }
+
+  document.getElementById('openRequestDialog').addEventListener('click', () => document.getElementById('requestDialog').showModal());
+  document.querySelectorAll('[data-close-dialog]').forEach((button) => button.addEventListener('click', () => document.getElementById(button.dataset.closeDialog).close()));
+
+  document.getElementById('requestForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const leaveDate = document.getElementById('requestDate').value;
+    document.getElementById('requestDialog').close();
+    window.appLoading.show('Submitting request…', 'Saving your leave request.');
+    try {
+      await apiFetch('/leave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_date: leaveDate }) });
+      await Promise.all([loadData(true), refreshSummary()]);
+      document.getElementById('requestForm').reset();
+    } catch (error) { alert(error.message); }
+    finally { window.appLoading.hide(); }
+  });
+
+  document.getElementById('editForm').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const id = document.getElementById('editId').value;
+    const leaveDate = document.getElementById('editDate').value;
+    document.getElementById('editDialog').close();
+    window.appLoading.show('Saving change…', 'Updating the leave date.');
+    try {
+      await apiFetch(`/leave/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_date: leaveDate }) });
+      await loadData(true);
+    } catch (error) { alert(error.message); }
+    finally { window.appLoading.hide(); }
+  });
+
+  leaveList.addEventListener('click', async (event) => {
+    const button = event.target.closest('[data-action]');
+    if (!button) return;
+    const { action, id, date } = button.dataset;
+    if (action === 'edit') {
+      document.getElementById('editId').value = id;
+      document.getElementById('editDate').value = date;
+      document.getElementById('editDialog').showModal();
+      return;
+    }
+    if (action === 'cancel' && !confirm('Cancel this leave request?')) return;
+    if (action === 'approve' && !confirm('Approve this request and deduct one leave day?')) return;
+    let reason = '';
+    if (action === 'reject') {
+      reason = prompt('Reason for rejection:') || '';
+      if (!reason.trim()) return;
+    }
+    window.appLoading.show(`${action[0].toUpperCase()}${action.slice(1)}ing request…`, 'Saving the decision.');
+    try {
+      if (action === 'cancel') await apiFetch(`/leave/${id}/cancel`, { method: 'PATCH' });
+      else await apiFetch(`/leave/${id}/decision`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: action === 'approve' ? 'APPROVED' : 'REJECTED', reason })
+      });
+      await Promise.all([loadData(true), refreshSummary()]);
+    } catch (error) { alert(error.message); }
+    finally { window.appLoading.hide(); }
+  });
+
+  statusTabs.addEventListener('click', (event) => {
+    const tab = event.target.closest('.tab');
+    if (!tab) return;
+    statusTabs.querySelectorAll('.tab').forEach((item) => item.classList.remove('active'));
+    tab.classList.add('active');
+    activeStatus = tab.dataset.status;
+    renderList();
+  });
+
+  yearFilter.addEventListener('change', () => { activeYear = yearFilter.value; renderList(); });
+
+  async function pollChanges() {
+    if (document.visibilityState !== 'visible') return;
+    try {
+      const response = await apiFetch('/leave', { cache: 'no-store' });
+      const payload = await response.json();
+      const snapshot = (payload.data || []).map((item) => `${item.id}-${item.status}-${item.updated_at || item.created_at}`).sort().join('|');
+      if (snapshot !== lastSnapshot) {
+        rawData = payload.data || [];
+        lastSnapshot = snapshot;
+        populateYears();
+        renderList();
+        refreshSummary();
+      }
+    } catch (_) {}
+  }
+
+  loadData();
+  setInterval(pollChanges, 30000);
 </script>
-
-</body>
-</html>
+{% endblock %}
