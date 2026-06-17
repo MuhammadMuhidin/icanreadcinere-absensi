@@ -214,8 +214,7 @@
     });
   }
 
-  async function loadData(silent = false) {
-    if (!silent) window.appLoading.show('Loading leave requests…', 'Fetching the latest approval status.');
+  async function loadData() {
     try {
       const response = await apiFetch('/leave', { cache: 'no-store' });
       const payload = await response.json();
@@ -225,8 +224,6 @@
       renderList();
     } catch (error) {
       leaveList.innerHTML = `<div class="empty-state"><div class="empty-icon">!</div><h3>Could not load requests</h3><p>${escapeHtml(error.message)}</p></div>`;
-    } finally {
-      window.appLoading.hide();
     }
   }
 
@@ -251,7 +248,7 @@
     window.appLoading.show('Submitting request…', 'Saving your leave request.');
     try {
       await apiFetch('/leave', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_date: leaveDate }) });
-      await Promise.all([loadData(true), refreshSummary()]);
+      await Promise.all([loadData(), refreshSummary()]);
       document.getElementById('requestForm').reset();
       await window.appDialog.success({
         title: 'Leave request submitted',
@@ -272,7 +269,7 @@
     window.appLoading.show('Saving change…', 'Updating the leave date.');
     try {
       await apiFetch(`/leave/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ leave_date: leaveDate }) });
-      await loadData(true);
+      await loadData();
       await window.appDialog.success({
         title: 'Leave date updated',
         message: `The request has been moved to ${formatDate(leaveDate)}.`
@@ -349,7 +346,7 @@
           body: JSON.stringify({ action: action === 'approve' ? 'APPROVED' : 'REJECTED', reason })
         });
       }
-      await Promise.all([loadData(true), refreshSummary()]);
+      await Promise.all([loadData(), refreshSummary()]);
       const resultCopy = {
         cancel: ['Request canceled', 'The leave request has been canceled.'],
         approve: ['Request approved', 'The leave request has been approved and the balance has been updated.'],
