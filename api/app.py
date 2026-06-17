@@ -429,7 +429,7 @@ def submit_leave():
         user_id="Hanny",
         type="manager_action",
         title="Leave approval required",
-        message=f"{employee_name} submitted a leave request.",
+        message=f"{uid} submitted a leave request for {chosen.isoformat()}."
         link="/paid_leave"
     )
     return jsonify(message="Leave request submitted"),201
@@ -523,13 +523,13 @@ def upload():
                     if scheduled<date.today(): flash("Scheduled date must be today or later.","error"); return redirect("/upload?tab=announcement")
                     published=scheduled.isoformat()
                 sb().table(T("news")).insert({"content":content,"published_at":published}).execute();
-                for user in users:
+                for user_id, user in USERS.all().items()::
                     create_notification(
                             user_id=user["userid"],
                             type="announcement",
-                            title=title,
+                            title="Announcement",
                             message=content,
-                            link="/announcement"
+                            link="/"
                         )
                 flash("Announcement saved.","success"); return redirect("/upload?tab=announcement")
             if kind=="cuti" and manager(uid):
