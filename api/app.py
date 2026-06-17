@@ -111,12 +111,15 @@ def balance(uid):
 
 def create_notification(user_id, type, title, message, link=None, metadata=None):
     try:
+        # Jika link tidak diisi atau None, otomatis arahkan ke halaman utama "/" atau "#"
+        final_link = link if link is not None else "/" 
+        
         sb().table(T("notifications")).insert({
             "user_id": user_id,
             "type": type,
             "title": title,
             "message": message,
-            "link": link,
+            "link": final_link, # <--- Menggunakan final_link yang aman
             "metadata": metadata or {},
         }).execute()
     except Exception as exc:
@@ -530,7 +533,7 @@ def upload():
                         type="announcement",
                         title="Announcement",
                         message=content,
-                        link="/"
+                        link=None
                     )
                 flash("Announcement saved.","success"); return redirect("/upload?tab=announcement")
             if kind=="cuti" and manager(uid):
