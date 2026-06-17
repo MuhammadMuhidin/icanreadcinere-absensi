@@ -5,6 +5,11 @@
   const systemDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
   const prefetched = new Set();
 
+  const themeIcons = {
+    light: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>',
+    dark: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M20.5 14.3A8.5 8.5 0 0 1 9.7 3.5 8.5 8.5 0 1 0 20.5 14.3Z"></path></svg>'
+  };
+
   root.dataset.theme = storedTheme || (systemDark ? "dark" : "light");
 
   function matchesAndDescendants(scope, selector) {
@@ -19,7 +24,7 @@
       const dark = root.dataset.theme === "dark";
       button.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
       button.setAttribute("title", dark ? "Use light mode" : "Use dark mode");
-      button.textContent = dark ? "☀" : "☾";
+      button.innerHTML = dark ? themeIcons.light : themeIcons.dark;
     });
   }
 
