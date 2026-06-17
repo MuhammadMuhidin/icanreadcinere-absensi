@@ -10,6 +10,7 @@ This application aims to improve attendance accuracy, simplify HR administrative
 - Leave request and leave management
 - Centralized attendance records
 - Simple and user-friendly interface
+- Storage with database
 
 ## Purpose
 The system is built to support operational efficiency at *I Can Read* Cinere by reducing manual attendance handling and minimizing data inconsistencies.
