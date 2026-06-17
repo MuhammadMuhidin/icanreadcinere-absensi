@@ -425,6 +425,13 @@ def submit_leave():
     day=now().date()
     if chosen<day or (chosen-day).days>30: return jsonify(message="Choose a date within the next 30 days"),400
     sb().table(T("paid_leave")).insert(dict(name=uid,leave_date=chosen.isoformat(),status="WAITING APPROVAL")).execute()
+    create_notification(
+        user_id="Hanny",
+        type="manager_action",
+        title="Leave approval required",
+        message=f"{employee_name} submitted a leave request.",
+        link="/paid_leave"
+    )
     return jsonify(message="Leave request submitted"),201
 
 
@@ -515,7 +522,16 @@ def upload():
                     scheduled=date.fromisoformat(request.form.get("published_at"))
                     if scheduled<date.today(): flash("Scheduled date must be today or later.","error"); return redirect("/upload?tab=announcement")
                     published=scheduled.isoformat()
-                sb().table(T("news")).insert({"content":content,"published_at":published}).execute(); flash("Announcement saved.","success"); return redirect("/upload?tab=announcement")
+                sb().table(T("news")).insert({"content":content,"published_at":published}).execute();
+                for user in users:
+                create_notification(
+                        user_id=user["userid"],
+                        type="announcement",
+                        title=title,
+                        message=content,
+                        link="/announcement"
+                    )
+                flash("Announcement saved.","success"); return redirect("/upload?tab=announcement")
             if kind=="cuti" and manager(uid):
                 name,value=request.form.get("userid"),request.form.get("sisa")
                 result=sb().table(T("balance")).update({"sisa":int(value)}).eq("nama",name).execute(); flash("Leave balance updated." if result.data else "Employee balance was not found.","success" if result.data else "error"); return redirect("/upload?tab=balance")
