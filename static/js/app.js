@@ -19,7 +19,7 @@
       const dark = root.dataset.theme === "dark";
       button.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
       button.setAttribute("title", dark ? "Use light mode" : "Use dark mode");
-      button.textContent = dark ? "☀" : "☾";
+      // Logika innerHTML dihapus agar CSS dapat menangani transisi SVG secara langsung
     });
   }
 
@@ -30,8 +30,11 @@
       "content",
       root.dataset.theme === "dark" ? "#09111f" : "#193773"
     );
+    
+    // Efek ripple/feedback khusus (jika diperlukan)
     button?.classList.add("theme-switching");
     setTimeout(() => button?.classList.remove("theme-switching"), 380);
+    
     updateThemeButtons();
   }
 
@@ -223,6 +226,7 @@
     const target = event.target.closest(".btn, .icon-button, .nav-item, .tab");
     target?.classList.add("is-pressing");
   });
+  
   ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
     document.addEventListener(type, (event) => event.target.closest?.(".is-pressing")?.classList.remove("is-pressing"), true);
   });
