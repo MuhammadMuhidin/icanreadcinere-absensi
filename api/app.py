@@ -21,6 +21,7 @@ GAS_URL = os.getenv("GAS_URL")
 PREFIX = os.getenv("DB_PREFIX", "")
 AUTH_TABLE = os.getenv("AUTH_TABLE", "app_users")
 R2_PUBLIC_BASE_URL = os.getenv("R2_PUBLIC_BASE_URL", "")
+_UNSET = object()
 
 try:
     FALLBACK_USERS = json.loads(os.environ.get("USERS_JSON", "{}"))
@@ -151,9 +152,14 @@ def day_session(rows, day=None):
                 is_late=bool(deviation and deviation != "On time!"))
 
 
-def today_session(uid):
-    tomorrow = (now().date()+timedelta(days=1)).isoformat()
-    return day_session(attendance_rows(uid, today(), tomorrow), today())
+def today_session(uid, rows=None):
+    day = today()
+    if rows is None:
+        tomorrow = (now().date()+timedelta(days=1)).isoformat()
+        rows = attendance_rows(uid, day, tomorrow)
+    else:
+        rows = [row for row in rows if row.get("tanggal") == day]
+    return day_session(rows, day)
 
 
 def bounds(period=None):
@@ -163,10 +169,15 @@ def bounds(period=None):
     return start, end
 
 
-def grouped(uid, period=None):
-    start, end = bounds(period); bucket = defaultdict(list)
-    for row in attendance_rows(uid, start.isoformat(), end.isoformat()): bucket[row.get("tanggal")].append(row)
-    days = sorted((day_session(rows, day) for day, rows in bucket.items()), key=lambda x:x["date"], reverse=True)
+def grouped_from_rows(rows, period=None):
+    start, end = bounds(period)
+    start_value, end_value = start.isoformat(), end.isoformat()
+    bucket = defaultdict(list)
+    for row in rows:
+        day = row.get("tanggal")
+        if day and start_value <= day < end_value:
+            bucket[day].append(row)
+    days = sorted((day_session(day_rows, day) for day, day_rows in bucket.items()), key=lambda x:x["date"], reverse=True)
     completed = [x for x in days if x["state"] == "completed"]; late = [x for x in days if x["is_late"]]
     late_minutes = 0
     for item in late:
@@ -180,9 +191,22 @@ def grouped(uid, period=None):
     return start.strftime("%Y-%m"), days, summary
 
 
-def last_incomplete(uid):
-    start, end = now().date()-timedelta(days=45), now().date()+timedelta(days=1); bucket = defaultdict(list)
-    for row in attendance_rows(uid, start.isoformat(), end.isoformat()): bucket[row.get("tanggal")].append(row)
+def grouped(uid, period=None):
+    start, end = bounds(period)
+    rows = attendance_rows(uid, start.isoformat(), end.isoformat())
+    return grouped_from_rows(rows, period)
+
+
+def last_incomplete(uid, rows=None):
+    if rows is None:
+        start, end = now().date()-timedelta(days=45), now().date()+timedelta(days=1)
+        rows = attendance_rows(uid, start.isoformat(), end.isoformat())
+    bucket = defaultdict(list)
+    cutoff = (now().date()-timedelta(days=45)).isoformat()
+    for row in rows:
+        day = row.get("tanggal")
+        if day and day >= cutoff:
+            bucket[day].append(row)
     for day in sorted(bucket, reverse=True):
         item = day_session(bucket[day], day)
         if day != today() and item["state"] == "checked_in": return item
@@ -195,8 +219,10 @@ def leave_rows(uid):
     return query.execute().data or []
 
 
-def leave_summary(uid):
-    data = leave_rows(uid); result = dict(all=len(data), waiting=0, approved=0, rejected=0, canceled=0, balance=balance(uid))
+def leave_summary(uid, data=None, balance_value=_UNSET):
+    data = leave_rows(uid) if data is None else data
+    balance_value = balance(uid) if balance_value is _UNSET else balance_value
+    result = dict(all=len(data), waiting=0, approved=0, rejected=0, canceled=0, balance=balance_value)
     for item in data:
         key = {"WAITING APPROVAL":"waiting", "APPROVED":"approved", "REJECTED":"rejected", "CANCELED":"canceled"}.get(item.get("status"))
         if key: result[key] += 1
@@ -285,9 +311,27 @@ def absence():
         except Exception as exc: print("GAS ERROR",exc)
         detail="on time" if deviation=="On time!" else f"late by {deviation[:5]}" if deviation else "recorded"
         flash(f"{action} recorded at {stamp.strftime('%H:%M')} — {detail}.","success"); return redirect("/absence")
-    period,days,summary=grouped(uid,now().strftime("%Y-%m")); data=ctx("home","Attendance")
-    data.update(nama=uid,title=session.get("title","Team Member"),today_session=today_session(uid),month_period=period,month_summary=summary,
-                news=news(),sisa=balance(uid),leave_summary=leave_summary(uid),latest_incomplete=last_incomplete(uid))
+
+    current_date = now().date()
+    attendance_start = current_date-timedelta(days=45)
+    attendance_end = current_date+timedelta(days=1)
+    attendance_data = attendance_rows(uid, attendance_start.isoformat(), attendance_end.isoformat())
+    period,days,summary = grouped_from_rows(attendance_data, current_date.strftime("%Y-%m"))
+    current_balance = balance(uid)
+    leave_data = leave_rows(uid)
+
+    data=ctx("home","Attendance")
+    data.update(
+        nama=uid,
+        title=session.get("title","Team Member"),
+        today_session=today_session(uid, attendance_data),
+        month_period=period,
+        month_summary=summary,
+        news=news(),
+        sisa=current_balance,
+        leave_summary=leave_summary(uid, leave_data, current_balance),
+        latest_incomplete=last_incomplete(uid, attendance_data),
+    )
     return render_template("absence.html",**data)
 
 
@@ -330,7 +374,17 @@ def change_photo():
 def paid_leave():
     uid=session.get("userid")
     if not uid: return redirect("/")
-    day=now().date(); data=ctx("leave","Paid leave"); data.update(SESSION_NAME=uid,leave_balance=balance(uid),leave_summary=leave_summary(uid),min_leave_date=day.isoformat(),max_leave_date=(day+timedelta(days=30)).isoformat())
+    day=now().date()
+    current_balance = balance(uid)
+    leave_data = leave_rows(uid)
+    data=ctx("leave","Paid leave")
+    data.update(
+        SESSION_NAME=uid,
+        leave_balance=current_balance,
+        leave_summary=leave_summary(uid, leave_data, current_balance),
+        min_leave_date=day.isoformat(),
+        max_leave_date=(day+timedelta(days=30)).isoformat(),
+    )
     return render_template("paid_leave.html",**data)
 
 
