@@ -4,11 +4,12 @@
 <section class="profile-row" aria-label="Signed-in user">
   <img
     class="profile-photo"
-    src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
+    src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg?v={{ range(100000000, 999999999) | random }}"
+    data-photo-url="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
     alt="{{ nama }} profile photo"
     id="profilePhoto"
     title="Change profile photo"
-    onerror="this.src='{{ url_for('static', filename='Logo.png') }}'"
+    onerror="if (!this.dataset.fallback) { this.dataset.fallback='1'; this.src='{{ url_for('static', filename='Logo.png') }}'; }"
   >
   <div class="profile-copy">
     <p id="greeting">Welcome back</p>
@@ -246,10 +247,13 @@
 
   const profilePhoto = document.getElementById('profilePhoto');
   const profileUpload = document.getElementById('profileUpload');
+  const freshProfilePhotoUrl = () => `${profilePhoto.dataset.photoUrl}?v=${Date.now()}`;
+
   profilePhoto.addEventListener('click', () => profileUpload.click());
   profilePhoto.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') profileUpload.click(); });
   profilePhoto.tabIndex = 0;
   profilePhoto.setAttribute('role', 'button');
+
   profileUpload.addEventListener('change', async () => {
     const file = profileUpload.files?.[0];
     if (!file) return;
@@ -260,7 +264,10 @@
       const response = await fetch('/change_photo', { method: 'POST', body: formData });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.message || 'Upload failed');
-      profilePhoto.src = URL.createObjectURL(file);
+
+      delete profilePhoto.dataset.fallback;
+      profilePhoto.src = freshProfilePhotoUrl();
+
       await window.appDialog.success({
         title: 'Profile photo updated',
         message: 'Your new photo has been saved successfully.'
