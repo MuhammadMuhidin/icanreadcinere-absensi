@@ -108,6 +108,22 @@ def balance(uid):
     except Exception as exc: print("BALANCE ERROR", exc); return None
 
 
+
+def create_notification(user_id, type, title, message, link=None, metadata=None):
+    try:
+        sb().table(T("notifications")).insert({
+            "user_id": user_id,
+            "type": type,
+            "title": title,
+            "message": message,
+            "link": link,
+            "metadata": metadata or {},
+        }).execute()
+    except Exception as exc:
+        print("NOTIFICATION ERROR", exc)
+
+
+
 def office():
     try: return tuple(float(x.strip()) for x in os.getenv("POINTOFFICE", "").split(",", 1))
     except Exception as exc: raise RuntimeError("POINTOFFICE env is invalid") from exc
@@ -420,7 +436,7 @@ def cancel_leave(leave_id):
     if not row: return jsonify(message="Request not found"),404
     if row.get("name")!=uid: return jsonify(message="You cannot cancel this request"),403
     if row.get("status")!="WAITING APPROVAL": return jsonify(message="Only waiting requests can be canceled"),400
-    sb().table(T("paid_leave")).update({"status":"CANCELED"}).eq("id",leave_id).execute(); return jsonify(message="Leave request canceled")
+    sb().table(T("paid_leave")).update({"status":"CANCELED"}).eq("id",leave_id).execute(); create_notification(uid,"leave_cancelled","Leave request cancelled","Your leave request has been cancelled.","/paid_leave"); return jsonify(message="Leave request canceled")
 
 
 @app.route("/leave/<int:leave_id>/decision",methods=["PATCH"])
@@ -439,6 +455,13 @@ def decide_leave(leave_id):
         patch={"status":"APPROVED","reason":None}
     else: patch={"status":"REJECTED","reason":reason}
     sb().table(T("paid_leave")).update(patch).eq("id",leave_id).eq("status","WAITING APPROVAL").execute()
+    create_notification(
+        name,
+        "leave_approved" if action=="APPROVED" else "leave_rejected",
+        "Leave request approved" if action=="APPROVED" else "Leave request rejected",
+        f"Your leave request for {row['leave_date']} has been {'approved' if action=='APPROVED' else 'rejected'}.",
+        "/paid_leave"
+    )
     phone=(USERS.get(name) or {}).get("phone")
     if phone:
         try:
@@ -533,3 +556,9 @@ def download():
     if not rows: return "No attendance data found",404
     output=StringIO(); writer=csv.DictWriter(output,fieldnames=rows[0].keys(),delimiter=";"); writer.writeheader(); writer.writerows(rows)
     return Response(output.getvalue(),mimetype="text/csv",headers={"Content-Disposition":f"attachment; filename=attendance_{period}.csv"})
+
+
+try:
+    import api.notification_routes
+except Exception as exc:
+    print('NOTIFICATION ROUTES LOAD ERROR', exc)
