@@ -429,7 +429,7 @@ def submit_leave():
         user_id="Hanny",
         type="manager_action",
         title="Leave approval required",
-        message=f"{uid} submitted a leave request for {chosen.isoformat()}."
+        message=f"{uid} submitted a leave request for {chosen.isoformat()}.",
         link="/paid_leave"
     )
     return jsonify(message="Leave request submitted"),201
