@@ -524,13 +524,13 @@ def upload():
                     published=scheduled.isoformat()
                 sb().table(T("news")).insert({"content":content,"published_at":published}).execute();
                 for user in users:
-                create_notification(
-                        user_id=user["userid"],
-                        type="announcement",
-                        title=title,
-                        message=content,
-                        link="/announcement"
-                    )
+                    create_notification(
+                            user_id=user["userid"],
+                            type="announcement",
+                            title=title,
+                            message=content,
+                            link="/announcement"
+                        )
                 flash("Announcement saved.","success"); return redirect("/upload?tab=announcement")
             if kind=="cuti" and manager(uid):
                 name,value=request.form.get("userid"),request.form.get("sisa")
