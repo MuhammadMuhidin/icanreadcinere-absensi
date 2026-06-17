@@ -1,0 +1,153 @@
+.inbox-button {
+  position: relative;
+}
+
+.inbox-badge {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  display: inline-grid;
+  place-items: center;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--danger, #d92d20);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.inbox-badge[hidden] {
+  display: none;
+}
+
+.inbox-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.notification-list {
+  display: grid;
+  gap: 10px;
+}
+
+.notification-item {
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 13px;
+  min-height: 92px;
+  padding: 16px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  box-shadow: 0 8px 24px rgba(16, 38, 80, .05);
+  transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
+}
+
+.notification-item:active {
+  transform: scale(.992);
+}
+
+.notification-item.is-unread {
+  border-color: color-mix(in srgb, var(--primary) 28%, var(--border));
+  background: color-mix(in srgb, var(--primary) 5%, var(--surface));
+}
+
+.notification-icon {
+  display: inline-grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: var(--surface-soft);
+  color: var(--primary);
+  font-size: 20px;
+  font-weight: 800;
+}
+
+.notification-icon-leave_approved {
+  background: color-mix(in srgb, var(--success, #198754) 12%, var(--surface));
+  color: var(--success, #198754);
+}
+
+.notification-icon-leave_rejected {
+  background: color-mix(in srgb, var(--danger, #d92d20) 11%, var(--surface));
+  color: var(--danger, #d92d20);
+}
+
+.notification-content {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.notification-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.notification-title-row strong {
+  color: var(--text);
+  font-size: 15px;
+}
+
+.notification-message {
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.notification-time {
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.notification-unread-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--primary);
+}
+
+.notification-chevron {
+  color: var(--text-muted);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.inbox-empty {
+  min-height: 280px;
+}
+
+@media (max-width: 620px) {
+  .inbox-heading {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .inbox-heading .btn {
+    align-self: flex-start;
+  }
+
+  .notification-item {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+    min-height: 86px;
+    padding: 14px;
+  }
+
+  .notification-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+}

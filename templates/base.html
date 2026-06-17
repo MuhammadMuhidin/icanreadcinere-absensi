@@ -18,6 +18,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css', v='20260616-premium-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/popup-center.css', v='20260616-popup-center-2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/route-skeleton.css', v='20260617-route-skeleton-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/inbox.css') }}">
   {% if active_page == 'home' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/account-details.css', v='20260616-account-details-3') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home-card-interactions.css', v='20260616-home-card-3') }}">
@@ -70,6 +71,12 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1-2.8 2.8-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.6V21h-4v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.9.3l-.1.1L4.2 17l.1-.1a1.7 1.7 0 0 0 .3-1.9A1.7 1.7 0 0 0 3 14H3v-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9L4.2 7 7 4.2l.1.1A1.7 1.7 0 0 0 9 4.6 1.7 1.7 0 0 0 10 3.1V3h4v.1A1.7 1.7 0 0 0 15 4.6a1.7 1.7 0 0 0 1.9-.3l.1-.1L19.8 7l-.1.1A1.7 1.7 0 0 0 19.4 9a1.7 1.7 0 0 0 1.6 1H21v4h-.1a1.7 1.7 0 0 0-1.5 1Z"></path></svg>
           </a>
         {% endif %}
+        <a class="icon-button inbox-button" href="/inbox" aria-label="Inbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+          </svg>
+          <span class="inbox-badge" data-inbox-count hidden>0</span>
+        </a>
         <button type="button" class="icon-button" data-theme-toggle aria-label="Use dark mode">☾</button>
         <a class="icon-button" href="/logout" data-no-prefetch aria-label="Sign out" title="Sign out">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 17l5-5-5-5"></path><path d="M15 12H3"></path><path d="M21 19V5a2 2 0 0 0-2-2h-6"></path></svg>
@@ -251,5 +258,6 @@
     <script src="{{ url_for('static', filename='js/account-security-ui.js', v='20260616-account-security-3') }}"></script>
   {% endif %}
   {% block scripts %}{% endblock %}
+<script src="{{ url_for('static', filename='js/inbox-badge.js') }}"></script>
 </body>
 </html>
