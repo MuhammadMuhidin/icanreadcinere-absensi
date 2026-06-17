@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/micro-fixes.css', v='20260616-mobile-grid-2') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/premium.css', v='20260616-premium-1') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/popup-center.css', v='20260616-popup-center-2') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/route-skeleton.css', v='20260617-route-skeleton-2') }}">
   {% if active_page == 'home' %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/account-details.css', v='20260616-account-details-3') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/home-card-interactions.css', v='20260616-home-card-3') }}">
@@ -40,8 +41,6 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  <div class="navigation-progress" aria-hidden="true"></div>
-
   <div class="toast-stack" aria-live="polite" aria-atomic="true">
     {% with messages = get_flashed_messages(with_categories=true) %}
       {% for category, message in messages %}
@@ -79,6 +78,63 @@
     </header>
 
     <div class="page-content" data-page-content>
+      <div class="route-skeleton" data-route-skeleton data-variant="{{ active_page }}" role="status" aria-label="Loading page content" aria-hidden="true" hidden>
+        <section class="route-skeleton-profile" aria-hidden="true">
+          <span class="route-skeleton-shape route-skeleton-avatar"></span>
+          <span class="route-skeleton-copy">
+            <span class="route-skeleton-line route-skeleton-short"></span>
+            <span class="route-skeleton-line route-skeleton-title"></span>
+            <span class="route-skeleton-line route-skeleton-medium"></span>
+          </span>
+        </section>
+
+        <section class="route-skeleton-heading" aria-hidden="true">
+          <span class="route-skeleton-line route-skeleton-title"></span>
+          <span class="route-skeleton-line route-skeleton-subtitle"></span>
+        </section>
+
+        <section class="route-skeleton-card" aria-hidden="true">
+          <div class="route-skeleton-card-head">
+            <span class="route-skeleton-copy">
+              <span class="route-skeleton-line route-skeleton-medium"></span>
+              <span class="route-skeleton-line route-skeleton-short"></span>
+            </span>
+            <span class="route-skeleton-shape route-skeleton-badge"></span>
+          </div>
+          <span class="route-skeleton-shape route-skeleton-hero"></span>
+          <span class="route-skeleton-lines">
+            <span class="route-skeleton-line route-skeleton-long"></span>
+            <span class="route-skeleton-line route-skeleton-medium"></span>
+          </span>
+          <span class="route-skeleton-shape route-skeleton-button"></span>
+        </section>
+
+        <section class="route-skeleton-card" aria-hidden="true">
+          <span class="route-skeleton-copy">
+            <span class="route-skeleton-line route-skeleton-medium"></span>
+            <span class="route-skeleton-line route-skeleton-short"></span>
+          </span>
+          <div class="route-skeleton-metrics">
+            {% for _ in range(4) %}
+              <span class="route-skeleton-shape route-skeleton-metric"></span>
+            {% endfor %}
+          </div>
+        </section>
+
+        <section class="route-skeleton-list" aria-hidden="true">
+          {% for _ in range(3) %}
+            <article class="route-skeleton-list-card">
+              <span class="route-skeleton-shape route-skeleton-list-icon"></span>
+              <span class="route-skeleton-copy">
+                <span class="route-skeleton-line route-skeleton-medium"></span>
+                <span class="route-skeleton-line route-skeleton-long"></span>
+              </span>
+              <span class="route-skeleton-shape route-skeleton-list-status"></span>
+            </article>
+          {% endfor %}
+        </section>
+      </div>
+
       {% block content %}{% endblock %}
     </div>
   </main>
@@ -112,6 +168,80 @@
     </div>
   </div>
 
+  <script>
+    (() => {
+      const pageContent = document.querySelector('[data-page-content]');
+      const skeleton = document.querySelector('[data-route-skeleton]');
+      if (!pageContent || !skeleton) return;
+
+      let showTimer;
+
+      const routeVariant = (pathname) => {
+        if (pathname === '/absence') return 'home';
+        if (pathname === '/history') return 'history';
+        if (pathname === '/paid_leave') return 'leave';
+        if (pathname === '/manager') return 'manager';
+        if (pathname === '/upload') return 'admin';
+        return 'generic';
+      };
+
+      const resetSkeleton = () => {
+        clearTimeout(showTimer);
+        skeleton.classList.remove('is-visible');
+        skeleton.hidden = true;
+        skeleton.setAttribute('aria-hidden', 'true');
+        pageContent.classList.remove('route-skeleton-active');
+        pageContent.removeAttribute('aria-busy');
+      };
+
+      const showSkeleton = (destination) => {
+        skeleton.dataset.variant = routeVariant(destination.pathname);
+        skeleton.hidden = false;
+        skeleton.setAttribute('aria-hidden', 'false');
+        pageContent.classList.add('route-skeleton-active');
+        pageContent.setAttribute('aria-busy', 'true');
+        window.scrollTo(0, 0);
+        requestAnimationFrame(() => skeleton.classList.add('is-visible'));
+      };
+
+      const scheduleSkeleton = (destination) => {
+        clearTimeout(showTimer);
+        showTimer = setTimeout(() => showSkeleton(destination), 250);
+      };
+
+      document.addEventListener('click', (event) => {
+        const anchor = event.target.closest?.('a[href]');
+        if (!anchor || anchor.target || anchor.hasAttribute('download') || anchor.hasAttribute('data-no-skeleton')) return;
+        if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        const href = anchor.getAttribute('href') || '';
+        if (!href || href.startsWith('#')) return;
+
+        const destination = new URL(anchor.href, location.href);
+        if (destination.origin !== location.origin || destination.pathname === '/logout') return;
+        if (destination.href === location.href) return;
+
+        queueMicrotask(() => {
+          if (!event.defaultPrevented) scheduleSkeleton(destination);
+        });
+      });
+
+      document.addEventListener('submit', (event) => {
+        const form = event.target;
+        if (!(form instanceof HTMLFormElement)) return;
+        if ((form.method || 'get').toLowerCase() !== 'get' || form.target || form.hasAttribute('data-no-skeleton')) return;
+
+        const destination = new URL(form.action || location.href, location.href);
+        if (destination.origin !== location.origin) return;
+        destination.search = new URLSearchParams(new FormData(form)).toString();
+
+        queueMicrotask(() => {
+          if (!event.defaultPrevented) scheduleSkeleton(destination);
+        });
+      });
+
+      window.addEventListener('pageshow', resetSkeleton);
+    })();
+  </script>
   <script src="{{ url_for('static', filename='js/app.js') }}"></script>
   <script src="{{ url_for('static', filename='js/dialog.js', v='20260616-dialog-2') }}"></script>
   <script src="{{ url_for('static', filename='js/dialog-polish.js', v='20260616-dialog-polish-1') }}"></script>
