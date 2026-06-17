@@ -19,38 +19,40 @@ from api.app import (
 )
 
 
-def _latest_incomplete_like_legacy(user_id):
+def _latest_incomplete_like_legacy(user_id, rows=None):
     """Match the latest-attendance validation used by commit b5b329b8.
 
     Only the user's most recent attendance date is evaluated. Older incomplete
     dates are not searched and therefore do not keep producing a Home warning.
+
+    ``rows`` is optional so the Home route can reuse attendance data that was
+    already loaded instead of issuing another Supabase request.
     """
-    try:
-        rows = (
-            sb()
-            .table(T("log_absen"))
-            .select("id,nama,aksi,tanggal,waktu,deviation,mood,notes")
-            .eq("nama", user_id)
-            .order("tanggal", desc=True)
-            .order("waktu", desc=True)
-            .execute()
-            .data
-            or []
-        )
-    except Exception as exc:
-        print("LATEST ATTENDANCE VALIDATION ERROR", exc)
-        return None
+    if rows is None:
+        try:
+            rows = (
+                sb()
+                .table(T("log_absen"))
+                .select("id,nama,aksi,tanggal,waktu,deviation,mood,notes")
+                .eq("nama", user_id)
+                .order("tanggal", desc=True)
+                .order("waktu", desc=True)
+                .execute()
+                .data
+                or []
+            )
+        except Exception as exc:
+            print("LATEST ATTENDANCE VALIDATION ERROR", exc)
+            return None
 
     if not rows:
         return None
 
-    latest_date = rows[0].get("tanggal")
-    latest_rows = []
-    for row in rows:
-        if row.get("tanggal") != latest_date:
-            break
-        latest_rows.append(row)
+    latest_date = max((row.get("tanggal") for row in rows if row.get("tanggal")), default=None)
+    if not latest_date:
+        return None
 
+    latest_rows = [row for row in rows if row.get("tanggal") == latest_date]
     latest_session = day_session(latest_rows, latest_date)
     if latest_date != today() and latest_session.get("state") == "checked_in":
         return latest_session
