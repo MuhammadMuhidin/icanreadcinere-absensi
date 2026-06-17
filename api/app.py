@@ -523,7 +523,7 @@ def upload():
                     if scheduled<date.today(): flash("Scheduled date must be today or later.","error"); return redirect("/upload?tab=announcement")
                     published=scheduled.isoformat()
                 sb().table(T("news")).insert({"content":content,"published_at":published}).execute();
-                for user_id, user in USERS.all().items()::
+                for user_id, user in USERS.all().items():
                     create_notification(
                             user_id=user["userid"],
                             type="announcement",
