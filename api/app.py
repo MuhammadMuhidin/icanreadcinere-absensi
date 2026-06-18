@@ -492,7 +492,8 @@ def submit_leave():
     if uid not in NON_TEACHERS:
         conflict = has_leave_conflict(chosen.isoformat())
         if conflict:
-            return jsonify(message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"), 409
+            # bypass for several reasons
+            # return jsonify(message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"), 409
     sb().table(T("paid_leave")).insert(dict(name=uid,leave_date=chosen.isoformat(),status="WAITING APPROVAL")).execute()
     create_notification(
         user_id="Hanny",
@@ -558,7 +559,8 @@ def edit_leave(leave_id):
     if uid not in NON_TEACHERS:
         conflict = has_leave_conflict(chosen.isoformat(), exclude_id=leave_id)
         if conflict:
-            return jsonify(message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"), 409
+            # bypass for several reasons
+            # return jsonify(message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"), 409
     result=sb().table(T("paid_leave")).update({"leave_date":chosen.isoformat()}).eq("id",leave_id).eq("name",uid).eq("status","WAITING APPROVAL").execute()
     return jsonify(message="Leave date updated") if result.data else (jsonify(message="Request cannot be updated"),409)
 
