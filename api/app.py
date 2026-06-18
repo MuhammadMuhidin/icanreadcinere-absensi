@@ -379,6 +379,9 @@ def absence():
     leave_data = leave_rows(uid)
 
     data=ctx("home","Attendance")
+    # Home-page leave card always reflects the current user's own requests,
+    # even for managers (who see global data on /paid_leave instead).
+    personal_leave = [r for r in leave_data if r.get("name") == uid]
     data.update(
         nama=uid,
         title=session.get("title","Team Member"),
@@ -387,7 +390,7 @@ def absence():
         month_summary=summary,
         news=news(),
         sisa=current_balance,
-        leave_summary=leave_summary(uid, leave_data, current_balance),
+        leave_summary=leave_summary(uid, personal_leave, current_balance),
         latest_incomplete=last_incomplete(uid, attendance_data),
     )
     return render_template("absence.html",**data)
