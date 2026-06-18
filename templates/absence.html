@@ -52,7 +52,7 @@
     {% elif today_session.state == 'checked_in' %}
       <div class="muted-on-dark">TODAY'S STATUS</div>
       <h2 id="todayHeading">You are checked in</h2>
-      <p>Started at {{ today_session.checkin[:5] }}{% if today_session.deviation == 'On time!' %} · On time{% elif today_session.deviation %} · Late by {{ today_session.deviation[:5] }}{% endif %}</p>
+      <p>Started at {{ today_session.checkin[:5] }}{% if today_session.deviation == 'On time!' %} · On time{% elif today_session.deviation %} · Late by {{ today_session.deviation }}{% endif %}</p>
       <p style="margin-top:6px">Working duration: <strong id="liveDuration" data-checkin="{{ today_session.checkin }}">calculating…</strong></p>
     {% else %}
       <div class="muted-on-dark">TODAY'S STATUS</div>
@@ -86,7 +86,7 @@
   <div class="timeline">
     <div class="timeline-row">
       <div class="timeline-icon {{ 'done' if today_session.checkin else '' }}" aria-hidden="true">{{ '✓' if today_session.checkin else '1' }}</div>
-      <div class="timeline-label"><strong>Check in</strong><span>{% if today_session.deviation == 'On time!' %}On time{% elif today_session.deviation %}Late by {{ today_session.deviation[:5] }}{% else %}Not recorded{% endif %}</span></div>
+      <div class="timeline-label"><strong>Check in</strong><span>{% if today_session.deviation == 'On time!' %}On time{% elif today_session.deviation %}Late by {{ today_session.deviation }}{% else %}Not recorded{% endif %}</span></div>
       <div class="timeline-time">{{ today_session.checkin[:5] if today_session.checkin else '--:--' }}</div>
     </div>
     <div class="timeline-row">
