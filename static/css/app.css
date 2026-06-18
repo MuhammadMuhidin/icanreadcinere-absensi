@@ -418,6 +418,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .scheduled-item time { color: var(--muted); font-size: 12px; white-space: nowrap; }
 
 .team-list .list-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; }
+.team-list .list-card[hidden] { display: none !important; }
 .team-status { text-align: right; }
 .team-status strong { display: block; font-size: 13px; }
 .team-status span { display: block; color: var(--muted); font-size: 11px; }
