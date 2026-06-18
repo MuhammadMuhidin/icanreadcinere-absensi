@@ -98,12 +98,13 @@
       let visibleCount = 0;
       cards.forEach((card) => {
         const status = card.dataset.teamStatus;
+        const deviation = card.dataset.deviation || '';
+        const isLate = deviation && deviation !== 'On time!';
         let visible;
         if (activeFilter === 'all') {
           visible = true;
         } else if (activeFilter === 'attention') {
-          // checked_in (working / late) + not_started — excludes completed and on_leave
-          visible = status === 'checked_in' || status === 'not_started';
+          visible = (status === 'checked_in' && isLate) || status === 'checked_in' || status === 'not_started';
         } else {
           visible = status === activeFilter;
         }
