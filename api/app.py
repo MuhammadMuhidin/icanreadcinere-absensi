@@ -253,6 +253,25 @@ def periods():
     except Exception as exc: print("PERIOD ERROR", exc); return []
 
 
+# ── Leave conflict guard ────────────────────────────────────────
+NON_TEACHERS = {"Hanny", "Dini", "Lintang"}
+
+
+def has_leave_conflict(leave_date_raw: str, exclude_id: int | None = None) -> dict | None:
+    """Cek conflict antar TEACHER saja. Non-teacher otomatis diabaikan."""
+    q = (
+        sb().table(T("paid_leave"))
+        .select("id, name, leave_date")
+        .eq("leave_date", leave_date_raw)
+        .in_("status", ["WAITING APPROVAL", "APPROVED"])
+        .filter("name", "not.in", f"({','.join(f'\"{n}\"' for n in NON_TEACHERS)})")
+    )
+    if exclude_id is not None:
+        q = q.neq("id", exclude_id)
+    res = q.execute()
+    return res.data[0] if res.data else None
+
+
 def team_today():
     names_dict = USERS.all()
     names = list(names_dict.keys())
@@ -469,6 +488,11 @@ def submit_leave():
     except Exception: return jsonify(message="Invalid leave date"),400
     day=now().date()
     if chosen<day or (chosen-day).days>30: return jsonify(message="Choose a date within the next 30 days"),400
+    # Conflict guard — hanya untuk teacher
+    if uid not in NON_TEACHERS:
+        conflict = has_leave_conflict(chosen.isoformat())
+        if conflict:
+            return jsonify(message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"), 409
     sb().table(T("paid_leave")).insert(dict(name=uid,leave_date=chosen.isoformat(),status="WAITING APPROVAL")).execute()
     create_notification(
         user_id="Hanny",
@@ -530,6 +554,11 @@ def edit_leave(leave_id):
     except Exception: return jsonify(message="Invalid leave date"),400
     day=now().date()
     if chosen<day or (chosen-day).days>30: return jsonify(message="Choose a date within the next 30 days"),400
+    # Conflict guard — hanya untuk teacher
+    if uid not in NON_TEACHERS:
+        conflict = has_leave_conflict(chosen.isoformat(), exclude_id=leave_id)
+        if conflict:
+            return jsonify(message=f"Oops! {conflict['name']} already has a leave request on {conflict['leave_date']}"), 409
     result=sb().table(T("paid_leave")).update({"leave_date":chosen.isoformat()}).eq("id",leave_id).eq("name",uid).eq("status","WAITING APPROVAL").execute()
     return jsonify(message="Leave date updated") if result.data else (jsonify(message="Request cannot be updated"),409)
 
