@@ -139,12 +139,23 @@ def distance(a, b, c, d):
 
 
 def late_status(value):
+    """Return human readable late duration in English"""
     current = value if not isinstance(value, str) else datetime.strptime(value, "%H:%M:%S").time()
     limit = datetime.strptime("09:00:00" if now().weekday() == 5 else "10:10:00", "%H:%M:%S").time()
-    if current <= limit: return "On time!"
-    seconds = int((datetime.combine(now().date(), current)-datetime.combine(now().date(), limit)).total_seconds())
-    return f"{seconds//3600:02}:{seconds%3600//60:02}:{seconds%60:02}"
-
+    if current <= limit:
+        return "On time!"
+    
+    seconds = int((datetime.combine(now().date(), current) - datetime.combine(now().date(), limit)).total_seconds())
+    h = seconds // 3600
+    m = (seconds % 3600) // 60
+    s = seconds % 60
+    
+    if h > 0:
+        return f"{h} hour{h > 1 and 's' or ''} {m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}"
+    elif m > 0:
+        return f"{m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}"
+    else:
+        return f"{s} second{s > 1 and 's' or ''}"
 
 def attendance_rows(uid, start, end):
     try:
