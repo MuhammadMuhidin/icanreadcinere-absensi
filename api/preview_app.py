@@ -65,7 +65,7 @@ def _latest_incomplete_like_legacy(user_id, rows=None):
 core_app.last_incomplete = _latest_incomplete_like_legacy
 
 
-def _own_leave_rows(user_id, limit=8):
+def _own_leave_rows(user_id):
     try:
         return (
             sb()
@@ -73,7 +73,6 @@ def _own_leave_rows(user_id, limit=8):
             .select("id,name,leave_date,status,reason,created_at")
             .eq("name", user_id)
             .order("created_at", desc=True)
-            .limit(limit)
             .execute()
             .data
             or []

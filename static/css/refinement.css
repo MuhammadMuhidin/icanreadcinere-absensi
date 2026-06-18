@@ -272,11 +272,11 @@ html[data-theme="dark"] .card { box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 14px 34
 
 .tab {
   min-height: 40px;
-  transition: transform var(--duration-fast), background-color var(--duration-fast), color var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
+  transition: transform var(--duration-fast), background-color var(--duration-fast), border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
-.tab:hover { border-color: color-mix(in srgb, var(--info) 30%, var(--border)); color: var(--text); }
+.tab:hover { border-color: color-mix(in srgb, var(--info) 30%, var(--border)); color: #fff; }
 .tab:active { transform: scale(.96); }
-.tab.active { box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 20%, transparent); }
+.tab.active { box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 20%, transparent); color: #fff; }
 
 .list { perspective: 900px; }
 .list-card {
