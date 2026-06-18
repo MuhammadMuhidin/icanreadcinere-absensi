@@ -336,7 +336,7 @@
       if (!reason) return;
     }
 
-    window.appLoading.show(`${action[0].toUpperCase()}${action.slice(1)}ing request…`, 'Saving the decision.');
+    window.appLoading.show('Approving request…', 'Saving the decision.');
     try {
       if (action === 'cancel') {
         await apiFetch(`/leave/${id}/cancel`, { method: 'PATCH' });

@@ -104,8 +104,6 @@
         if (activeFilter === 'all') {
           visible = true;
         } else if (activeFilter === 'attention') {
-          // Only checked_in, not_started, and late checked_in users
-          // Completed users do NOT appear here even if late
           visible = (status === 'checked_in' && isLate) || status === 'checked_in' || status === 'not_started';
         } else {
           visible = status === activeFilter;
@@ -114,9 +112,18 @@
         if (visible) visibleCount++;
       });
 
-      // Show/hide empty state
-      const emptyEl = document.getElementById('teamEmpty');
-      if (emptyEl) emptyEl.hidden = visibleCount > 0 || isRefreshing;
+      // Show/hide empty state — create one if it doesn't exist yet
+      let emptyEl = document.getElementById('teamEmpty');
+      if (visibleCount === 0 && !isRefreshing) {
+        if (!emptyEl) {
+          teamList.insertAdjacentHTML('beforeend',
+            '<div class="empty-state" id="teamEmpty"><p>No team members match this filter.</p></div>');
+        } else {
+          emptyEl.hidden = false;
+        }
+      } else if (emptyEl) {
+        emptyEl.hidden = true;
+      }
     }
 
     // ── Tab switching ────────────────────────────────────────────
