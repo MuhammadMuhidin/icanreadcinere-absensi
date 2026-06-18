@@ -254,22 +254,61 @@ def periods():
 
 
 def team_today():
-    names, day = list(USERS.all()), today(); by_name = defaultdict(list)
-    try:
-        rows = sb().table(T("log_absen")).select("nama,aksi,tanggal,waktu,deviation,mood,notes").eq("tanggal", day).order("waktu", desc=False).execute().data or []
-    except Exception as exc: print("TEAM ERROR", exc); rows = []
-    for row in rows: by_name[row.get("nama")].append(row)
-    try: leave_names = {x.get("name") for x in (sb().table(T("paid_leave")).select("name").eq("leave_date", day).eq("status", "APPROVED").execute().data or [])}
-    except Exception: leave_names = set()
-    counts = dict(checked_in=0, completed=0, on_time=0, late=0, not_started=0, on_leave=len(leave_names)); people=[]
+    names_dict = USERS.all()
+    names = list(names_dict.keys())
+    day = today()
+    by_name = defaultdict(list)
+
+    # Retry up to 2 times for log_absen query
+    rows = []
+    log_error = None
+    for attempt in range(2):
+        try:
+            rows = sb().table(T("log_absen")).select("nama,aksi,tanggal,waktu,deviation,mood,notes").eq("tanggal", day).order("waktu", desc=False).execute().data or []
+            log_error = None
+            break
+        except Exception as exc:
+            log_error = str(exc)
+            print(f"TEAM LOG_ABSEN ERROR (attempt {attempt+1})", exc)
+    if log_error:
+        flash("Could not load attendance records. Some statuses may be inaccurate.", "error")
+
+    for row in rows:
+        by_name[row.get("nama")].append(row)
+
+    # Retry up to 2 times for paid_leave query
+    leave_names = set()
+    leave_error = None
+    for attempt in range(2):
+        try:
+            leave_rows = sb().table(T("paid_leave")).select("name").eq("leave_date", day).eq("status", "APPROVED").execute().data or []
+            leave_names = {x.get("name") for x in leave_rows}
+            leave_error = None
+            break
+        except Exception as exc:
+            leave_error = str(exc)
+            print(f"TEAM PAID_LEAVE ERROR (attempt {attempt+1})", exc)
+    if leave_error:
+        flash("Could not load leave records. Leave statuses may be inaccurate.", "error")
+
+    # Only count leaves for users that actually exist in the directory
+    leave_names = leave_names & set(names)
+
+    counts = dict(checked_in=0, completed=0, on_time=0, late=0, not_started=0, on_leave=len(leave_names))
+    people = []
     for name in names:
         if name in leave_names:
-            people.append(dict(name=name,status="on_leave",label="Approved leave",checkin=None,checkout=None,deviation="")); continue
-        item=day_session(by_name.get(name,[]),day); counts[item["state"]]+=1
-        counts["on_time"] += item["deviation"]=="On time!"; counts["late"] += item["is_late"]
-        people.append(dict(name=name,status=item["state"],checkin=item["checkin"],checkout=item["checkout"],deviation=item["deviation"]))
-    order={"checked_in":0,"not_started":1,"on_leave":2,"completed":3}; people.sort(key=lambda x:(order.get(x["status"],9),x["name"]))
-    return {"date":day,"counts":counts,"people":people}
+            people.append(dict(name=name, status="on_leave", label="Approved leave", checkin=None, checkout=None, deviation=""))
+            continue
+        item = day_session(by_name.get(name, []), day)
+        counts[item["state"]] += 1
+        counts["on_time"] += item["deviation"] == "On time!"
+        counts["late"] += item["is_late"]
+        people.append(dict(name=name, status=item["state"], checkin=item["checkin"], checkout=item["checkout"], deviation=item["deviation"]))
+
+    order = {"checked_in": 0, "not_started": 1, "on_leave": 2, "completed": 3}
+    people.sort(key=lambda x: (order.get(x["status"], 9), x["name"]))
+    return {"date": day, "counts": counts, "people": people, "log_error": bool(log_error), "leave_error": bool(leave_error)}
 
 
 @app.before_request

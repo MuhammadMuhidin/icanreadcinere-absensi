@@ -6,17 +6,30 @@
   <p>Current attendance status for {{ dashboard.date }}.</p>
 </section>
 
+{% if dashboard.log_error or dashboard.leave_error %}
+  <div class="toast toast-error" data-auto-dismiss="8000" style="margin-bottom:16px">
+    <div aria-hidden="true">!</div>
+    <div>
+      <strong>Data may be incomplete</strong>
+      <span>{% if dashboard.log_error %}Attendance records could not be fully loaded.{% endif %}{% if dashboard.log_error and dashboard.leave_error %} {% endif %}{% if dashboard.leave_error %}Leave records could not be fully loaded.{% endif %} Try refreshing.</span>
+    </div>
+  </div>
+{% endif %}
+
 <section class="grid grid-2 grid-md-4" aria-label="Team attendance summary">
-  <div class="metric"><span class="metric-value">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
-  <div class="metric"><span class="metric-value">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
-  <div class="metric"><span class="metric-value">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
-  <div class="metric"><span class="metric-value">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
+  <div class="metric"><span class="metric-value" id="metricCheckedIn">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
+  <div class="metric"><span class="metric-value" id="metricCompleted">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
+  <div class="metric"><span class="metric-value" id="metricNotStarted">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
+  <div class="metric"><span class="metric-value" id="metricOnLeave">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
 </section>
 
 <section class="card card-pad">
   <div class="section-heading">
     <div><h2>Needs attention</h2><p>Working, late and not-started records are prioritised.</p></div>
-    <button type="button" class="btn btn-ghost" id="refreshTeam">Refresh</button>
+    <button type="button" class="btn btn-ghost" id="refreshTeam">
+      <span class="refresh-label">Refresh</span>
+      <span class="spinner" id="refreshSpinner" hidden aria-hidden="true"></span>
+    </button>
   </div>
 
   <div class="tabs" id="teamTabs" style="margin-bottom:14px">
@@ -27,26 +40,32 @@
   </div>
 
   <div class="list team-list" id="teamList">
-    {% for person in dashboard.people %}
-      <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
-        <div>
-          <h3>{{ person.name }}</h3>
-          <p>
-            {% if person.status == 'checked_in' %}Checked in {{ person.checkin[:5] }}
-            {% elif person.status == 'completed' %}{{ person.checkin[:5] }}–{{ person.checkout[:5] }}
-            {% elif person.status == 'on_leave' %}Approved leave today
-            {% else %}No check-in recorded{% endif %}
-          </p>
-        </div>
-        <div class="team-status">
-          {% if person.status == 'checked_in' %}<span class="badge badge-info badge-dot">Working</span>
-          {% elif person.status == 'completed' %}<span class="badge badge-success badge-dot">Completed</span>
-          {% elif person.status == 'on_leave' %}<span class="badge badge-muted badge-dot">Leave</span>
-          {% else %}<span class="badge badge-warning badge-dot">Not started</span>{% endif %}
-          {% if person.deviation == 'On time!' %}<span>On time</span>{% elif person.deviation %}<span>Late {{ person.deviation[:5] }}</span>{% endif %}
-        </div>
-      </article>
-    {% endfor %}
+    {% if dashboard.people %}
+      {% for person in dashboard.people %}
+        <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
+          <div>
+            <h3>{{ person.name }}</h3>
+            <p>
+              {% if person.status == 'checked_in' %}Checked in {{ person.checkin[:5] }}
+              {% elif person.status == 'completed' %}{{ person.checkin[:5] }}–{{ person.checkout[:5] }}
+              {% elif person.status == 'on_leave' %}Approved leave today
+              {% else %}No check-in recorded{% endif %}
+            </p>
+          </div>
+          <div class="team-status">
+            {% if person.status == 'checked_in' %}<span class="badge badge-info badge-dot">Working</span>
+            {% elif person.status == 'completed' %}<span class="badge badge-success badge-dot">Completed</span>
+            {% elif person.status == 'on_leave' %}<span class="badge badge-muted badge-dot">Leave</span>
+            {% else %}<span class="badge badge-warning badge-dot">Not started</span>{% endif %}
+            {% if person.deviation == 'On time!' %}<span>On time</span>{% elif person.deviation %}<span>Late {{ person.deviation[:5] }}</span>{% endif %}
+          </div>
+        </article>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state" id="teamEmpty" hidden>
+        <p>No team members found for today.</p>
+      </div>
+    {% endif %}
   </div>
 </section>
 
@@ -55,39 +74,170 @@
     <div><h2>Punctuality</h2><p>Based only on check-ins recorded today.</p></div>
   </div>
   <div class="grid grid-2">
-    <div class="metric"><span class="metric-value">{{ dashboard.counts.on_time }}</span><span class="metric-label">On time</span></div>
-    <div class="metric"><span class="metric-value">{{ dashboard.counts.late }}</span><span class="metric-label">Late</span></div>
+    <div class="metric"><span class="metric-value" id="metricOnTime">{{ dashboard.counts.on_time }}</span><span class="metric-label">On time</span></div>
+    <div class="metric"><span class="metric-value" id="metricLate">{{ dashboard.counts.late }}</span><span class="metric-label">Late</span></div>
   </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  const teamList = document.getElementById('teamList');
-  const teamTabs = document.getElementById('teamTabs');
-  let activeFilter = 'attention';
+  (() => {
+    const teamList = document.getElementById('teamList');
+    const teamTabs = document.getElementById('teamTabs');
+    const refreshBtn = document.getElementById('refreshTeam');
+    const refreshSpinner = document.getElementById('refreshSpinner');
+    const refreshLabel = refreshBtn?.querySelector('.refresh-label');
+    const errorBanner = document.querySelector('.toast-error');
+    let activeFilter = 'attention';
+    let isRefreshing = false;
 
-  function applyTeamFilter() {
-    teamList.querySelectorAll('[data-team-status]').forEach((card) => {
-      const status = card.dataset.teamStatus;
-      const late = card.dataset.deviation && card.dataset.deviation !== 'On time!';
-      const visible = activeFilter === 'all'
-        || (activeFilter === 'attention' && (status === 'checked_in' || status === 'not_started' || late))
-        || status === activeFilter;
-      card.hidden = !visible;
+    // ── Filter logic ──────────────────────────────────────────────
+    function applyTeamFilter() {
+      const cards = teamList.querySelectorAll('[data-team-status]');
+      let visibleCount = 0;
+      cards.forEach((card) => {
+        const status = card.dataset.teamStatus;
+        const deviation = card.dataset.deviation || '';
+        const isLate = deviation && deviation !== 'On time!';
+        let visible;
+        if (activeFilter === 'all') {
+          visible = true;
+        } else if (activeFilter === 'attention') {
+          // Only checked_in, not_started, and late checked_in users
+          // Completed users do NOT appear here even if late
+          visible = (status === 'checked_in' && isLate) || status === 'checked_in' || status === 'not_started';
+        } else {
+          visible = status === activeFilter;
+        }
+        card.hidden = !visible;
+        if (visible) visibleCount++;
+      });
+
+      // Show/hide empty state
+      const emptyEl = document.getElementById('teamEmpty');
+      if (emptyEl) emptyEl.hidden = visibleCount > 0 || isRefreshing;
+    }
+
+    // ── Tab switching ────────────────────────────────────────────
+    teamTabs.addEventListener('click', (event) => {
+      const tab = event.target.closest('.tab');
+      if (!tab || isRefreshing) return;
+      teamTabs.querySelectorAll('.tab').forEach((item) => item.classList.remove('active'));
+      tab.classList.add('active');
+      activeFilter = tab.dataset.status;
+      applyTeamFilter();
     });
-  }
-
-  teamTabs.addEventListener('click', (event) => {
-    const tab = event.target.closest('.tab');
-    if (!tab) return;
-    teamTabs.querySelectorAll('.tab').forEach((item) => item.classList.remove('active'));
-    tab.classList.add('active');
-    activeFilter = tab.dataset.status;
     applyTeamFilter();
-  });
-  applyTeamFilter();
 
-  document.getElementById('refreshTeam').addEventListener('click', () => window.location.reload());
+    // ── AJAX Refresh ─────────────────────────────────────────────
+    function renderTeamList(people) {
+      teamList.querySelectorAll('.list-card').forEach((card) => card.remove());
+      const emptyEl = document.getElementById('teamEmpty');
+      if (emptyEl) emptyEl.remove();
+
+      if (!people || people.length === 0) {
+        teamList.insertAdjacentHTML('beforeend',
+          '<div class="empty-state" id="teamEmpty"><p>No team members found for today.</p></div>');
+        return;
+      }
+
+      const statusLabels = {
+        checked_in: ['badge-info', 'Working'],
+        completed: ['badge-success', 'Completed'],
+        on_leave: ['badge-muted', 'Leave'],
+        not_started: ['badge-warning', 'Not started']
+      };
+
+      const html = people.map((p) => {
+        const status = p.status || 'not_started';
+        const dev = p.deviation || '';
+        const [badgeClass, badgeLabel] = statusLabels[status] || statusLabels.not_started;
+
+        let desc;
+        if (status === 'checked_in') desc = 'Checked in ' + (p.checkin || '').slice(0, 5);
+        else if (status === 'completed') desc = (p.checkin || '').slice(0, 5) + '\u2013' + (p.checkout || '').slice(0, 5);
+        else if (status === 'on_leave') desc = 'Approved leave today';
+        else desc = 'No check-in recorded';
+
+        let devHtml = '';
+        if (dev === 'On time!') devHtml = '<span>On time</span>';
+        else if (dev) devHtml = '<span>Late ' + dev.slice(0, 5) + '</span>';
+
+        return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
+          + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
+          + '<div class="team-status">'
+          + '<span class="badge ' + badgeClass + ' badge-dot">' + badgeLabel + '</span>'
+          + devHtml
+          + '</div></article>';
+      }).join('');
+
+      teamList.insertAdjacentHTML('beforeend', html);
+      applyTeamFilter();
+    }
+
+    function updateMetrics(counts) {
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.textContent = val; };
+      setVal('metricCheckedIn', counts.checked_in ?? 0);
+      setVal('metricCompleted', counts.completed ?? 0);
+      setVal('metricNotStarted', counts.not_started ?? 0);
+      setVal('metricOnLeave', counts.on_leave ?? 0);
+      setVal('metricOnTime', counts.on_time ?? 0);
+      setVal('metricLate', counts.late ?? 0);
+    }
+
+    async function refreshData() {
+      if (isRefreshing) return;
+      isRefreshing = true;
+      refreshBtn.disabled = true;
+      refreshSpinner.hidden = false;
+      if (refreshLabel) refreshLabel.textContent = 'Loading\u2026';
+
+      // Remove old error banner if present
+      if (errorBanner) errorBanner.remove();
+
+      try {
+        const resp = await fetch('/api/manager/today', {
+          headers: { Accept: 'application/json' },
+          cache: 'no-store'
+        });
+        if (!resp.ok) throw new Error('Server returned ' + resp.status);
+        const data = await resp.json();
+
+        renderTeamList(data.people);
+        updateMetrics(data.counts);
+
+        // Show error if Supabase queries had issues
+        if (data.log_error || data.leave_error) {
+          const msg = [];
+          if (data.log_error) msg.push('Attendance records could not be fully loaded.');
+          if (data.leave_error) msg.push('Leave records could not be fully loaded.');
+          const banner = document.createElement('div');
+          banner.className = 'toast toast-error';
+          banner.setAttribute('data-auto-dismiss', '8000');
+          banner.style.marginBottom = '16px';
+          banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Data may be incomplete</strong><span>' + msg.join(' ') + ' Try refreshing.</span></div>';
+          const heading = document.querySelector('.page-heading');
+          if (heading) heading.insertAdjacentElement('afterend', banner);
+        }
+      } catch (err) {
+        console.error('Team refresh error', err);
+        const banner = document.createElement('div');
+        banner.className = 'toast toast-error';
+        banner.setAttribute('data-auto-dismiss', '8000');
+        banner.style.marginBottom = '16px';
+        banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Refresh failed</strong><span>Could not load team data. Check your connection and try again.</span></div>';
+        const heading = document.querySelector('.page-heading');
+        if (heading) heading.insertAdjacentElement('afterend', banner);
+      } finally {
+        isRefreshing = false;
+        refreshBtn.disabled = false;
+        refreshSpinner.hidden = true;
+        if (refreshLabel) refreshLabel.textContent = 'Refresh';
+      }
+    }
+
+    refreshBtn.addEventListener('click', refreshData);
+  })();
 </script>
 {% endblock %}
