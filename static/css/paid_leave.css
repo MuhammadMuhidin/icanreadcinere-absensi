@@ -315,6 +315,8 @@ dialog input {
 }
 
 .tab {
+  appearance: none;
+  -webkit-appearance: none;
   padding: 6px 14px;
   font-size: 13px;
   font-weight: 600;
@@ -326,10 +328,17 @@ dialog input {
   white-space: nowrap;
 }
 
-.tab.active {
+.tab.active,
+.tab.active:focus,
+.tab.active:hover,
+.tab.active:focus-visible {
   background: var(--primary);
   border-color: var(--primary);
   color: #fff;
+}
+.tab:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .35);
+  outline-offset: 3px;
 }
 
 /* ================= YEAR SELECT ================= */

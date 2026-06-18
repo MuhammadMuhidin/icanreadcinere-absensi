@@ -331,6 +331,8 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 }
 .tabs::-webkit-scrollbar { display: none; }
 .tab {
+  appearance: none;
+  -webkit-appearance: none;
   flex: 0 0 auto;
   min-height: 38px;
   padding: 8px 13px;
@@ -342,7 +344,18 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   font-size: 12px;
   cursor: pointer;
 }
-.tab.active { background: var(--brand); border-color: var(--brand); color: #fff; }
+.tab.active,
+.tab.active:focus,
+.tab.active:hover,
+.tab.active:focus-visible {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: #fff;
+}
+.tab:focus-visible {
+  outline: 3px solid rgba(37, 99, 235, .35);
+  outline-offset: 3px;
+}
 
 .filter-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 14px; }
 .filter-bar .form-control { width: auto; min-width: 130px; min-height: 38px; padding-block: 7px; font-size: 13px; }
