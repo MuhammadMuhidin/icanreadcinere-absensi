@@ -17,7 +17,7 @@
 {% endif %}
 
 <section class="grid grid-2 grid-md-4" aria-label="Team attendance summary">
-  <div class="metric"><span class="metric-value" id="metricCheckedIn">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
+  <div class="metric{% if dashboard.counts.checked_in %} metric-active{% endif %}"><span class="metric-value" id="metricCheckedIn">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
   <div class="metric"><span class="metric-value" id="metricCompleted">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
   <div class="metric"><span class="metric-value" id="metricNotStarted">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
   <div class="metric"><span class="metric-value" id="metricOnLeave">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
@@ -38,7 +38,7 @@
   <div class="list team-list" id="teamList">
     {% if dashboard.people %}
       {% for person in dashboard.people %}
-        <article class="list-card{% if person.status == 'checked_in' %} team-working{% endif %}" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
+        <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
           <div>
             <h3>{{ person.name }}</h3>
             <p>
@@ -132,6 +132,25 @@
     applyTeamFilter();
 
     // ── Render helpers ───────────────────────────────────────────
+    const STATUS_ORDER = { checked_in: 0, not_started: 1, on_leave: 2, completed: 3 };
+
+    function timeSinceCheckin(checkin) {
+      if (!checkin) return '';
+      try {
+        const parts = checkin.split(':').map(Number);
+        const now = new Date();
+        const checkinDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0], parts[1], parts[2] || 0);
+        let diffMs = now - checkinDate;
+        if (diffMs < 0) diffMs = 0;
+        const diffMin = Math.floor(diffMs / 60000);
+        const h = Math.floor(diffMin / 60);
+        const m = diffMin % 60;
+        if (h > 0 && m > 0) return ` \u00b7 ${h}h ${m}m ago`;
+        if (h > 0) return ` \u00b7 ${h}h ago`;
+        return ` \u00b7 ${m}m ago`;
+      } catch (e) { return ''; }
+    }
+
     function renderTeamList(people) {
       teamList.querySelectorAll('.list-card').forEach((card) => card.remove());
       const emptyEl = document.getElementById('teamEmpty');
@@ -143,6 +162,13 @@
         return;
       }
 
+      // Sort: Working → Not started → Completed → Leave
+      const sorted = [...people].sort((a, b) => {
+        const sa = a.status || 'not_started';
+        const sb = b.status || 'not_started';
+        return (STATUS_ORDER[sa] ?? 9) - (STATUS_ORDER[sb] ?? 9);
+      });
+
       const statusLabels = {
         checked_in: ['badge-info', 'Working'],
         completed: ['badge-success', 'Completed'],
@@ -150,14 +176,13 @@
         not_started: ['badge-warning', 'Not started']
       };
 
-      const html = people.map((p) => {
+      const html = sorted.map((p) => {
         const status = p.status || 'not_started';
         const dev = p.deviation || '';
         const [badgeClass, badgeLabel] = statusLabels[status] || statusLabels.not_started;
-        const workingClass = status === 'checked_in' ? ' team-working' : '';
 
         let desc;
-        if (status === 'checked_in') desc = 'Checked in ' + (p.checkin || '').slice(0, 5);
+        if (status === 'checked_in') desc = 'Checked in ' + (p.checkin || '').slice(0, 5) + timeSinceCheckin(p.checkin);
         else if (status === 'completed') desc = (p.checkin || '').slice(0, 5) + '\u2013' + (p.checkout || '').slice(0, 5);
         else if (status === 'on_leave') desc = 'Approved leave today';
         else desc = 'No check-in recorded';
@@ -166,7 +191,7 @@
         if (dev === 'On time!') devHtml = '<span>On time</span>';
         else if (dev) devHtml = '<span>Late ' + dev + '</span>';
 
-        return '<article class="list-card' + workingClass + '" data-team-status="' + status + '" data-deviation="' + dev + '">'
+        return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
           + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
           + '<span class="badge ' + badgeClass + ' badge-dot">' + badgeLabel + '</span>'
@@ -186,6 +211,13 @@
       setVal('metricOnLeave', counts.on_leave ?? 0);
       setVal('metricOnTime', counts.on_time ?? 0);
       setVal('metricLate', counts.late ?? 0);
+
+      // Accent Working now metric when >0
+      const metricEl = document.getElementById('metricCheckedIn')?.closest('.metric');
+      if (metricEl) {
+        if ((counts.checked_in ?? 0) > 0) metricEl.classList.add('metric-active');
+        else metricEl.classList.remove('metric-active');
+      }
     }
 
     // ── Auto-refresh ─────────────────────────────────────────────

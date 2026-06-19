@@ -420,36 +420,8 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .team-list .list-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; border: 0; background: var(--surface-soft); }
 .team-list .list-card[hidden] { display: none !important; }
 
-/* Working (checked_in) card — subtle running-line indicator */
-.team-list .list-card.team-working {
-  position: relative;
-  overflow: hidden;
-}
-.team-list .list-card.team-working::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
-  background: linear-gradient(to bottom, transparent, var(--info), transparent);
-  animation: team-working-pulse 2.4s ease-in-out infinite;
-  pointer-events: none;
-  border-radius: 0 2px 2px 0;
-}
-@keyframes team-working-pulse {
-  0%, 100% { opacity: .35; }
-  50% { opacity: 1; }
-}
-
-/* Pulsing dot for Working badge */
-.team-list .list-card.team-working .badge-info.badge-dot::before {
-  animation: badge-pulse 1.8s ease-in-out infinite;
-}
-@keyframes badge-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 color-mix(in srgb, var(--info) 35%, transparent); }
-  50% { opacity: .75; box-shadow: 0 0 0 6px color-mix(in srgb, var(--info) 0%, transparent); }
-}
+/* Working now metric accent when >0 */
+.metric.metric-active .metric-value { color: var(--info); }
 
 .team-status { text-align: right; }
 .team-status strong { display: block; font-size: 13px; }
