@@ -426,6 +426,11 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .team-list .list-card[data-team-status="on_leave"]    { border-left-color: var(--muted);   color: var(--muted); }
 .team-list .list-card[data-team-status="not_started"] { border-left-color: var(--warning); color: var(--warning); }
 
+/* Let h3 / p / deviation inherit the card's status colour (badges keep their own colours) */
+.team-list .list-card[data-team-status] h3,
+.team-list .list-card[data-team-status] p,
+.team-list .list-card[data-team-status] .team-status span:not(.badge) { color: inherit; }
+
 /* Team tab accent colours */
 #teamTabs .tab[data-status="attention"]:not(.active) { color: var(--info); }
 #teamTabs .tab[data-status="all"]:not(.active)       { color: var(--text); }
