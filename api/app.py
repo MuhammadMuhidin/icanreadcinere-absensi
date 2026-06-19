@@ -139,49 +139,36 @@ def distance(a, b, c, d):
 
 
 def late_status(value):
-    """Convert late duration to readable English format.
-    Supports both old HH:MM:SS string from DB and new time object."""
+    """Generate new late status + support old DB format"""
     if not value:
         return "On time!"
     
-    # Jika sudah berupa string HH:MM:SS dari database lama
-    if isinstance(value, str) and ":" in value:
-        try:
-            parts = list(map(int, value.strip().split(":")))
-            if len(parts) == 3:
-                h, m, s = parts
-                seconds = h * 3600 + m * 60 + s
-            elif len(parts) == 2:
-                m, s = parts
-                seconds = m * 60 + s
-            else:
-                seconds = 0
-        except:
-            return str(value)  # fallback
-    else:
-        # Logic baru untuk check-in hari ini
-        current = value if not isinstance(value, str) else datetime.strptime(value, "%H:%M:%S").time()
+    # New check-in logic
+    if not isinstance(value, str) or ":" not in value or len(value.split(":")) == 3 and value.count(":") == 2:
+        current = value if not isinstance(value, str) else datetime.strptime(str(value), "%H:%M:%S").time()
         limit = datetime.strptime("09:00:00" if now().weekday() == 5 else "10:10:00", "%H:%M:%S").time()
-        
         if current <= limit:
             return "On time!"
-        
         seconds = int((datetime.combine(now().date(), current) - datetime.combine(now().date(), limit)).total_seconds())
+    else:
+        # Old DB format HH:MM:SS
+        try:
+            parts = list(map(int, str(value).strip().split(":")))
+            seconds = (parts[0]*3600 + parts[1]*60 + parts[2]) if len(parts) == 3 else 0
+        except:
+            return str(value)
 
-    # Convert seconds ke English text
-    if seconds <= 0:
-        return "On time!"
-    
     h = seconds // 3600
     m = (seconds % 3600) // 60
     s = seconds % 60
-    
+
     if h > 0:
         return f"{h} hour{h > 1 and 's' or ''} {m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}".strip()
     elif m > 0:
         return f"{m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}".strip()
     else:
         return f"{s} second{s > 1 and 's' or ''}"
+
 
 def attendance_rows(uid, start, end):
     try:
