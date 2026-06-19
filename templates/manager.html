@@ -38,7 +38,7 @@
   <div class="list team-list" id="teamList">
     {% if dashboard.people %}
       {% for person in dashboard.people %}
-        <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
+        <article class="list-card{% if person.status == 'checked_in' %} team-working{% endif %}" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
           <div>
             <h3>{{ person.name }}</h3>
             <p>
@@ -154,6 +154,7 @@
         const status = p.status || 'not_started';
         const dev = p.deviation || '';
         const [badgeClass, badgeLabel] = statusLabels[status] || statusLabels.not_started;
+        const workingClass = status === 'checked_in' ? ' team-working' : '';
 
         let desc;
         if (status === 'checked_in') desc = 'Checked in ' + (p.checkin || '').slice(0, 5);
@@ -163,9 +164,9 @@
 
         let devHtml = '';
         if (dev === 'On time!') devHtml = '<span>On time</span>';
-        else if (dev) devHtml = '<span>Late ' + dev.slice(0, 5) + '</span>';
+        else if (dev) devHtml = '<span>Late ' + dev + '</span>';
 
-        return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
+        return '<article class="list-card' + workingClass + '" data-team-status="' + status + '" data-deviation="' + dev + '">'
           + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
           + '<span class="badge ' + badgeClass + ' badge-dot">' + badgeLabel + '</span>'
