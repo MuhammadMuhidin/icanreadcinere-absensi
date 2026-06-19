@@ -139,21 +139,47 @@ def distance(a, b, c, d):
 
 
 def late_status(value):
-    """Return human readable late duration in English"""
-    current = value if not isinstance(value, str) else datetime.strptime(value, "%H:%M:%S").time()
-    limit = datetime.strptime("09:00:00" if now().weekday() == 5 else "10:10:00", "%H:%M:%S").time()
-    if current <= limit:
+    """Convert late duration to readable English format.
+    Supports both old HH:MM:SS string from DB and new time object."""
+    if not value:
         return "On time!"
     
-    seconds = int((datetime.combine(now().date(), current) - datetime.combine(now().date(), limit)).total_seconds())
+    # Jika sudah berupa string HH:MM:SS dari database lama
+    if isinstance(value, str) and ":" in value:
+        try:
+            parts = list(map(int, value.strip().split(":")))
+            if len(parts) == 3:
+                h, m, s = parts
+                seconds = h * 3600 + m * 60 + s
+            elif len(parts) == 2:
+                m, s = parts
+                seconds = m * 60 + s
+            else:
+                seconds = 0
+        except:
+            return str(value)  # fallback
+    else:
+        # Logic baru untuk check-in hari ini
+        current = value if not isinstance(value, str) else datetime.strptime(value, "%H:%M:%S").time()
+        limit = datetime.strptime("09:00:00" if now().weekday() == 5 else "10:10:00", "%H:%M:%S").time()
+        
+        if current <= limit:
+            return "On time!"
+        
+        seconds = int((datetime.combine(now().date(), current) - datetime.combine(now().date(), limit)).total_seconds())
+
+    # Convert seconds ke English text
+    if seconds <= 0:
+        return "On time!"
+    
     h = seconds // 3600
     m = (seconds % 3600) // 60
     s = seconds % 60
     
     if h > 0:
-        return f"{h} hour{h > 1 and 's' or ''} {m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}"
+        return f"{h} hour{h > 1 and 's' or ''} {m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}".strip()
     elif m > 0:
-        return f"{m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}"
+        return f"{m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}".strip()
     else:
         return f"{s} second{s > 1 and 's' or ''}"
 
