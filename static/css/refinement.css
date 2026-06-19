@@ -230,7 +230,6 @@ html[data-theme="dark"] .card { box-shadow: 0 1px 2px rgba(0,0,0,.18), 0 14px 34
 .timeline-icon.done { animation: check-pop 420ms var(--ease-emphasized) both; }
 @keyframes check-pop { from { transform: scale(.6); opacity: .4; } 65% { transform: scale(1.1); } }
 
-.badge { border: 1px solid color-mix(in srgb, currentColor 12%, transparent); }
 .badge-dot::before { box-shadow: 0 0 0 3px color-mix(in srgb, currentColor 10%, transparent); }
 
 .bottom-nav {

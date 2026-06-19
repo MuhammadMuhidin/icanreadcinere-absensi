@@ -17,24 +17,20 @@
 {% endif %}
 
 <section class="grid grid-2 grid-md-4" aria-label="Team attendance summary">
-  <div class="metric"><span class="metric-value" id="metricCheckedIn">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
-  <div class="metric"><span class="metric-value" id="metricCompleted">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
-  <div class="metric"><span class="metric-value" id="metricNotStarted">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
-  <div class="metric"><span class="metric-value" id="metricOnLeave">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
+  <div class="metric metric-working{% if dashboard.counts.checked_in %} metric-active{% endif %}"><span class="metric-value" id="metricCheckedIn">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
+  <div class="metric metric-completed"><span class="metric-value" id="metricCompleted">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
+  <div class="metric metric-notstarted"><span class="metric-value" id="metricNotStarted">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
+  <div class="metric metric-leave"><span class="metric-value" id="metricOnLeave">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
 </section>
 
 <section class="card card-pad">
   <div class="section-heading">
-    <div><h2>Needs attention</h2><p>Working, late and not-started records are prioritised.</p></div>
-    <button type="button" class="btn btn-ghost" id="refreshTeam">
-      <span class="refresh-label">Refresh</span>
-      <span class="spinner" id="refreshSpinner" hidden aria-hidden="true"></span>
-    </button>
+    <div><h2>Team today</h2><p>All members · switch tabs to filter by status.</p></div>
   </div>
 
   <div class="tabs" id="teamTabs" style="margin-bottom:14px">
-    <button type="button" class="tab active" data-status="attention">Attention</button>
-    <button type="button" class="tab" data-status="all">All</button>
+    <button type="button" class="tab active" data-status="all">All</button>
+    <button type="button" class="tab" data-status="attention">Attention</button>
     <button type="button" class="tab" data-status="completed">Completed</button>
     <button type="button" class="tab" data-status="on_leave">Leave</button>
   </div>
@@ -53,10 +49,10 @@
             </p>
           </div>
           <div class="team-status">
-            {% if person.status == 'checked_in' %}<span class="badge badge-info badge-dot">Working</span>
-            {% elif person.status == 'completed' %}<span class="badge badge-success badge-dot">Completed</span>
-            {% elif person.status == 'on_leave' %}<span class="badge badge-muted badge-dot">Leave</span>
-            {% else %}<span class="badge badge-warning badge-dot">Not started</span>{% endif %}
+            {% if person.status == 'checked_in' %}<span class="badge badge-info">Working</span>
+            {% elif person.status == 'completed' %}<span class="badge badge-success">Completed</span>
+            {% elif person.status == 'on_leave' %}<span class="badge badge-muted">Leave</span>
+            {% else %}<span class="badge badge-warning">Not started</span>{% endif %}
             {% if person.deviation == 'On time!' %}<span>On time</span>{% elif person.deviation %}<span>Late {{ person.deviation }}</span>{% endif %}
           </div>
         </article>
@@ -85,12 +81,10 @@
   (() => {
     const teamList = document.getElementById('teamList');
     const teamTabs = document.getElementById('teamTabs');
-    const refreshBtn = document.getElementById('refreshTeam');
-    const refreshSpinner = document.getElementById('refreshSpinner');
-    const refreshLabel = refreshBtn?.querySelector('.refresh-label');
     const errorBanner = document.querySelector('.toast-error');
-    let activeFilter = 'attention';
+    let activeFilter = 'all';
     let isRefreshing = false;
+    let refreshTimer = null;
 
     // ── Filter logic ──────────────────────────────────────────────
     function applyTeamFilter() {
@@ -137,7 +131,9 @@
     });
     applyTeamFilter();
 
-    // ── AJAX Refresh ─────────────────────────────────────────────
+    // ── Render helpers ───────────────────────────────────────────
+    const STATUS_ORDER = { checked_in: 0, not_started: 1, on_leave: 2, completed: 3 };
+
     function renderTeamList(people) {
       teamList.querySelectorAll('.list-card').forEach((card) => card.remove());
       const emptyEl = document.getElementById('teamEmpty');
@@ -149,6 +145,13 @@
         return;
       }
 
+      // Sort: Working → Not started → Completed → Leave
+      const sorted = [...people].sort((a, b) => {
+        const sa = a.status || 'not_started';
+        const sb = b.status || 'not_started';
+        return (STATUS_ORDER[sa] ?? 9) - (STATUS_ORDER[sb] ?? 9);
+      });
+
       const statusLabels = {
         checked_in: ['badge-info', 'Working'],
         completed: ['badge-success', 'Completed'],
@@ -156,7 +159,7 @@
         not_started: ['badge-warning', 'Not started']
       };
 
-      const html = people.map((p) => {
+      const html = sorted.map((p) => {
         const status = p.status || 'not_started';
         const dev = p.deviation || '';
         const [badgeClass, badgeLabel] = statusLabels[status] || statusLabels.not_started;
@@ -169,12 +172,12 @@
 
         let devHtml = '';
         if (dev === 'On time!') devHtml = '<span>On time</span>';
-        else if (dev) devHtml = '<span>Late ' + dev.slice(0, 5) + '</span>';
+        else if (dev) devHtml = '<span>Late ' + dev + '</span>';
 
         return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
           + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
-          + '<span class="badge ' + badgeClass + ' badge-dot">' + badgeLabel + '</span>'
+          + '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>'
           + devHtml
           + '</div></article>';
       }).join('');
@@ -191,14 +194,19 @@
       setVal('metricOnLeave', counts.on_leave ?? 0);
       setVal('metricOnTime', counts.on_time ?? 0);
       setVal('metricLate', counts.late ?? 0);
+
+      // Accent Working now metric when >0
+      const metricEl = document.getElementById('metricCheckedIn')?.closest('.metric');
+      if (metricEl) {
+        if ((counts.checked_in ?? 0) > 0) metricEl.classList.add('metric-active');
+        else metricEl.classList.remove('metric-active');
+      }
     }
 
+    // ── Auto-refresh ─────────────────────────────────────────────
     async function refreshData() {
       if (isRefreshing) return;
       isRefreshing = true;
-      refreshBtn.disabled = true;
-      refreshSpinner.hidden = false;
-      if (refreshLabel) refreshLabel.textContent = 'Loading\u2026';
 
       // Remove old error banner if present
       if (errorBanner) errorBanner.remove();
@@ -223,28 +231,19 @@
           banner.className = 'toast toast-error';
           banner.setAttribute('data-auto-dismiss', '8000');
           banner.style.marginBottom = '16px';
-          banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Data may be incomplete</strong><span>' + msg.join(' ') + ' Try refreshing.</span></div>';
+          banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Data may be incomplete</strong><span>' + msg.join(' ') + '</span></div>';
           const heading = document.querySelector('.page-heading');
           if (heading) heading.insertAdjacentElement('afterend', banner);
         }
       } catch (err) {
         console.error('Team refresh error', err);
-        const banner = document.createElement('div');
-        banner.className = 'toast toast-error';
-        banner.setAttribute('data-auto-dismiss', '8000');
-        banner.style.marginBottom = '16px';
-        banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Refresh failed</strong><span>Could not load team data. Check your connection and try again.</span></div>';
-        const heading = document.querySelector('.page-heading');
-        if (heading) heading.insertAdjacentElement('afterend', banner);
       } finally {
         isRefreshing = false;
-        refreshBtn.disabled = false;
-        refreshSpinner.hidden = true;
-        if (refreshLabel) refreshLabel.textContent = 'Refresh';
       }
     }
 
-    refreshBtn.addEventListener('click', refreshData);
+    // Refresh every 60 seconds
+    refreshTimer = setInterval(refreshData, 60000);
   })();
 </script>
 {% endblock %}
