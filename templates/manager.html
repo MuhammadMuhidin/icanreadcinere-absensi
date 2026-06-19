@@ -26,10 +26,6 @@
 <section class="card card-pad">
   <div class="section-heading">
     <div><h2>Needs attention</h2><p>Working, late and not-started records are prioritised.</p></div>
-    <button type="button" class="btn btn-ghost" id="refreshTeam">
-      <span class="refresh-label">Refresh</span>
-      <span class="spinner" id="refreshSpinner" hidden aria-hidden="true"></span>
-    </button>
   </div>
 
   <div class="tabs" id="teamTabs" style="margin-bottom:14px">
@@ -85,12 +81,10 @@
   (() => {
     const teamList = document.getElementById('teamList');
     const teamTabs = document.getElementById('teamTabs');
-    const refreshBtn = document.getElementById('refreshTeam');
-    const refreshSpinner = document.getElementById('refreshSpinner');
-    const refreshLabel = refreshBtn?.querySelector('.refresh-label');
     const errorBanner = document.querySelector('.toast-error');
     let activeFilter = 'attention';
     let isRefreshing = false;
+    let refreshTimer = null;
 
     // ── Filter logic ──────────────────────────────────────────────
     function applyTeamFilter() {
@@ -137,7 +131,7 @@
     });
     applyTeamFilter();
 
-    // ── AJAX Refresh ─────────────────────────────────────────────
+    // ── Render helpers ───────────────────────────────────────────
     function renderTeamList(people) {
       teamList.querySelectorAll('.list-card').forEach((card) => card.remove());
       const emptyEl = document.getElementById('teamEmpty');
@@ -193,12 +187,10 @@
       setVal('metricLate', counts.late ?? 0);
     }
 
+    // ── Auto-refresh ─────────────────────────────────────────────
     async function refreshData() {
       if (isRefreshing) return;
       isRefreshing = true;
-      refreshBtn.disabled = true;
-      refreshSpinner.hidden = false;
-      if (refreshLabel) refreshLabel.textContent = 'Loading\u2026';
 
       // Remove old error banner if present
       if (errorBanner) errorBanner.remove();
@@ -223,28 +215,19 @@
           banner.className = 'toast toast-error';
           banner.setAttribute('data-auto-dismiss', '8000');
           banner.style.marginBottom = '16px';
-          banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Data may be incomplete</strong><span>' + msg.join(' ') + ' Try refreshing.</span></div>';
+          banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Data may be incomplete</strong><span>' + msg.join(' ') + '</span></div>';
           const heading = document.querySelector('.page-heading');
           if (heading) heading.insertAdjacentElement('afterend', banner);
         }
       } catch (err) {
         console.error('Team refresh error', err);
-        const banner = document.createElement('div');
-        banner.className = 'toast toast-error';
-        banner.setAttribute('data-auto-dismiss', '8000');
-        banner.style.marginBottom = '16px';
-        banner.innerHTML = '<div aria-hidden="true">!</div><div><strong>Refresh failed</strong><span>Could not load team data. Check your connection and try again.</span></div>';
-        const heading = document.querySelector('.page-heading');
-        if (heading) heading.insertAdjacentElement('afterend', banner);
       } finally {
         isRefreshing = false;
-        refreshBtn.disabled = false;
-        refreshSpinner.hidden = true;
-        if (refreshLabel) refreshLabel.textContent = 'Refresh';
       }
     }
 
-    refreshBtn.addEventListener('click', refreshData);
+    // Refresh every 60 seconds
+    refreshTimer = setInterval(refreshData, 60000);
   })();
 </script>
 {% endblock %}
