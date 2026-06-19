@@ -421,10 +421,10 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .team-list .list-card[hidden] { display: none !important; }
 
 /* Left border colours per status — visible in All / Attention views */
-.team-list .list-card[data-team-status="checked_in"] { border-left-color: var(--info); }
-.team-list .list-card[data-team-status="completed"]  { border-left-color: var(--success); }
-.team-list .list-card[data-team-status="on_leave"]    { border-left-color: var(--muted); }
-.team-list .list-card[data-team-status="not_started"] { border-left-color: var(--warning); }
+.team-list .list-card[data-team-status="checked_in"] { border-left-color: var(--info);    color: var(--info); }
+.team-list .list-card[data-team-status="completed"]  { border-left-color: var(--success); color: var(--success); }
+.team-list .list-card[data-team-status="on_leave"]    { border-left-color: var(--muted);   color: var(--muted); }
+.team-list .list-card[data-team-status="not_started"] { border-left-color: var(--warning); color: var(--warning); }
 
 /* Team tab accent colours */
 #teamTabs .tab[data-status="attention"]:not(.active) { color: var(--info); }
