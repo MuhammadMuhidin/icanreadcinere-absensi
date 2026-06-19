@@ -17,10 +17,10 @@
 {% endif %}
 
 <section class="grid grid-2 grid-md-4" aria-label="Team attendance summary">
-  <div class="metric{% if dashboard.counts.checked_in %} metric-active{% endif %}"><span class="metric-value" id="metricCheckedIn">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
-  <div class="metric"><span class="metric-value" id="metricCompleted">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
-  <div class="metric"><span class="metric-value" id="metricNotStarted">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
-  <div class="metric"><span class="metric-value" id="metricOnLeave">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
+  <div class="metric metric-working{% if dashboard.counts.checked_in %} metric-active{% endif %}"><span class="metric-value" id="metricCheckedIn">{{ dashboard.counts.checked_in }}</span><span class="metric-label">Working now</span></div>
+  <div class="metric metric-completed"><span class="metric-value" id="metricCompleted">{{ dashboard.counts.completed }}</span><span class="metric-label">Completed</span></div>
+  <div class="metric metric-notstarted"><span class="metric-value" id="metricNotStarted">{{ dashboard.counts.not_started }}</span><span class="metric-label">Not checked in</span></div>
+  <div class="metric metric-leave"><span class="metric-value" id="metricOnLeave">{{ dashboard.counts.on_leave }}</span><span class="metric-label">Approved leave</span></div>
 </section>
 
 <section class="card card-pad">

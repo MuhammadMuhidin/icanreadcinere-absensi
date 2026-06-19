@@ -443,6 +443,11 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 #teamTabs .tab.active[data-status="on_leave"]  { background: var(--muted); border-color: var(--muted); }
 
 /* Working now metric accent when >0 */
+/* Status-coloured metric values — consistent with card colours */
+.metric-working   .metric-value { color: var(--info); }
+.metric-completed .metric-value { color: var(--success); }
+.metric-notstarted .metric-value { color: var(--warning); }
+.metric-leave     .metric-value { color: var(--muted); }
 .metric.metric-active .metric-value { color: var(--info); }
 
 .team-status { text-align: right; }
