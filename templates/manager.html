@@ -25,12 +25,12 @@
 
 <section class="card card-pad">
   <div class="section-heading">
-    <div><h2>Needs attention</h2><p>Working, late and not-started records are prioritised.</p></div>
+    <div><h2>Team today</h2><p>All members · switch tabs to filter by status.</p></div>
   </div>
 
   <div class="tabs" id="teamTabs" style="margin-bottom:14px">
-    <button type="button" class="tab active" data-status="attention">Attention</button>
-    <button type="button" class="tab" data-status="all">All</button>
+    <button type="button" class="tab active" data-status="all">All</button>
+    <button type="button" class="tab" data-status="attention">Attention</button>
     <button type="button" class="tab" data-status="completed">Completed</button>
     <button type="button" class="tab" data-status="on_leave">Leave</button>
   </div>
@@ -82,7 +82,7 @@
     const teamList = document.getElementById('teamList');
     const teamTabs = document.getElementById('teamTabs');
     const errorBanner = document.querySelector('.toast-error');
-    let activeFilter = 'attention';
+    let activeFilter = 'all';
     let isRefreshing = false;
     let refreshTimer = null;
 
