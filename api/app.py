@@ -140,10 +140,28 @@ def distance(a, b, c, d):
 
 def late_status(value):
     current = value if not isinstance(value, str) else datetime.strptime(value, "%H:%M:%S").time()
-    limit = datetime.strptime("09:00:00" if now().weekday() == 5 else "10:10:00", "%H:%M:%S").time()
-    if current <= limit: return "On time!"
-    seconds = int((datetime.combine(now().date(), current)-datetime.combine(now().date(), limit)).total_seconds())
-    return f"{seconds//3600:02}:{seconds%3600//60:02}:{seconds%60:02}"
+    limit_str = "09:00:00" if now().weekday() == 5 else "10:10:00"
+    limit = datetime.strptime(limit_str, "%H:%M:%S").time()
+    
+    if current <= limit:
+        return "On time!"
+    
+    today = now().date()
+    total_seconds = int((datetime.combine(today, current) - datetime.combine(today, limit)).total_seconds())
+    
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    
+    parts = []
+    if hours:
+        parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
+    if minutes:
+        parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
+    if seconds:
+        parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
+    
+    return " ".join(parts)
 
 
 def attendance_rows(uid, start, end):
@@ -386,7 +404,7 @@ def absence():
         except Exception as exc: flash(f"Attendance could not be saved: {exc}","error"); return redirect("/absence")
         try: requests.post(GAS_URL,json=dict(nama=uid,aksi=action,late_status=deviation,mood=mood,notes=notes),timeout=5)
         except Exception as exc: print("GAS ERROR",exc)
-        detail="on time" if deviation=="On time!" else f"late by {deviation[:5]}" if deviation else "recorded"
+        detail="on time" if deviation=="On time!" else f"late by {deviation}" if deviation else "recorded"
         flash(f"{action} recorded at {stamp.strftime('%H:%M')} — {detail}.","success"); return redirect("/absence")
 
     current_date = now().date()

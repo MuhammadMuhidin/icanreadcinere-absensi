@@ -63,7 +63,7 @@
             <div class="meta-item"><span>Check in</span><strong>{{ row.checkin[:5] if row.checkin else '—' }}</strong></div>
             <div class="meta-item"><span>Check out</span><strong>{{ row.checkout[:5] if row.checkout else '—' }}</strong></div>
             <div class="meta-item"><span>Duration</span><strong>{% if row.duration_minutes is not none %}{{ row.duration_minutes // 60 }}h {{ row.duration_minutes % 60 }}m{% else %}—{% endif %}</strong></div>
-            <div class="meta-item"><span>Punctuality</span><strong>{% if row.deviation == 'On time!' %}On time{% elif row.deviation %}Late {{ row.deviation[:5] }}{% else %}—{% endif %}</strong></div>
+            <div class="meta-item"><span>Punctuality</span><strong>{% if row.deviation == 'On time!' %}On time{% elif row.deviation %}Late {{ row.deviation }}{% else %}—{% endif %}</strong></div>
           </div>
 
           {% if row.mood or row.notes %}
