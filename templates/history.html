@@ -22,7 +22,7 @@
   </div>
 
   <div class="inline-stats" id="historyInlineStats">
-    <span class="inline-stat"><strong id="lateMinutes">{{ summary.total_late_minutes }}</strong> late minutes</span>
+    <span class="inline-stat"><strong id="lateMinutes">{{ summary.total_late_minutes // 60 }}h {{ summary.total_late_minutes % 60 }}m</strong> late</span>
     <span class="inline-stat"><strong id="workTime">{{ summary.total_work_minutes // 60 }}h {{ summary.total_work_minutes % 60 }}m</strong> recorded work time</span>
     <span class="inline-stat" id="avgWork"{% if not summary.average_work_minutes %} hidden{% endif %}><strong>{% if summary.average_work_minutes %}{{ summary.average_work_minutes // 60 }}h {{ summary.average_work_minutes % 60 }}m{% endif %}</strong> average completed day</span>
   </div>
@@ -201,7 +201,7 @@
       if (inlineStats && json.summary) {
         const s = json.summary;
         const lm = inlineStats.querySelector('#lateMinutes');
-        if (lm) lm.textContent = s.total_late_minutes;
+        if (lm) lm.textContent = `${Math.floor(s.total_late_minutes / 60)}h ${s.total_late_minutes % 60}m`;
         const wt = inlineStats.querySelector('#workTime');
         if (wt) wt.textContent = `${Math.floor(s.total_work_minutes / 60)}h ${s.total_work_minutes % 60}m`;
         const avg = inlineStats.querySelector('#avgWork');
