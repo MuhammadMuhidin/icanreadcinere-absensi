@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from io import StringIO
 from math import atan2, cos, radians, sin, sqrt
-import boto3, csv, json, os, pytz, requests
+import boto3, csv, json, os, pytz, re, requests
 from dateutil.parser import isoparse
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, session
 from supabase import create_client
@@ -166,11 +166,22 @@ def late_status(value):
 
 def parse_deviation_minutes(deviation):
     """Parse a deviation string into total minutes (rounded up at 30s).
-    Handles HH:MM:SS, HH:MM, plain integer, and other edge cases."""
+    Handles both human-readable ("1 hour 15 minutes") and HH:MM:SS formats."""
     if not deviation or deviation == "On time!":
         return 0
+    value = deviation.strip()
+    # Human-readable format: "1 hour 15 minutes 30 seconds"
+    h_match = re.search(r"(\d+)\s*hours?", value)
+    m_match = re.search(r"(\d+)\s*minutes?", value)
+    s_match = re.search(r"(\d+)\s*seconds?", value)
+    if h_match or m_match or s_match:
+        h = int(h_match.group(1)) if h_match else 0
+        m = int(m_match.group(1)) if m_match else 0
+        s = int(s_match.group(1)) if s_match else 0
+        return h * 60 + m + (1 if s >= 30 else 0)
+    # Legacy HH:MM:SS / HH:MM / plain integer format
     try:
-        parts = deviation.strip().split(":")
+        parts = value.split(":")
         if len(parts) == 3:
             h, m, s = map(int, parts)
         elif len(parts) == 2:
