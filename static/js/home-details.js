@@ -170,7 +170,7 @@
         icon: 'today',
         content: `
           <div class="detail-section"><h3 class="detail-section-title">Status</h3><div style="margin-bottom:12px">${badge(item.state)}</div><div class="detail-grid">${stat('Check in', item.checkin?.slice(0, 5) || '—')}${stat('Check out', item.checkout?.slice(0, 5) || '—')}${stat('Duration', duration(item.duration_minutes))}${stat('Expected start', item.expected_start)}</div></div>
-          <div class="detail-section"><h3 class="detail-section-title">Recorded context</h3>${row('Punctuality', item.deviation === 'On time!' ? 'On time' : item.deviation ? `Late ${item.deviation.slice(0, 5)}` : 'Not recorded')}${row('Mood', item.mood || 'Not provided')}${row('Database records', item.events?.length || 0)}${item.notes ? `<p class="detail-note" style="margin-top:12px"><strong>Note</strong>\n${escapeHtml(item.notes)}</p>` : ''}</div>`,
+          <div class="detail-section"><h3 class="detail-section-title">Recorded context</h3>${row('Punctuality', item.deviation === 'On time!' ? 'On time' : item.deviation ? `Late ${item.deviation}` : 'Not recorded')}${row('Mood', item.mood || 'Not provided')}${row('Database records', item.events?.length || 0)}${item.notes ? `<p class="detail-note" style="margin-top:12px"><strong>Note</strong>\n${escapeHtml(item.notes)}</p>` : ''}</div>`,
         actions: [{ id: 'close', label: 'Close', className: 'btn-primary' }]
       });
       return;
@@ -181,7 +181,7 @@
       const items = events.length
         ? events.map((event) => listItem(
             event.aksi,
-            [event.deviation === 'On time!' ? 'On time' : event.deviation ? `Late ${event.deviation.slice(0, 5)}` : '', event.mood ? `Mood: ${event.mood}` : '', event.notes || ''].filter(Boolean).join(' · '),
+            [event.deviation === 'On time!' ? 'On time' : event.deviation ? `Late ${event.deviation}` : '', event.mood ? `Mood: ${event.mood}` : '', event.notes || ''].filter(Boolean).join(' · '),
             event.waktu?.slice(0, 5) || '—'
           )).join('')
         : '<div class="detail-empty">No attendance events have been recorded today.</div>';
@@ -204,7 +204,7 @@
         icon: 'month',
         content: `
           <div class="detail-section"><h3 class="detail-section-title">Performance</h3><div class="detail-grid">${stat('Recorded days', summary.recorded_days)}${stat('Completed days', summary.completed_days)}${stat('On time', summary.on_time_days)}${stat('Late', summary.late_days)}${stat('Incomplete', summary.incomplete_days)}${stat('Late minutes', summary.total_late_minutes)}${stat('Total work', duration(summary.total_work_minutes))}${stat('Average day', duration(summary.average_work_minutes))}</div></div>
-          <div class="detail-section"><h3 class="detail-section-title">Highlights</h3>${row('Longest completed day', item.longest_day ? `${formatDate(item.longest_day.date)} · ${duration(item.longest_day.duration_minutes)}` : 'No completed day')}${row('Latest late arrival', item.latest_late ? `${formatDate(item.latest_late.date)} · ${item.latest_late.deviation.slice(0, 5)}` : 'None')}</div>
+          <div class="detail-section"><h3 class="detail-section-title">Highlights</h3>${row('Longest completed day', item.longest_day ? `${formatDate(item.longest_day.date)} · ${duration(item.longest_day.duration_minutes)}` : 'No completed day')}${row('Latest late arrival', item.latest_late ? `${formatDate(item.latest_late.date)} · ${item.latest_late.deviation}` : 'None')}</div>
           <div class="detail-section"><h3 class="detail-section-title">Recent recorded days</h3><div class="detail-list">${item.recent_days.length ? item.recent_days.map((day) => listItem(formatDate(day.date), `${day.checkin?.slice(0, 5) || '—'}–${day.checkout?.slice(0, 5) || '—'} · ${day.state.replaceAll('_', ' ')}`, duration(day.duration_minutes))).join('') : '<div class="detail-empty">No records in this period.</div>'}</div></div>`,
         actions: [{ id: 'close', label: 'Close' }, { id: 'history', label: 'Open full history', className: 'btn-primary' }]
       });
