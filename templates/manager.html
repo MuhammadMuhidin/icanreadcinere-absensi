@@ -134,23 +134,6 @@
     // ── Render helpers ───────────────────────────────────────────
     const STATUS_ORDER = { checked_in: 0, not_started: 1, on_leave: 2, completed: 3 };
 
-    function timeSinceCheckin(checkin) {
-      if (!checkin) return '';
-      try {
-        const parts = checkin.split(':').map(Number);
-        const now = new Date();
-        const checkinDate = new Date(now.getFullYear(), now.getMonth(), now.getDate(), parts[0], parts[1], parts[2] || 0);
-        let diffMs = now - checkinDate;
-        if (diffMs < 0) diffMs = 0;
-        const diffMin = Math.floor(diffMs / 60000);
-        const h = Math.floor(diffMin / 60);
-        const m = diffMin % 60;
-        if (h > 0 && m > 0) return ` \u00b7 ${h}h ${m}m ago`;
-        if (h > 0) return ` \u00b7 ${h}h ago`;
-        return ` \u00b7 ${m}m ago`;
-      } catch (e) { return ''; }
-    }
-
     function renderTeamList(people) {
       teamList.querySelectorAll('.list-card').forEach((card) => card.remove());
       const emptyEl = document.getElementById('teamEmpty');
@@ -182,7 +165,7 @@
         const [badgeClass, badgeLabel] = statusLabels[status] || statusLabels.not_started;
 
         let desc;
-        if (status === 'checked_in') desc = 'Checked in ' + (p.checkin || '').slice(0, 5) + timeSinceCheckin(p.checkin);
+        if (status === 'checked_in') desc = 'Checked in ' + (p.checkin || '').slice(0, 5);
         else if (status === 'completed') desc = (p.checkin || '').slice(0, 5) + '\u2013' + (p.checkout || '').slice(0, 5);
         else if (status === 'on_leave') desc = 'Approved leave today';
         else desc = 'No check-in recorded';
