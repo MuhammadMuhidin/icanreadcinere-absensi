@@ -49,10 +49,10 @@
             </p>
           </div>
           <div class="team-status">
-            {% if person.status == 'checked_in' %}<span class="badge badge-info badge-dot">Working</span>
-            {% elif person.status == 'completed' %}<span class="badge badge-success badge-dot">Completed</span>
-            {% elif person.status == 'on_leave' %}<span class="badge badge-muted badge-dot">Leave</span>
-            {% else %}<span class="badge badge-warning badge-dot">Not started</span>{% endif %}
+            {% if person.status == 'checked_in' %}<span class="badge badge-info">Working</span>
+            {% elif person.status == 'completed' %}<span class="badge badge-success">Completed</span>
+            {% elif person.status == 'on_leave' %}<span class="badge badge-muted">Leave</span>
+            {% else %}<span class="badge badge-warning">Not started</span>{% endif %}
             {% if person.deviation == 'On time!' %}<span>On time</span>{% elif person.deviation %}<span>Late {{ person.deviation }}</span>{% endif %}
           </div>
         </article>
@@ -194,7 +194,7 @@
         return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
           + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
-          + '<span class="badge ' + badgeClass + ' badge-dot">' + badgeLabel + '</span>'
+          + '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>'
           + devHtml
           + '</div></article>';
       }).join('');
