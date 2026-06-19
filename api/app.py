@@ -139,35 +139,29 @@ def distance(a, b, c, d):
 
 
 def late_status(value):
-    """Generate new late status + support old DB format"""
-    if not value:
+    current = value if not isinstance(value, str) else datetime.strptime(value, "%H:%M:%S").time()
+    limit_str = "09:00:00" if now().weekday() == 5 else "10:10:00"
+    limit = datetime.strptime(limit_str, "%H:%M:%S").time()
+    
+    if current <= limit:
         return "On time!"
     
-    # New check-in logic
-    if not isinstance(value, str) or ":" not in value or len(value.split(":")) == 3 and value.count(":") == 2:
-        current = value if not isinstance(value, str) else datetime.strptime(str(value), "%H:%M:%S").time()
-        limit = datetime.strptime("09:00:00" if now().weekday() == 5 else "10:10:00", "%H:%M:%S").time()
-        if current <= limit:
-            return "On time!"
-        seconds = int((datetime.combine(now().date(), current) - datetime.combine(now().date(), limit)).total_seconds())
-    else:
-        # Old DB format HH:MM:SS
-        try:
-            parts = list(map(int, str(value).strip().split(":")))
-            seconds = (parts[0]*3600 + parts[1]*60 + parts[2]) if len(parts) == 3 else 0
-        except:
-            return str(value)
-
-    h = seconds // 3600
-    m = (seconds % 3600) // 60
-    s = seconds % 60
-
-    if h > 0:
-        return f"{h} hour{h > 1 and 's' or ''} {m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}".strip()
-    elif m > 0:
-        return f"{m} minute{m > 1 and 's' or ''} {s} second{s > 1 and 's' or ''}".strip()
-    else:
-        return f"{s} second{s > 1 and 's' or ''}"
+    today = now().date()
+    total_seconds = int((datetime.combine(today, current) - datetime.combine(today, limit)).total_seconds())
+    
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    seconds = total_seconds % 60
+    
+    parts = []
+    if hours:
+        parts.append(f"{hours} hour{'s' if hours > 1 else ''}")
+    if minutes:
+        parts.append(f"{minutes} minute{'s' if minutes > 1 else ''}")
+    if seconds:
+        parts.append(f"{seconds} second{'s' if seconds > 1 else ''}")
+    
+    return " ".join(parts)
 
 
 def attendance_rows(uid, start, end):
@@ -410,7 +404,7 @@ def absence():
         except Exception as exc: flash(f"Attendance could not be saved: {exc}","error"); return redirect("/absence")
         try: requests.post(GAS_URL,json=dict(nama=uid,aksi=action,late_status=deviation,mood=mood,notes=notes),timeout=5)
         except Exception as exc: print("GAS ERROR",exc)
-        detail="on time" if deviation=="On time!" else f"late by {deviation[:5]}" if deviation else "recorded"
+        detail="on time" if deviation=="On time!" else f"late by {deviation}" if deviation else "recorded"
         flash(f"{action} recorded at {stamp.strftime('%H:%M')} — {detail}.","success"); return redirect("/absence")
 
     current_date = now().date()
