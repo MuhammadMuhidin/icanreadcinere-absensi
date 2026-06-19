@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from io import StringIO
 from math import atan2, cos, radians, sin, sqrt
-import boto3, csv, json, os, pytz, requests
+import boto3, csv, json, os, pytz, re, requests
 from dateutil.parser import isoparse
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, session
 from supabase import create_client
@@ -164,6 +164,37 @@ def late_status(value):
     return " ".join(parts)
 
 
+def parse_deviation_minutes(deviation):
+    """Parse a deviation string into total minutes (rounded up at 30s).
+    Handles both human-readable ("1 hour 15 minutes") and HH:MM:SS formats."""
+    if not deviation or deviation == "On time!":
+        return 0
+    value = deviation.strip()
+    # Human-readable format: "1 hour 15 minutes 30 seconds"
+    h_match = re.search(r"(\d+)\s*hours?", value)
+    m_match = re.search(r"(\d+)\s*minutes?", value)
+    s_match = re.search(r"(\d+)\s*seconds?", value)
+    if h_match or m_match or s_match:
+        h = int(h_match.group(1)) if h_match else 0
+        m = int(m_match.group(1)) if m_match else 0
+        s = int(s_match.group(1)) if s_match else 0
+        return h * 60 + m + (1 if s >= 30 else 0)
+    # Legacy HH:MM:SS / HH:MM / plain integer format
+    try:
+        parts = value.split(":")
+        if len(parts) == 3:
+            h, m, s = map(int, parts)
+        elif len(parts) == 2:
+            h, m = map(int, parts); s = 0
+        elif len(parts) == 1:
+            h = int(parts[0]); m = s = 0
+        else:
+            return 0
+        return h * 60 + m + (1 if s >= 30 else 0)
+    except (ValueError, TypeError):
+        return 0
+
+
 def attendance_rows(uid, start, end):
     try:
         return sb().table(T("log_absen")).select("id,nama,aksi,tanggal,waktu,deviation,mood,notes").eq("nama", uid).gte("tanggal", start).lt("tanggal", end).order("tanggal", desc=True).order("waktu", desc=False).execute().data or []
@@ -216,11 +247,7 @@ def grouped_from_rows(rows, period=None):
             bucket[day].append(row)
     days = sorted((day_session(day_rows, day) for day, day_rows in bucket.items()), key=lambda x:x["date"], reverse=True)
     completed = [x for x in days if x["state"] == "completed"]; late = [x for x in days if x["is_late"]]
-    late_minutes = 0
-    for item in late:
-        try:
-            h,m,s = map(int, item["deviation"].split(":")); late_minutes += h*60+m+(s>=30)
-        except Exception: pass
+    late_minutes = sum(parse_deviation_minutes(item["deviation"]) for item in late)
     durations = [x["duration_minutes"] for x in completed if x["duration_minutes"] is not None]
     summary = dict(recorded_days=len(days), completed_days=len(completed), on_time_days=sum(x["deviation"]=="On time!" for x in days),
                    late_days=len(late), incomplete_days=sum(x["state"]=="checked_in" for x in days), total_late_minutes=late_minutes,

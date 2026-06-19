@@ -7,25 +7,24 @@
 </section>
 
 <section class="card card-pad">
-  <form method="get" class="filter-bar" aria-label="Attendance history filter">
+  <div class="filter-bar" aria-label="Attendance history filter">
     <div>
       <label class="form-label" for="period">Period</label>
-      <input class="form-control" id="period" name="period" type="month" value="{{ period }}">
+      <input class="form-control" id="period" name="period" type="month" value="{{ period }}" onchange="loadHistoryPeriod(this.value)">
     </div>
-    <button class="btn btn-primary" type="submit">Apply period</button>
-  </form>
-
-  <div class="grid grid-2 grid-md-4">
-    <div class="metric"><span class="metric-value">{{ summary.recorded_days }}</span><span class="metric-label">Recorded days</span></div>
-    <div class="metric"><span class="metric-value">{{ summary.on_time_days }}</span><span class="metric-label">On time</span></div>
-    <div class="metric"><span class="metric-value">{{ summary.late_days }}</span><span class="metric-label">Late</span></div>
-    <div class="metric"><span class="metric-value">{{ summary.incomplete_days }}</span><span class="metric-label">Incomplete</span></div>
   </div>
 
-  <div class="inline-stats">
-    <span class="inline-stat"><strong>{{ summary.total_late_minutes }}</strong> late minutes</span>
-    <span class="inline-stat"><strong>{{ summary.total_work_minutes // 60 }}h {{ summary.total_work_minutes % 60 }}m</strong> recorded work time</span>
-    {% if summary.average_work_minutes %}<span class="inline-stat"><strong>{{ summary.average_work_minutes // 60 }}h {{ summary.average_work_minutes % 60 }}m</strong> average completed day</span>{% endif %}
+  <div class="grid grid-2 grid-md-4" id="historySummary">
+    <div class="metric"><span class="metric-value" data-metric="recorded_days">{{ summary.recorded_days }}</span><span class="metric-label">Recorded days</span></div>
+    <div class="metric"><span class="metric-value" data-metric="on_time_days">{{ summary.on_time_days }}</span><span class="metric-label">On time</span></div>
+    <div class="metric"><span class="metric-value" data-metric="late_days">{{ summary.late_days }}</span><span class="metric-label">Late</span></div>
+    <div class="metric"><span class="metric-value" data-metric="incomplete_days">{{ summary.incomplete_days }}</span><span class="metric-label">Incomplete</span></div>
+  </div>
+
+  <div class="inline-stats" id="historyInlineStats">
+    <span class="inline-stat"><strong id="lateMinutes">{{ summary.total_late_minutes // 60 }}h {{ summary.total_late_minutes % 60 }}m</strong> late</span>
+    <span class="inline-stat"><strong id="workTime">{{ summary.total_work_minutes // 60 }}h {{ summary.total_work_minutes % 60 }}m</strong> recorded work time</span>
+    <span class="inline-stat" id="avgWork"{% if not summary.average_work_minutes %} hidden{% endif %}><strong>{% if summary.average_work_minutes %}{{ summary.average_work_minutes // 60 }}h {{ summary.average_work_minutes % 60 }}m{% endif %}</strong> average completed day</span>
   </div>
 </section>
 
@@ -37,64 +36,196 @@
     </div>
   </div>
 
-  {% if attendance_rows %}
-    <div class="list">
-      {% for row in attendance_rows %}
-        <article class="list-card history-card">
-          <div class="list-card-header">
-            <div>
-              <h3 class="history-date" data-date="{{ row.date }}">{{ row.date }}</h3>
-              <p>
-                {% if row.state == 'completed' %}Attendance completed
-                {% elif row.state == 'checked_in' %}Missing check-out
-                {% else %}No completed action{% endif %}
-              </p>
+  <div id="historyList">
+    {% if attendance_rows %}
+      <div class="list">
+        {% for row in attendance_rows %}
+          <article class="list-card history-card">
+            <div class="list-card-header">
+              <div>
+                <h3 class="history-date" data-date="{{ row.date }}">{{ row.date }}</h3>
+                <p>
+                  {% if row.state == 'completed' %}Attendance completed
+                  {% elif row.state == 'checked_in' %}Missing check-out
+                  {% else %}No completed action{% endif %}
+                </p>
+              </div>
+              {% if row.state == 'completed' %}
+                <span class="badge badge-success badge-dot">Complete</span>
+              {% elif row.state == 'checked_in' %}
+                <span class="badge badge-warning badge-dot">Incomplete</span>
+              {% else %}
+                <span class="badge badge-muted badge-dot">No record</span>
+              {% endif %}
             </div>
-            {% if row.state == 'completed' %}
-              <span class="badge badge-success badge-dot">Complete</span>
-            {% elif row.state == 'checked_in' %}
-              <span class="badge badge-warning badge-dot">Incomplete</span>
-            {% else %}
-              <span class="badge badge-muted badge-dot">No record</span>
+
+            <div class="list-meta">
+              <div class="meta-item"><span>Check in</span><strong>{{ row.checkin[:5] if row.checkin else '—' }}</strong></div>
+              <div class="meta-item"><span>Check out</span><strong>{{ row.checkout[:5] if row.checkout else '—' }}</strong></div>
+              <div class="meta-item"><span>Duration</span><strong>{% if row.duration_minutes is not none %}{{ row.duration_minutes // 60 }}h {{ row.duration_minutes % 60 }}m{% else %}—{% endif %}</strong></div>
+              <div class="meta-item"><span>Punctuality</span><strong>{% if row.deviation == 'On time!' %}On time{% elif row.deviation %}Late {{ row.deviation }}{% else %}—{% endif %}</strong></div>
+            </div>
+
+            {% if row.mood or row.notes %}
+              <div class="inline-stats">
+                {% if row.mood %}<span class="inline-stat"><strong>Mood:</strong> {{ row.mood }}</span>{% endif %}
+                {% if row.notes %}<span class="inline-stat"><strong>Note:</strong> {{ row.notes }}</span>{% endif %}
+              </div>
             {% endif %}
-          </div>
-
-          <div class="list-meta">
-            <div class="meta-item"><span>Check in</span><strong>{{ row.checkin[:5] if row.checkin else '—' }}</strong></div>
-            <div class="meta-item"><span>Check out</span><strong>{{ row.checkout[:5] if row.checkout else '—' }}</strong></div>
-            <div class="meta-item"><span>Duration</span><strong>{% if row.duration_minutes is not none %}{{ row.duration_minutes // 60 }}h {{ row.duration_minutes % 60 }}m{% else %}—{% endif %}</strong></div>
-            <div class="meta-item"><span>Punctuality</span><strong>{% if row.deviation == 'On time!' %}On time{% elif row.deviation %}Late {{ row.deviation }}{% else %}—{% endif %}</strong></div>
-          </div>
-
-          {% if row.mood or row.notes %}
-            <div class="inline-stats">
-              {% if row.mood %}<span class="inline-stat"><strong>Mood:</strong> {{ row.mood }}</span>{% endif %}
-              {% if row.notes %}<span class="inline-stat"><strong>Note:</strong> {{ row.notes }}</span>{% endif %}
-            </div>
-          {% endif %}
-        </article>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="empty-state">
-      <div class="empty-icon" aria-hidden="true">◷</div>
-      <h3>No records for this period</h3>
-      <p>Choose another month to review your attendance history.</p>
-    </div>
-  {% endif %}
+          </article>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">◷</div>
+        <h3>No records for this period</h3>
+        <p>Choose another month to review your attendance history.</p>
+      </div>
+    {% endif %}
+  </div>
 </section>
 {% endblock %}
 
 {% block scripts %}
 <script>
-  document.querySelectorAll('.history-date').forEach((element) => {
-    const value = element.dataset.date;
+  function formatDate(value) {
     const parsed = new Date(`${value}T00:00:00`);
-    if (!Number.isNaN(parsed.getTime())) {
-      element.textContent = new Intl.DateTimeFormat('en-GB', {
-        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
-      }).format(parsed);
+    if (Number.isNaN(parsed.getTime())) return value;
+    return new Intl.DateTimeFormat('en-GB', {
+      weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'
+    }).format(parsed);
+  }
+
+  function formatDuration(minutes) {
+    if (minutes == null) return '—';
+    return `${Math.floor(minutes / 60)}h ${minutes % 60}m`;
+  }
+
+  function buildStateLabel(state) {
+    switch (state) {
+      case 'completed': return 'Attendance completed';
+      case 'checked_in': return 'Missing check-out';
+      default: return 'No completed action';
     }
-  });
+  }
+
+  function buildBadge(state) {
+    switch (state) {
+      case 'completed': return '<span class="badge badge-success badge-dot">Complete</span>';
+      case 'checked_in': return '<span class="badge badge-warning badge-dot">Incomplete</span>';
+      default: return '<span class="badge badge-muted badge-dot">No record</span>';
+    }
+  }
+
+  function buildDeviationText(deviation) {
+    if (deviation === 'On time!') return 'On time';
+    if (deviation) return `Late ${deviation}`;
+    return '—';
+  }
+
+  function buildHistoryCards(rows) {
+    if (!rows || !rows.length) {
+      return `<div class="empty-state">
+        <div class="empty-icon" aria-hidden="true">◷</div>
+        <h3>No records for this period</h3>
+        <p>Choose another month to review your attendance history.</p>
+      </div>`;
+    }
+    let html = '<div class="list">';
+    for (const row of rows) {
+      const checkin = row.checkin ? row.checkin.slice(0, 5) : '—';
+      const checkout = row.checkout ? row.checkout.slice(0, 5) : '—';
+      const moodHtml = row.mood ? `<span class="inline-stat"><strong>Mood:</strong> ${row.mood}</span>` : '';
+      const notesHtml = row.notes ? `<span class="inline-stat"><strong>Note:</strong> ${row.notes}</span>` : '';
+      const extras = (row.mood || row.notes) ? `<div class="inline-stats">${moodHtml}${notesHtml}</div>` : '';
+      html += `<article class="list-card history-card">
+        <div class="list-card-header">
+          <div>
+            <h3 class="history-date" data-date="${row.date}">${row.date}</h3>
+            <p>${buildStateLabel(row.state)}</p>
+          </div>
+          ${buildBadge(row.state)}
+        </div>
+        <div class="list-meta">
+          <div class="meta-item"><span>Check in</span><strong>${checkin}</strong></div>
+          <div class="meta-item"><span>Check out</span><strong>${checkout}</strong></div>
+          <div class="meta-item"><span>Duration</span><strong>${formatDuration(row.duration_minutes)}</strong></div>
+          <div class="meta-item"><span>Punctuality</span><strong>${buildDeviationText(row.deviation)}</strong></div>
+        </div>
+        ${extras}
+      </article>`;
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function formatHistoryDates(container) {
+    if (!container) return;
+    container.querySelectorAll('.history-date').forEach((el) => {
+      const value = el.dataset.date;
+      if (value) el.textContent = formatDate(value);
+    });
+  }
+
+  async function loadHistoryPeriod(period) {
+    const list = document.getElementById('historyList');
+    const summary = document.getElementById('historySummary');
+    const inlineStats = document.getElementById('historyInlineStats');
+    if (!list) return;
+
+    // Show subtle loading indicator
+    list.style.opacity = '0.55';
+    list.style.transition = 'opacity .15s';
+
+    try {
+      const resp = await fetch(`/api/me/attendance/history?period=${encodeURIComponent(period)}`);
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const json = await resp.json();
+
+      // Update summary metrics
+      if (summary && json.summary) {
+        const s = json.summary;
+        const metrics = {
+          recorded_days: s.recorded_days,
+          on_time_days: s.on_time_days,
+          late_days: s.late_days,
+          incomplete_days: s.incomplete_days,
+        };
+        for (const [key, val] of Object.entries(metrics)) {
+          const el = summary.querySelector(`[data-metric="${key}"]`);
+          if (el) el.textContent = val;
+        }
+      }
+
+      // Update inline stats
+      if (inlineStats && json.summary) {
+        const s = json.summary;
+        const lm = inlineStats.querySelector('#lateMinutes');
+        if (lm) lm.textContent = `${Math.floor(s.total_late_minutes / 60)}h ${s.total_late_minutes % 60}m`;
+        const wt = inlineStats.querySelector('#workTime');
+        if (wt) wt.textContent = `${Math.floor(s.total_work_minutes / 60)}h ${s.total_work_minutes % 60}m`;
+        const avg = inlineStats.querySelector('#avgWork');
+        if (avg) {
+          if (s.average_work_minutes) {
+            avg.hidden = false;
+            avg.querySelector('strong').textContent = `${Math.floor(s.average_work_minutes / 60)}h ${s.average_work_minutes % 60}m`;
+          } else {
+            avg.hidden = true;
+          }
+        }
+      }
+
+      // Update day list
+      list.innerHTML = buildHistoryCards(json.data);
+      formatHistoryDates(list);
+    } catch (err) {
+      console.error('History load error', err);
+    } finally {
+      list.style.opacity = '1';
+    }
+  }
+
+  // Format dates on initial page load
+  formatHistoryDates(document.getElementById('historyList'));
 </script>
 {% endblock %}
