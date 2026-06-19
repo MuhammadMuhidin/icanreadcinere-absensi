@@ -417,8 +417,25 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .scheduled-item p { margin: 0; }
 .scheduled-item time { color: var(--muted); font-size: 12px; white-space: nowrap; }
 
-.team-list .list-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; border: 0; background: var(--surface-soft); }
+.team-list .list-card { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 12px; border: 0; border-left: 3px solid transparent; background: var(--surface-soft); }
 .team-list .list-card[hidden] { display: none !important; }
+
+/* Left border colours per status — visible in All / Attention views */
+.team-list .list-card[data-team-status="checked_in"] { border-left-color: var(--info); }
+.team-list .list-card[data-team-status="completed"]  { border-left-color: var(--success); }
+.team-list .list-card[data-team-status="on_leave"]    { border-left-color: var(--muted); }
+.team-list .list-card[data-team-status="not_started"] { border-left-color: var(--warning); }
+
+/* Team tab accent colours */
+#teamTabs .tab[data-status="attention"]:not(.active) { color: var(--info); }
+#teamTabs .tab[data-status="all"]:not(.active)       { color: var(--text); }
+#teamTabs .tab[data-status="completed"]:not(.active)  { color: var(--success); }
+#teamTabs .tab[data-status="on_leave"]:not(.active)   { color: var(--muted); }
+
+#teamTabs .tab.active[data-status="attention"] { background: var(--brand); border-color: var(--brand); }
+#teamTabs .tab.active[data-status="all"]       { background: var(--info); border-color: var(--info); }
+#teamTabs .tab.active[data-status="completed"] { background: var(--success); border-color: var(--success); }
+#teamTabs .tab.active[data-status="on_leave"]  { background: var(--muted); border-color: var(--muted); }
 
 /* Working now metric accent when >0 */
 .metric.metric-active .metric-value { color: var(--info); }
