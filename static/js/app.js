@@ -5,7 +5,57 @@
   const systemDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
   const prefetched = new Set();
 
+  // Detect slow connection
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const isSlow = connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || "") || connection?.effectiveType === "slow-2g";
+
   root.dataset.theme = storedTheme || (systemDark ? "dark" : "light");
+
+  // Profile photo cache via IndexedDB
+  const PHOTO_DB = 'icr-photo-cache';
+  const PHOTO_STORE = 'photos';
+  let profilePhotoSrc = null;
+
+  function openPhotoDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(PHOTO_DB, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(PHOTO_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function getCachedPhoto(url) {
+    try {
+      const db = await openPhotoDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(PHOTO_STORE, 'readonly');
+        const req = tx.objectStore(PHOTO_STORE).get(url);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    } catch { return null; }
+  }
+
+  async function cachePhoto(url, blob) {
+    try {
+      const db = await openPhotoDB();
+      const tx = db.transaction(PHOTO_STORE, 'readwrite');
+      tx.objectStore(PHOTO_STORE).put(blob, url);
+    } catch {}
+  }
+
+  async function loadProfilePhoto(photoEl) {
+    const basePhotoUrl = photoEl.dataset.photoUrl;
+    if (!basePhotoUrl) return;
+    const cached = await getCachedPhoto(basePhotoUrl);
+    if (cached) {
+      profilePhotoSrc = URL.createObjectURL(cached);
+      photoEl.src = profilePhotoSrc;
+    } else {
+      photoEl.src = basePhotoUrl;
+    }
+  }
 
   function matchesAndDescendants(scope, selector) {
     const matches = [];
@@ -19,7 +69,6 @@
       const dark = root.dataset.theme === "dark";
       button.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
       button.setAttribute("title", dark ? "Use light mode" : "Use dark mode");
-      // Logika innerHTML dihapus agar CSS dapat menangani transisi SVG secara langsung
     });
   }
 
@@ -30,11 +79,8 @@
       "content",
       root.dataset.theme === "dark" ? "#09111f" : "#193773"
     );
-    
-    // Efek ripple/feedback khusus (jika diperlukan)
     button?.classList.add("theme-switching");
     setTimeout(() => button?.classList.remove("theme-switching"), 380);
-    
     updateThemeButtons();
   }
 
@@ -53,7 +99,8 @@
   function removeToast(toast) {
     if (!toast?.isConnected) return;
     toast.classList.add("is-leaving");
-    setTimeout(() => toast.remove(), reducedMotion ? 0 : 230);
+    if (!reducedMotion && !isSlow) setTimeout(() => toast.remove(), 230);
+    else toast.remove();
   }
 
   function initialiseToasts(scope = document) {
@@ -66,12 +113,11 @@
         clearTimeout(timer);
         removeToast(toast);
       });
-      if (toast.classList.contains("toast-success")) createSuccessBurst(toast);
+      if (toast.classList.contains("toast-success") && !reducedMotion && !isSlow) createSuccessBurst(toast);
     });
   }
 
   function createSuccessBurst(anchor) {
-    if (reducedMotion) return;
     const rect = anchor.getBoundingClientRect();
     const x = rect.right - 20;
     const y = rect.top + rect.height / 2;
@@ -90,7 +136,7 @@
   }
 
   function addRipple(event, element) {
-    if (reducedMotion || element.disabled) return;
+    if (reducedMotion || isSlow || element.disabled) return;
     const rect = element.getBoundingClientRect();
     const ripple = document.createElement("span");
     ripple.className = "ripple";
@@ -105,7 +151,7 @@
     const raw = element.textContent.trim();
     if (!/^\d+$/.test(raw)) return;
     element.dataset.countReady = "true";
-    if (reducedMotion) return;
+    if (reducedMotion || isSlow) return;
     const target = Number(raw);
     if (target === 0) return;
     const duration = Math.min(650, 280 + target * 12);
@@ -145,39 +191,28 @@
   }
 
   function prefetch(anchor) {
+    if (isSlow) return;
     if (!isPrefetchable(anchor)) return;
     const url = new URL(anchor.href, location.href);
     url.hash = "";
     const key = url.href;
     if (key === location.href.split("#")[0] || prefetched.has(key)) return;
     prefetched.add(key);
-
     const link = document.createElement("link");
     link.rel = "prefetch";
     link.href = key;
     link.as = "document";
     document.head.appendChild(link);
-
-    fetch(key, {
-      method: "GET",
-      credentials: "same-origin",
-      cache: "force-cache",
-      priority: "low",
-      headers: { "X-Purpose": "prefetch" },
-    }).catch(() => {});
   }
 
   function predictivePrefetch() {
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || "")) return;
-
+    if (isSlow) return;
     const preferredPaths = location.pathname === "/absence"
       ? ["/history", "/paid_leave"]
       : ["/absence"];
     const links = preferredPaths
       .map((path) => document.querySelector(`a[href="${path}"]`))
       .filter(Boolean);
-
     const work = () => links.forEach((link, index) => {
       setTimeout(() => prefetch(link), index * 420);
     });
@@ -208,14 +243,9 @@
 
   document.addEventListener("click", (event) => {
     const themeButton = event.target.closest("[data-theme-toggle]");
-    if (themeButton) {
-      switchTheme(themeButton);
-      return;
-    }
-
+    if (themeButton) { switchTheme(themeButton); return; }
     const interactive = event.target.closest(".btn, .icon-button, .nav-item, .tab");
     if (interactive) addRipple(event, interactive);
-
     const anchor = event.target.closest("a[href]");
     if (anchor && !event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       beginNavigation(anchor);
@@ -226,14 +256,15 @@
     const target = event.target.closest(".btn, .icon-button, .nav-item, .tab");
     target?.classList.add("is-pressing");
   });
-  
   ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
     document.addEventListener(type, (event) => event.target.closest?.(".is-pressing")?.classList.remove("is-pressing"), true);
   });
 
-  ["pointerenter", "focusin", "touchstart"].forEach((type) => {
-    document.addEventListener(type, (event) => prefetch(event.target.closest?.("a[href]")), true);
-  });
+  if (!isSlow) {
+    ["pointerenter", "focusin"].forEach((type) => {
+      document.addEventListener(type, (event) => prefetch(event.target.closest?.("a[href]")), true);
+    });
+  }
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
@@ -270,7 +301,11 @@
   enhanceActiveNavigation();
   predictivePrefetch();
   completeNavigation();
-  setInterval(updateClock, 1000);
+  setInterval(updateClock, isSlow ? 30000 : 1000);
   window.addEventListener("pageshow", completeNavigation);
   window.addEventListener("pagehide", () => root.classList.add("is-navigating"));
+
+  // Load profile photo from cache on home page
+  const profilePhotoEl = document.getElementById("profilePhoto");
+  if (profilePhotoEl) loadProfilePhoto(profilePhotoEl);
 })();

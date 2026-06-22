@@ -216,7 +216,7 @@
 
   async function loadData() {
     try {
-      const response = await apiFetch('/leave', { cache: 'no-store' });
+      const response = await apiFetch('/leave');
       const payload = await response.json();
       rawData = payload.data || [];
       lastSnapshot = rawData.map((item) => `${item.id}-${item.status}-${item.updated_at || item.created_at}`).sort().join('|');
@@ -229,7 +229,7 @@
 
   async function refreshSummary() {
     try {
-      const response = await apiFetch('/api/me/leave-summary', { cache: 'no-store' });
+      const response = await apiFetch('/api/me/leave-summary');
       const summary = await response.json();
       document.getElementById('balanceMetric').textContent = summary.balance ?? '—';
       document.getElementById('waitingMetric').textContent = summary.waiting ?? 0;
@@ -374,7 +374,7 @@
   async function pollChanges() {
     if (document.visibilityState !== 'visible') return;
     try {
-      const response = await apiFetch('/leave', { cache: 'no-store' });
+      const response = await apiFetch('/leave');
       const payload = await response.json();
       const snapshot = (payload.data || []).map((item) => `${item.id}-${item.status}-${item.updated_at || item.created_at}`).sort().join('|');
       if (snapshot !== lastSnapshot) {
@@ -388,6 +388,7 @@
   }
 
   loadData();
-  setInterval(pollChanges, 30000);
+  // Poll less frequently to save data
+  setInterval(pollChanges, 60000);
 </script>
 {% endblock %}

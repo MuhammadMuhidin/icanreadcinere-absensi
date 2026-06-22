@@ -282,6 +282,13 @@ def leave_rows(uid):
     if not manager(uid): query = query.eq("name", uid)
     return query.execute().data or []
 
+def _own_leave_rows(uid):
+    """Fetch only the current user's own leave rows (used for home page card)."""
+    try:
+        return sb().table(T("paid_leave")).select("id,name,leave_date,status,reason,created_at").eq("name", uid).order("created_at", desc=True).execute().data or []
+    except Exception as exc:
+        print("OWN LEAVE ROWS ERROR", exc)
+        return []
 
 def leave_summary(uid, data=None, balance_value=_UNSET):
     data = leave_rows(uid) if data is None else data
@@ -383,6 +390,9 @@ def permanent(): session.permanent = True
 def headers(response):
     if request.endpoint == "login":
         response.headers.update({"Cache-Control":"no-store, no-cache, must-revalidate","Pragma":"no-cache","Expires":"0"})
+    # Add compression hint for HTML responses
+    if response.content_type and 'text/html' in response.content_type:
+        response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
 
 
@@ -440,12 +450,10 @@ def absence():
     attendance_data = attendance_rows(uid, attendance_start.isoformat(), attendance_end.isoformat())
     period,days,summary = grouped_from_rows(attendance_data, current_date.strftime("%Y-%m"))
     current_balance = balance(uid)
-    leave_data = leave_rows(uid)
+    # Only fetch user's own leaves for the home page card (not all leaves)
+    personal_leave_data = _own_leave_rows(uid)
 
     data=ctx("home","Attendance")
-    # Home-page leave card always reflects the current user's own requests,
-    # even for managers (who see global data on /paid_leave instead).
-    personal_leave = [r for r in leave_data if r.get("name") == uid]
     data.update(
         nama=uid,
         title=session.get("title","Team Member"),
@@ -454,8 +462,9 @@ def absence():
         month_summary=summary,
         news=news(),
         sisa=current_balance,
-        leave_summary=leave_summary(uid, personal_leave, current_balance),
+        leave_summary=leave_summary(uid, personal_leave_data, current_balance),
         latest_incomplete=last_incomplete(uid, attendance_data),
+        photo_ts=session.get("photo_ts", 0),
     )
     return render_template("absence.html",**data)
 
@@ -482,17 +491,58 @@ def attendance_summary_api():
     period,_,summary=grouped(uid,request.args.get("period")); return jsonify(period=period,summary=summary)
 
 
-@app.route("/change_photo",methods=["POST"])
+@app.route("/change_photo", methods=["POST"])
 def change_photo():
-    uid=session.get("userid")
-    if not uid: return Response(status=401)
-    file=request.files.get("file")
-    if not file: return jsonify(message="No file selected"),400
-    if file.mimetype not in {"image/jpeg","image/png","image/webp"}: return jsonify(message="Use a JPG, PNG or WebP image"),400
-    payload=file.read()
-    if len(payload)>5*1024*1024: return jsonify(message="Image must be smaller than 5 MB"),400
-    r2().put_object(Bucket=os.getenv("R2_BUCKET"),Key=f"profiles/{uid}.jpg",Body=payload,ContentType=file.mimetype)
-    return jsonify(message="Profile photo updated")
+    uid = session.get("userid")
+    if not uid:
+        return Response(status=401)
+
+    file = request.files.get("file")
+    if not file:
+        return jsonify(message="No file selected"), 400
+
+    if file.mimetype not in {"image/jpeg", "image/png", "image/webp"}:
+        return jsonify(message="Use a JPG, PNG or WebP image"), 400
+
+    payload = file.read()
+    if len(payload) > 5 * 1024 * 1024:
+        return jsonify(message="Image must be smaller than 5 MB"), 400
+
+    from io import BytesIO
+    from PIL import Image
+    import time
+    import base64
+
+    img = Image.open(BytesIO(payload))
+    img = img.convert("RGB")
+    img.thumbnail((200, 200), Image.LANCZOS)
+
+    out = BytesIO()
+    img.save(out, format="JPEG", quality=60, optimize=True)
+    out.seek(0)
+
+    # Upload ke R2
+    r2().put_object(
+        Bucket=os.getenv("R2_BUCKET"),
+        Key=f"profiles/{uid}.jpg",
+        Body=out.read(),
+        ContentType="image/jpeg"
+    )
+
+    # 🔥 Buat data URI dari hasil resize (out sudah di-reset)
+    out.seek(0)
+    image_data = out.read()
+    b64 = base64.b64encode(image_data).decode('utf-8')
+    data_uri = f"data:image/jpeg;base64,{b64}"
+
+    ts = int(time.time())
+    session["photo_ts"] = ts
+
+    return jsonify(
+        message="Profile photo updated",
+        photo_ts=ts,
+        data_uri=data_uri   # <-- tambahkan ini
+    )
 
 
 @app.route("/paid_leave")

@@ -120,7 +120,7 @@
   async function getData(force = false) {
     if (cache && !force) return cache;
     if (pending && !force) return pending;
-    pending = fetch('/api/me/dashboard-details', { cache: 'no-store' })
+    pending = fetch('/api/me/dashboard-details')
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || data.error || 'Could not load details');
@@ -145,7 +145,9 @@
     if (type === 'profile') {
       const item = data.profile;
       const profileImage = document.getElementById('profileImage');
-      const avatar = profileImage?.currentSrc || profileImage?.src || '';
+      // Use base photo URL with timestamp to avoid cache
+      const baseUrl = profileImage?.dataset?.photoUrl || profileImage?.src?.split('?')[0] || '';
+      const avatar = baseUrl ? `${baseUrl}?v=${Date.now()}` : '';
       openDetail({
         title: item.user_id,
         subtitle: `${item.title} · ${item.role}`,

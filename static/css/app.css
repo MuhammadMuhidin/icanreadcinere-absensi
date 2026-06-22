@@ -210,16 +210,45 @@ img { max-width: 100%; }
 .metric-value small { font-size: 13px; font-weight: 650; color: var(--muted); }
 
 .profile-row { display: flex; align-items: center; gap: 13px; }
-.profile-photo {
+.profile-photo-wrap {
+  position: relative;
   width: 62px;
   height: 62px;
   flex: 0 0 62px;
+}
+.profile-photo {
+  position: relative;
+  z-index: 1;
+  width: 62px;
+  height: 62px;
   border-radius: 18px;
   object-fit: cover;
   background: var(--surface-soft);
   border: 3px solid var(--surface);
   box-shadow: 0 0 0 1px var(--border);
   cursor: pointer;
+}
+.profile-photo-placeholder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 62px;
+  height: 62px;
+  border-radius: 18px;
+  background: var(--surface-soft);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--border);
+  pointer-events: none;
+}
+.profile-photo-placeholder path,
+.profile-photo-placeholder circle,
+.profile-photo-placeholder ellipse {
+  fill: #cbd5e1;
+}
+html[data-theme="dark"] .profile-photo-placeholder path,
+html[data-theme="dark"] .profile-photo-placeholder circle,
+html[data-theme="dark"] .profile-photo-placeholder ellipse {
+  fill: #334155;
 }
 .profile-copy { min-width: 0; }
 .profile-copy h1, .profile-copy h2 { margin: 0; font-size: 20px; letter-spacing: -.025em; }
