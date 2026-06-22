@@ -464,6 +464,7 @@ def absence():
         sisa=current_balance,
         leave_summary=leave_summary(uid, personal_leave_data, current_balance),
         latest_incomplete=last_incomplete(uid, attendance_data),
+        photo_ts=session.get("photo_ts", 0),
     )
     return render_template("absence.html",**data)
 
@@ -499,8 +500,28 @@ def change_photo():
     if file.mimetype not in {"image/jpeg","image/png","image/webp"}: return jsonify(message="Use a JPG, PNG or WebP image"),400
     payload=file.read()
     if len(payload)>5*1024*1024: return jsonify(message="Image must be smaller than 5 MB"),400
-    r2().put_object(Bucket=os.getenv("R2_BUCKET"),Key=f"profiles/{uid}.jpg",Body=payload,ContentType=file.mimetype)
-    return jsonify(message="Profile photo updated")
+
+    # Resize + compress before upload
+    from io import BytesIO
+    from PIL import Image
+    import time
+
+    img = Image.open(BytesIO(payload))
+    img = img.convert("RGB")
+
+    # Resize to max 200x200 for profile photo
+    img.thumbnail((200, 200), Image.LANCZOS)
+
+    out = BytesIO()
+    img.save(out, format="JPEG", quality=75, optimize=True)
+    out.seek(0)
+
+    r2().put_object(Bucket=os.getenv("R2_BUCKET"),Key=f"profiles/{uid}.jpg",Body=out.read(),ContentType="image/jpeg")
+
+    # Store timestamp in session for cache busting
+    ts = int(time.time())
+    session["photo_ts"] = ts
+    return jsonify(message="Profile photo updated", photo_ts=ts)
 
 
 @app.route("/paid_leave")
