@@ -267,9 +267,13 @@
       if (!response.ok) throw new Error(result.message || 'Upload failed');
 
       delete profilePhoto.dataset.fallback;
-      // Use timestamp from server response for cache busting
+
+      // Force fetch fresh photo from R2 using blob URL (bypasses ALL browser cache)
       const ts = result.photo_ts || Date.now();
-      profilePhoto.src = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+      const photoUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+      const fresh = await fetch(photoUrl, { cache: 'no-store' });
+      const blob = await fresh.blob();
+      profilePhoto.src = URL.createObjectURL(blob);
 
       await window.appDialog.success({
         title: 'Profile photo updated',
