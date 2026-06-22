@@ -262,18 +262,21 @@
     formData.append('file', file);
     window.appLoading.show('Updating photo…', 'Uploading your new profile photo.');
     try {
+      // Show local preview immediately while uploading
+      const localPreview = URL.createObjectURL(file);
+      profilePhoto.src = localPreview;
+      delete profilePhoto.dataset.fallback;
+
       const response = await fetch('/change_photo', { method: 'POST', body: formData });
       const result = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(result.message || 'Upload failed');
 
-      delete profilePhoto.dataset.fallback;
-
-      // Force fetch fresh photo from R2 using blob URL (bypasses ALL browser cache)
+      // Upload success — update src with server timestamp for cache busting
       const ts = result.photo_ts || Date.now();
-      const photoUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
-      const fresh = await fetch(photoUrl, { cache: 'no-store' });
-      const blob = await fresh.blob();
-      profilePhoto.src = URL.createObjectURL(blob);
+      profilePhoto.src = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+
+      // Revoke local preview URL to free memory
+      URL.revokeObjectURL(localPreview);
 
       await window.appDialog.success({
         title: 'Profile photo updated',
