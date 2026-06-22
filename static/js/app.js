@@ -304,6 +304,7 @@
   setInterval(updateClock, isSlow ? 30000 : 1000);
   window.addEventListener("pageshow", completeNavigation);
   window.addEventListener("pagehide", () => root.classList.add("is-navigating"));
+  document.querySelectorAll('[data-theme-toggle]').forEach(btn => btn.classList.add('ready'));
 
   // Load profile photo from cache on home page
   const profilePhotoEl = document.getElementById("profilePhoto");
