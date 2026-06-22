@@ -273,49 +273,67 @@ profileUpload.addEventListener('change', async () => {
   window.appLoading.show('Updating photo…', 'Uploading your new profile photo.');
 
   try {
-    // 1. Preview lokal sementara (biar cepat)
+    // Preview lokal
     const localPreview = URL.createObjectURL(file);
     profilePhoto.src = localPreview;
     delete profilePhoto.dataset.fallback;
 
-    // 2. Upload ke server
     const response = await fetch('/change_photo', { method: 'POST', body: formData });
     const result = await response.json();
     if (!response.ok) throw new Error(result.message || 'Upload failed');
 
-    // 3. 🔥 Langsung tampilkan data URI dari server (kalau ada)
+    let finalSrc;
+
+    // 🔥 Jika server mengembalikan data URI, langsung tampilkan dan simpan ke IndexedDB
     if (result.data_uri) {
-      profilePhoto.src = result.data_uri;
+      finalSrc = result.data_uri;
+      // Konversi data URI ke blob dan simpan ke IndexedDB
+      try {
+        const blobResp = await fetch(result.data_uri);
+        const blob = await blobResp.blob();
+        const req = indexedDB.open('icr-photo-cache', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('photos');
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction('photos', 'readwrite');
+          tx.objectStore('photos').put(blob, profilePhoto.dataset.photoUrl);
+        };
+      } catch (_) {
+        // Jika gagal simpan, tidak masalah, karena kita tetap tampilkan data URI
+      }
     } else {
       // Fallback: pakai URL dengan timestamp (cara lama)
       const ts = result.photo_ts || Date.now();
-      const newUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
-      profilePhoto.src = newUrl;
+      finalSrc = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+      // Coba simpan blob dari R2 (tapi mungkin gagal di mobile data)
+      try {
+        const resp = await fetch(finalSrc);
+        const blob = await resp.blob();
+        const req = indexedDB.open('icr-photo-cache', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('photos');
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction('photos', 'readwrite');
+          tx.objectStore('photos').put(blob, profilePhoto.dataset.photoUrl);
+        };
+      } catch (_) {}
     }
 
-    // 4. Simpan ke IndexedDB di background (tanpa menghalangi UI)
+    // Tampilkan foto
+    profilePhoto.src = finalSrc;
+
+    // Refresh cache R2 di background (opsional)
     const ts = result.photo_ts || Date.now();
-    const cacheUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
-    fetch(cacheUrl)
+    const newUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+    fetch(newUrl)
       .then(res => res.blob())
       .then(blob => {
-        // Pakai fungsi dari app.js jika ada, atau buat sendiri
         if (window.cachePhoto) {
           window.cachePhoto(profilePhoto.dataset.photoUrl, blob);
-        } else {
-          // Fallback langsung
-          const req = indexedDB.open('icr-photo-cache', 1);
-          req.onupgradeneeded = () => req.result.createObjectStore('photos');
-          req.onsuccess = () => {
-            const db = req.result;
-            const tx = db.transaction('photos', 'readwrite');
-            tx.objectStore('photos').put(blob, profilePhoto.dataset.photoUrl);
-          };
         }
       })
-      .catch(() => {}); // Abaikan jika gagal
+      .catch(() => {});
 
-    // 5. Bersihkan memory
     URL.revokeObjectURL(localPreview);
 
     await window.appDialog.success({
