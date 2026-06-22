@@ -11,6 +11,52 @@
 
   root.dataset.theme = storedTheme || (systemDark ? "dark" : "light");
 
+  // Profile photo cache via IndexedDB
+  const PHOTO_DB = 'icr-photo-cache';
+  const PHOTO_STORE = 'photos';
+  let profilePhotoSrc = null;
+
+  function openPhotoDB() {
+    return new Promise((resolve, reject) => {
+      const req = indexedDB.open(PHOTO_DB, 1);
+      req.onupgradeneeded = () => req.result.createObjectStore(PHOTO_STORE);
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function getCachedPhoto(url) {
+    try {
+      const db = await openPhotoDB();
+      return new Promise((resolve) => {
+        const tx = db.transaction(PHOTO_STORE, 'readonly');
+        const req = tx.objectStore(PHOTO_STORE).get(url);
+        req.onsuccess = () => resolve(req.result || null);
+        req.onerror = () => resolve(null);
+      });
+    } catch { return null; }
+  }
+
+  async function cachePhoto(url, blob) {
+    try {
+      const db = await openPhotoDB();
+      const tx = db.transaction(PHOTO_STORE, 'readwrite');
+      tx.objectStore(PHOTO_STORE).put(blob, url);
+    } catch {}
+  }
+
+  async function loadProfilePhoto(photoEl) {
+    const basePhotoUrl = photoEl.dataset.photoUrl;
+    if (!basePhotoUrl) return;
+    const cached = await getCachedPhoto(basePhotoUrl);
+    if (cached) {
+      profilePhotoSrc = URL.createObjectURL(cached);
+      photoEl.src = profilePhotoSrc;
+    } else {
+      photoEl.src = basePhotoUrl;
+    }
+  }
+
   function matchesAndDescendants(scope, selector) {
     const matches = [];
     if (scope instanceof Element && scope.matches(selector)) matches.push(scope);
@@ -145,7 +191,6 @@
   }
 
   function prefetch(anchor) {
-    // Skip prefetch entirely on slow connections
     if (isSlow) return;
     if (!isPrefetchable(anchor)) return;
     const url = new URL(anchor.href, location.href);
@@ -153,7 +198,6 @@
     const key = url.href;
     if (key === location.href.split("#")[0] || prefetched.has(key)) return;
     prefetched.add(key);
-
     const link = document.createElement("link");
     link.rel = "prefetch";
     link.href = key;
@@ -162,16 +206,13 @@
   }
 
   function predictivePrefetch() {
-    // Never prefetch on slow connections
     if (isSlow) return;
-
     const preferredPaths = location.pathname === "/absence"
       ? ["/history", "/paid_leave"]
       : ["/absence"];
     const links = preferredPaths
       .map((path) => document.querySelector(`a[href="${path}"]`))
       .filter(Boolean);
-
     const work = () => links.forEach((link, index) => {
       setTimeout(() => prefetch(link), index * 420);
     });
@@ -202,14 +243,9 @@
 
   document.addEventListener("click", (event) => {
     const themeButton = event.target.closest("[data-theme-toggle]");
-    if (themeButton) {
-      switchTheme(themeButton);
-      return;
-    }
-
+    if (themeButton) { switchTheme(themeButton); return; }
     const interactive = event.target.closest(".btn, .icon-button, .nav-item, .tab");
     if (interactive) addRipple(event, interactive);
-
     const anchor = event.target.closest("a[href]");
     if (anchor && !event.defaultPrevented && event.button === 0 && !event.metaKey && !event.ctrlKey && !event.shiftKey && !event.altKey) {
       beginNavigation(anchor);
@@ -220,12 +256,10 @@
     const target = event.target.closest(".btn, .icon-button, .nav-item, .tab");
     target?.classList.add("is-pressing");
   });
-
   ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
     document.addEventListener(type, (event) => event.target.closest?.(".is-pressing")?.classList.remove("is-pressing"), true);
   });
 
-  // Only prefetch on hover/focus on fast connections
   if (!isSlow) {
     ["pointerenter", "focusin"].forEach((type) => {
       document.addEventListener(type, (event) => prefetch(event.target.closest?.("a[href]")), true);
@@ -267,8 +301,11 @@
   enhanceActiveNavigation();
   predictivePrefetch();
   completeNavigation();
-  // Increase clock interval on slow connections
   setInterval(updateClock, isSlow ? 30000 : 1000);
   window.addEventListener("pageshow", completeNavigation);
   window.addEventListener("pagehide", () => root.classList.add("is-navigating"));
+
+  // Load profile photo from cache on home page
+  const profilePhotoEl = document.getElementById("profilePhoto");
+  if (profilePhotoEl) loadProfilePhoto(profilePhotoEl);
 })();

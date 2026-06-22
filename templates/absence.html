@@ -2,17 +2,22 @@
 
 {% block content %}
 <section class="profile-row" aria-label="Signed-in user">
-  <img
-    class="profile-photo"
-    src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg?v={{ photo_ts or 0 }}"
-    data-photo-url="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
-    alt="{{ nama }} profile photo"
-    id="profilePhoto"
-    title="Change profile photo"
-    fetchpriority="high"
-    decoding="async"
-    onerror="if (!this.dataset.fallback) { this.dataset.fallback='1'; this.src='{{ url_for('static', filename='Logo.png') }}'; }"
-  >
+  <div class="profile-photo-wrap">
+    <img
+      class="profile-photo"
+      src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg?v={{ photo_ts or 0 }}"
+      data-photo-url="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
+      alt="{{ nama }} profile photo"
+      id="profilePhoto"
+      title="Change profile photo"
+      fetchpriority="high"
+      decoding="async"
+    >
+    <svg class="profile-photo-placeholder" viewBox="0 0 100 100" aria-hidden="true">
+      <circle cx="50" cy="35" r="18" fill="#cbd5e1"/>
+      <ellipse cx="50" cy="80" rx="30" ry="22" fill="#cbd5e1"/>
+    </svg>
+  </div>
   <div class="profile-copy">
     <p id="greeting">Welcome back</p>
     <h1>{{ nama }}</h1>
@@ -273,7 +278,21 @@
 
       // Upload success — update src with server timestamp for cache busting
       const ts = result.photo_ts || Date.now();
-      profilePhoto.src = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+      const newUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+      profilePhoto.src = newUrl;
+
+      // Cache the new photo in IndexedDB for offline/fast loading
+      try {
+        const resp = await fetch(newUrl);
+        const blob = await resp.blob();
+        const req = indexedDB.open('icr-photo-cache', 1);
+        req.onupgradeneeded = () => req.result.createObjectStore('photos');
+        req.onsuccess = () => {
+          const db = req.result;
+          const tx = db.transaction('photos', 'readwrite');
+          tx.objectStore('photos').put(blob, profilePhoto.dataset.photoUrl);
+        };
+      } catch (_) {}
 
       // Revoke local preview URL to free memory
       URL.revokeObjectURL(localPreview);

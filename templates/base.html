@@ -259,5 +259,10 @@
   {% endif %}
   {% block scripts %}{% endblock %}
 <script src="{{ url_for('static', filename='js/inbox-badge.js') }}" defer></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/static/sw.js', { scope: '/' });
+  }
+</script>
 </body>
 </html>
