@@ -253,64 +253,85 @@
     );
   });
 
-  const profilePhoto = document.getElementById('profilePhoto');
-  const profileUpload = document.getElementById('profileUpload');
+const profilePhoto = document.getElementById('profilePhoto');
+const profileUpload = document.getElementById('profileUpload');
 
-  profilePhoto.addEventListener('click', () => profileUpload.click());
-  profilePhoto.addEventListener('keydown', (event) => { if (event.key === 'Enter' || event.key === ' ') profileUpload.click(); });
-  profilePhoto.tabIndex = 0;
-  profilePhoto.setAttribute('role', 'button');
+profilePhoto.addEventListener('click', () => profileUpload.click());
+profilePhoto.addEventListener('keydown', (event) => {
+  if (event.key === 'Enter' || event.key === ' ') profileUpload.click();
+});
+profilePhoto.tabIndex = 0;
+profilePhoto.setAttribute('role', 'button');
 
-  profileUpload.addEventListener('change', async () => {
-    const file = profileUpload.files?.[0];
-    if (!file) return;
-    const formData = new FormData();
-    formData.append('file', file);
-    window.appLoading.show('Updating photo…', 'Uploading your new profile photo.');
-    try {
-      // Show local preview immediately while uploading
-      const localPreview = URL.createObjectURL(file);
-      profilePhoto.src = localPreview;
-      delete profilePhoto.dataset.fallback;
+// ===== UBAH EVENT LISTENER INI =====
+profileUpload.addEventListener('change', async () => {
+  const file = profileUpload.files?.[0];
+  if (!file) return;
 
-      const response = await fetch('/change_photo', { method: 'POST', body: formData });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(result.message || 'Upload failed');
+  const formData = new FormData();
+  formData.append('file', file);
+  window.appLoading.show('Updating photo…', 'Uploading your new profile photo.');
 
-      // Upload success — update src with server timestamp for cache busting
+  try {
+    // 1. Preview lokal sementara (biar cepat)
+    const localPreview = URL.createObjectURL(file);
+    profilePhoto.src = localPreview;
+    delete profilePhoto.dataset.fallback;
+
+    // 2. Upload ke server
+    const response = await fetch('/change_photo', { method: 'POST', body: formData });
+    const result = await response.json();
+    if (!response.ok) throw new Error(result.message || 'Upload failed');
+
+    // 3. 🔥 Langsung tampilkan data URI dari server (kalau ada)
+    if (result.data_uri) {
+      profilePhoto.src = result.data_uri;
+    } else {
+      // Fallback: pakai URL dengan timestamp (cara lama)
       const ts = result.photo_ts || Date.now();
       const newUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
       profilePhoto.src = newUrl;
-
-      // Cache the new photo in IndexedDB for offline/fast loading
-      try {
-        const resp = await fetch(newUrl);
-        const blob = await resp.blob();
-        const req = indexedDB.open('icr-photo-cache', 1);
-        req.onupgradeneeded = () => req.result.createObjectStore('photos');
-        req.onsuccess = () => {
-          const db = req.result;
-          const tx = db.transaction('photos', 'readwrite');
-          tx.objectStore('photos').put(blob, profilePhoto.dataset.photoUrl);
-        };
-      } catch (_) {}
-
-      // Revoke local preview URL to free memory
-      URL.revokeObjectURL(localPreview);
-
-      await window.appDialog.success({
-        title: 'Profile photo updated',
-        message: 'Your new photo has been saved successfully.'
-      });
-    } catch (error) {
-      await window.appDialog.error({
-        title: 'Photo could not be updated',
-        message: error.message
-      });
-    } finally {
-      window.appLoading.hide();
-      profileUpload.value = '';
     }
-  });
+
+    // 4. Simpan ke IndexedDB di background (tanpa menghalangi UI)
+    const ts = result.photo_ts || Date.now();
+    const cacheUrl = `${profilePhoto.dataset.photoUrl}?v=${ts}`;
+    fetch(cacheUrl)
+      .then(res => res.blob())
+      .then(blob => {
+        // Pakai fungsi dari app.js jika ada, atau buat sendiri
+        if (window.cachePhoto) {
+          window.cachePhoto(profilePhoto.dataset.photoUrl, blob);
+        } else {
+          // Fallback langsung
+          const req = indexedDB.open('icr-photo-cache', 1);
+          req.onupgradeneeded = () => req.result.createObjectStore('photos');
+          req.onsuccess = () => {
+            const db = req.result;
+            const tx = db.transaction('photos', 'readwrite');
+            tx.objectStore('photos').put(blob, profilePhoto.dataset.photoUrl);
+          };
+        }
+      })
+      .catch(() => {}); // Abaikan jika gagal
+
+    // 5. Bersihkan memory
+    URL.revokeObjectURL(localPreview);
+
+    await window.appDialog.success({
+      title: 'Profile photo updated',
+      message: 'Your new photo has been saved successfully.'
+    });
+
+  } catch (error) {
+    await window.appDialog.error({
+      title: 'Photo could not be updated',
+      message: error.message
+    });
+  } finally {
+    window.appLoading.hide();
+    profileUpload.value = '';
+  }
+});
 </script>
 {% endblock %}
