@@ -491,37 +491,58 @@ def attendance_summary_api():
     period,_,summary=grouped(uid,request.args.get("period")); return jsonify(period=period,summary=summary)
 
 
-@app.route("/change_photo",methods=["POST"])
+@app.route("/change_photo", methods=["POST"])
 def change_photo():
-    uid=session.get("userid")
-    if not uid: return Response(status=401)
-    file=request.files.get("file")
-    if not file: return jsonify(message="No file selected"),400
-    if file.mimetype not in {"image/jpeg","image/png","image/webp"}: return jsonify(message="Use a JPG, PNG or WebP image"),400
-    payload=file.read()
-    if len(payload)>5*1024*1024: return jsonify(message="Image must be smaller than 5 MB"),400
+    uid = session.get("userid")
+    if not uid:
+        return Response(status=401)
 
-    # Resize + compress before upload
+    file = request.files.get("file")
+    if not file:
+        return jsonify(message="No file selected"), 400
+
+    if file.mimetype not in {"image/jpeg", "image/png", "image/webp"}:
+        return jsonify(message="Use a JPG, PNG or WebP image"), 400
+
+    payload = file.read()
+    if len(payload) > 5 * 1024 * 1024:
+        return jsonify(message="Image must be smaller than 5 MB"), 400
+
     from io import BytesIO
     from PIL import Image
     import time
+    import base64
 
     img = Image.open(BytesIO(payload))
     img = img.convert("RGB")
-
-    # Resize to max 200x200 for profile photo
     img.thumbnail((200, 200), Image.LANCZOS)
 
     out = BytesIO()
-    img.save(out, format="JPEG", quality=75, optimize=True)
+    img.save(out, format="JPEG", quality=60, optimize=True)
     out.seek(0)
 
-    r2().put_object(Bucket=os.getenv("R2_BUCKET"),Key=f"profiles/{uid}.jpg",Body=out.read(),ContentType="image/jpeg")
+    # Upload ke R2
+    r2().put_object(
+        Bucket=os.getenv("R2_BUCKET"),
+        Key=f"profiles/{uid}.jpg",
+        Body=out.read(),
+        ContentType="image/jpeg"
+    )
 
-    # Store timestamp in session for cache busting
+    # 🔥 Buat data URI dari hasil resize (out sudah di-reset)
+    out.seek(0)
+    image_data = out.read()
+    b64 = base64.b64encode(image_data).decode('utf-8')
+    data_uri = f"data:image/jpeg;base64,{b64}"
+
     ts = int(time.time())
     session["photo_ts"] = ts
-    return jsonify(message="Profile photo updated", photo_ts=ts)
+
+    return jsonify(
+        message="Profile photo updated",
+        photo_ts=ts,
+        data_uri=data_uri   # <-- tambahkan ini
+    )
 
 
 @app.route("/paid_leave")
