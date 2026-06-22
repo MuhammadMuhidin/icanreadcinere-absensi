@@ -35,7 +35,7 @@
           "/manager"{% endif %}{% if can_admin_tools %},
           "/upload"{% endif %}
         ],
-        "eagerness": "moderate"
+        "eagerness": "conservative"
       }]
     }
   </script>
@@ -249,15 +249,15 @@
       window.addEventListener('pageshow', resetSkeleton);
     })();
   </script>
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/dialog.js', v='20260616-dialog-2') }}"></script>
-  <script src="{{ url_for('static', filename='js/dialog-polish.js', v='20260616-dialog-polish-1') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/dialog.js', v='20260616-dialog-2') }}" defer></script>
+  <script src="{{ url_for('static', filename='js/dialog-polish.js', v='20260616-dialog-polish-1') }}" defer></script>
   {% if active_page == 'home' %}
-    <script src="{{ url_for('static', filename='js/api-form.js', v='20260616-api-form-1') }}"></script>
-    <script src="{{ url_for('static', filename='js/home-details.js', v='20260616-home-details-5') }}"></script>
-    <script src="{{ url_for('static', filename='js/account-security-ui.js', v='20260616-account-security-3') }}"></script>
+    <script src="{{ url_for('static', filename='js/api-form.js', v='20260616-api-form-1') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/home-details.js', v='20260616-home-details-5') }}" defer></script>
+    <script src="{{ url_for('static', filename='js/account-security-ui.js', v='20260616-account-security-3') }}" defer></script>
   {% endif %}
   {% block scripts %}{% endblock %}
-<script src="{{ url_for('static', filename='js/inbox-badge.js') }}"></script>
+<script src="{{ url_for('static', filename='js/inbox-badge.js') }}" defer></script>
 </body>
 </html>

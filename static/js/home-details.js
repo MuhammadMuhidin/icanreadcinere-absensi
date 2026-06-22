@@ -120,7 +120,7 @@
   async function getData(force = false) {
     if (cache && !force) return cache;
     if (pending && !force) return pending;
-    pending = fetch('/api/me/dashboard-details', { cache: 'no-store' })
+    pending = fetch('/api/me/dashboard-details')
       .then(async (response) => {
         const data = await response.json().catch(() => ({}));
         if (!response.ok) throw new Error(data.message || data.error || 'Could not load details');

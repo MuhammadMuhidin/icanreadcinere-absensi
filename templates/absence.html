@@ -4,11 +4,13 @@
 <section class="profile-row" aria-label="Signed-in user">
   <img
     class="profile-photo"
-    src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg?v={{ range(100000000, 999999999) | random }}"
+    src="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
     data-photo-url="{{ R2_PUBLIC_BASE_URL }}/profiles/{{ nama }}.jpg"
     alt="{{ nama }} profile photo"
     id="profilePhoto"
     title="Change profile photo"
+    fetchpriority="high"
+    decoding="async"
     onerror="if (!this.dataset.fallback) { this.dataset.fallback='1'; this.src='{{ url_for('static', filename='Logo.png') }}'; }"
   >
   <div class="profile-copy">

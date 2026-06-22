@@ -282,6 +282,13 @@ def leave_rows(uid):
     if not manager(uid): query = query.eq("name", uid)
     return query.execute().data or []
 
+def _own_leave_rows(uid):
+    """Fetch only the current user's own leave rows (used for home page card)."""
+    try:
+        return sb().table(T("paid_leave")).select("id,name,leave_date,status,reason,created_at").eq("name", uid).order("created_at", desc=True).execute().data or []
+    except Exception as exc:
+        print("OWN LEAVE ROWS ERROR", exc)
+        return []
 
 def leave_summary(uid, data=None, balance_value=_UNSET):
     data = leave_rows(uid) if data is None else data
@@ -383,6 +390,9 @@ def permanent(): session.permanent = True
 def headers(response):
     if request.endpoint == "login":
         response.headers.update({"Cache-Control":"no-store, no-cache, must-revalidate","Pragma":"no-cache","Expires":"0"})
+    # Add compression hint for HTML responses
+    if response.content_type and 'text/html' in response.content_type:
+        response.headers['X-Content-Type-Options'] = 'nosniff'
     return response
 
 
@@ -440,12 +450,10 @@ def absence():
     attendance_data = attendance_rows(uid, attendance_start.isoformat(), attendance_end.isoformat())
     period,days,summary = grouped_from_rows(attendance_data, current_date.strftime("%Y-%m"))
     current_balance = balance(uid)
-    leave_data = leave_rows(uid)
+    # Only fetch user's own leaves for the home page card (not all leaves)
+    personal_leave_data = _own_leave_rows(uid)
 
     data=ctx("home","Attendance")
-    # Home-page leave card always reflects the current user's own requests,
-    # even for managers (who see global data on /paid_leave instead).
-    personal_leave = [r for r in leave_data if r.get("name") == uid]
     data.update(
         nama=uid,
         title=session.get("title","Team Member"),
@@ -454,7 +462,7 @@ def absence():
         month_summary=summary,
         news=news(),
         sisa=current_balance,
-        leave_summary=leave_summary(uid, personal_leave, current_balance),
+        leave_summary=leave_summary(uid, personal_leave_data, current_balance),
         latest_incomplete=last_incomplete(uid, attendance_data),
     )
     return render_template("absence.html",**data)

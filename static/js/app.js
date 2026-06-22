@@ -5,6 +5,10 @@
   const systemDark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
   const prefetched = new Set();
 
+  // Detect slow connection
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const isSlow = connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || "") || connection?.effectiveType === "slow-2g";
+
   root.dataset.theme = storedTheme || (systemDark ? "dark" : "light");
 
   function matchesAndDescendants(scope, selector) {
@@ -19,7 +23,6 @@
       const dark = root.dataset.theme === "dark";
       button.setAttribute("aria-label", dark ? "Use light mode" : "Use dark mode");
       button.setAttribute("title", dark ? "Use light mode" : "Use dark mode");
-      // Logika innerHTML dihapus agar CSS dapat menangani transisi SVG secara langsung
     });
   }
 
@@ -30,11 +33,8 @@
       "content",
       root.dataset.theme === "dark" ? "#09111f" : "#193773"
     );
-    
-    // Efek ripple/feedback khusus (jika diperlukan)
     button?.classList.add("theme-switching");
     setTimeout(() => button?.classList.remove("theme-switching"), 380);
-    
     updateThemeButtons();
   }
 
@@ -53,7 +53,8 @@
   function removeToast(toast) {
     if (!toast?.isConnected) return;
     toast.classList.add("is-leaving");
-    setTimeout(() => toast.remove(), reducedMotion ? 0 : 230);
+    if (!reducedMotion && !isSlow) setTimeout(() => toast.remove(), 230);
+    else toast.remove();
   }
 
   function initialiseToasts(scope = document) {
@@ -66,12 +67,11 @@
         clearTimeout(timer);
         removeToast(toast);
       });
-      if (toast.classList.contains("toast-success")) createSuccessBurst(toast);
+      if (toast.classList.contains("toast-success") && !reducedMotion && !isSlow) createSuccessBurst(toast);
     });
   }
 
   function createSuccessBurst(anchor) {
-    if (reducedMotion) return;
     const rect = anchor.getBoundingClientRect();
     const x = rect.right - 20;
     const y = rect.top + rect.height / 2;
@@ -90,7 +90,7 @@
   }
 
   function addRipple(event, element) {
-    if (reducedMotion || element.disabled) return;
+    if (reducedMotion || isSlow || element.disabled) return;
     const rect = element.getBoundingClientRect();
     const ripple = document.createElement("span");
     ripple.className = "ripple";
@@ -105,7 +105,7 @@
     const raw = element.textContent.trim();
     if (!/^\d+$/.test(raw)) return;
     element.dataset.countReady = "true";
-    if (reducedMotion) return;
+    if (reducedMotion || isSlow) return;
     const target = Number(raw);
     if (target === 0) return;
     const duration = Math.min(650, 280 + target * 12);
@@ -145,6 +145,8 @@
   }
 
   function prefetch(anchor) {
+    // Skip prefetch entirely on slow connections
+    if (isSlow) return;
     if (!isPrefetchable(anchor)) return;
     const url = new URL(anchor.href, location.href);
     url.hash = "";
@@ -157,19 +159,11 @@
     link.href = key;
     link.as = "document";
     document.head.appendChild(link);
-
-    fetch(key, {
-      method: "GET",
-      credentials: "same-origin",
-      cache: "force-cache",
-      priority: "low",
-      headers: { "X-Purpose": "prefetch" },
-    }).catch(() => {});
   }
 
   function predictivePrefetch() {
-    const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-    if (connection?.saveData || /(^|-)2g$/.test(connection?.effectiveType || "")) return;
+    // Never prefetch on slow connections
+    if (isSlow) return;
 
     const preferredPaths = location.pathname === "/absence"
       ? ["/history", "/paid_leave"]
@@ -226,14 +220,17 @@
     const target = event.target.closest(".btn, .icon-button, .nav-item, .tab");
     target?.classList.add("is-pressing");
   });
-  
+
   ["pointerup", "pointercancel", "pointerleave"].forEach((type) => {
     document.addEventListener(type, (event) => event.target.closest?.(".is-pressing")?.classList.remove("is-pressing"), true);
   });
 
-  ["pointerenter", "focusin", "touchstart"].forEach((type) => {
-    document.addEventListener(type, (event) => prefetch(event.target.closest?.("a[href]")), true);
-  });
+  // Only prefetch on hover/focus on fast connections
+  if (!isSlow) {
+    ["pointerenter", "focusin"].forEach((type) => {
+      document.addEventListener(type, (event) => prefetch(event.target.closest?.("a[href]")), true);
+    });
+  }
 
   const observer = new MutationObserver((mutations) => {
     mutations.forEach((mutation) => mutation.addedNodes.forEach((node) => {
@@ -270,7 +267,8 @@
   enhanceActiveNavigation();
   predictivePrefetch();
   completeNavigation();
-  setInterval(updateClock, 1000);
+  // Increase clock interval on slow connections
+  setInterval(updateClock, isSlow ? 30000 : 1000);
   window.addEventListener("pageshow", completeNavigation);
   window.addEventListener("pagehide", () => root.classList.add("is-navigating"));
 })();
