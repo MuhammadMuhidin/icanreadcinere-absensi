@@ -419,8 +419,6 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 
 .force-checkout-name {
   cursor: pointer;
-  display: inline-block;
-  position: relative;
   transition: color .15s ease;
   border-bottom: 1px dashed transparent;
 }
