@@ -74,16 +74,15 @@
     <div class="metric"><span class="metric-value" id="metricLate">{{ dashboard.counts.late }}</span><span class="metric-label">Late</span></div>
   </div>
 </section>
-{% endblock %}
 
 <dialog class="dialog" id="forceCheckoutDialog">
-  <form method="dialog" id="forceCheckoutForm">
+  <form method="dialog" id="forceCheckoutForm" novalidate>
     <div class="dialog-body">
       <h2 id="forceCheckoutTitle">Force Check-out</h2>
-      <p class="dialog-description" id="forceCheckoutDesc">Record a mandatory check-out for <strong id="forceCheckoutTarget"></strong>. This action will be logged with your name and role.</p>
+      <p class="dialog-description">Record a mandatory check-out for <strong id="forceCheckoutTarget"></strong>. This action will be logged with your name and role.</p>
       <div class="form-group">
         <label for="forceCheckoutNote" class="form-label">Mandatory note</label>
-        <textarea class="form-control" id="forceCheckoutNote" name="note" maxlength="500" placeholder="Reason for force check-out (required)" required></textarea>
+        <textarea class="form-control" id="forceCheckoutNote" name="note" maxlength="500" placeholder="Reason for force check-out (required)"></textarea>
       </div>
       <div class="dialog-actions">
         <button type="button" class="btn btn-ghost" id="cancelForceCheckout">Cancel</button>
@@ -92,6 +91,7 @@
     </div>
   </form>
 </dialog>
+{% endblock %}
 
 {% block scripts %}
 <script>
@@ -274,9 +274,9 @@
 
     console.log('Force checkout init:', { forceDialog: !!forceDialog, teamList: !!teamList, confirmBtn: !!confirmBtn });
 
+    if (forceDialog && confirmBtn && forceNote && forceTarget) {
     try {
       teamList.addEventListener('click', (event) => {
-        console.log('Team list click:', event.target.tagName, event.target.className, event.target.classList?.contains('force-checkout-name'));
         const target = event.target;
         if (!target.classList || !target.classList.contains('force-checkout-name')) return;
         const card = target.closest('[data-team-status]');
@@ -284,69 +284,68 @@
         pendingForceName = target.textContent.trim();
         forceTarget.textContent = pendingForceName;
         forceNote.value = '';
-        if (forceDialog && typeof forceDialog.showModal === 'function') {
-          forceDialog.showModal();
-          setTimeout(() => forceNote.focus(), 50);
-        }
+        forceDialog.showModal();
+        setTimeout(() => forceNote.focus(), 50);
       });
 
       cancelBtn.addEventListener('click', () => {
-        if (forceDialog && typeof forceDialog.close === 'function') {
-          forceDialog.close();
-        }
+        forceDialog.close();
         pendingForceName = null;
+      });
+
+      forceDialog.addEventListener('close', () => {
+        pendingForceName = null;
+        forceNote.value = '';
+      });
+
+      confirmBtn.addEventListener('click', async () => {
+        if (!pendingForceName) return;
+        const note = forceNote.value.trim();
+        if (!note) {
+          await window.appDialog.error({
+            title: 'Note required',
+            message: 'A mandatory note is required to force check-out.',
+          });
+          forceNote.focus();
+          return;
+        }
+        const targetName = pendingForceName;
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing…';
+        try {
+          const resp = await fetch('/api/manager/force-checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            cache: 'no-store',
+            body: JSON.stringify({ name: targetName, note }),
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.message || 'Force checkout failed');
+          await window.appDialog.success({
+            title: 'Force Check-out',
+            message: data.message || `Check-out recorded for ${targetName}.`,
+          });
+          forceDialog.close();
+          if (typeof refreshData === 'function') refreshData();
+        } catch (err) {
+          await window.appDialog.error({
+            title: 'Force Check-out Failed',
+            message: err.message || 'An error occurred while recording force check-out.',
+          });
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirm Check-out';
+        }
       });
     } catch (err) {
       console.error('Force checkout init error', err);
     }
-
-    forceDialog.addEventListener('close', () => {
-      pendingForceName = null;
-      forceNote.value = '';
-    });
-
-    confirmBtn.addEventListener('click', async () => {
-      if (!pendingForceName) return;
-      const note = forceNote.value.trim();
-      if (!note) {
-        await window.appDialog.error({
-          title: 'Note required',
-          message: 'A mandatory note is required to force check-out.',
-        });
-        forceNote.focus();
-        return;
-      }
-      const targetName = pendingForceName;
-      confirmBtn.disabled = true;
-      confirmBtn.textContent = 'Processing…';
-      try {
-        const resp = await fetch('/api/manager/force-checkout', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Accept: 'application/json',
-          },
-          cache: 'no-store',
-          body: JSON.stringify({ name: targetName, note }),
-        });
-        const data = await resp.json();
-        if (!resp.ok) throw new Error(data.message || 'Force checkout failed');
-        await window.appDialog.success({
-          title: 'Force Check-out',
-          message: data.message || `Check-out recorded for ${targetName}.`,
-        });
-        forceDialog.close();
-        if (typeof refreshData === 'function') refreshData();
-      } catch (err) {
-        await window.appDialog.error({
-          title: 'Force Check-out Failed',
-          message: err.message || 'An error occurred while recording force check-out.',
-        });
-      } finally {
-        confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Confirm Check-out';
-      }
-    });
+    } else {
+      console.warn('Force checkout elements missing:', { forceDialog: !!forceDialog, confirmBtn: !!confirmBtn, forceNote: !!forceNote, forceTarget: !!forceTarget });
+    }
   })();
 </script>
 {% endblock %}
