@@ -38,8 +38,8 @@
   <div class="list team-list" id="teamList">
     {% if dashboard.people %}
       {% for person in dashboard.people %}
-        <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}"{% if person.status == 'checked_in' %} data-force-checkout="1"{% endif %}>
-          <div{% if person.status == 'checked_in' %} class="force-checkout-row"{% endif %}>
+        <article class="list-card{% if person.status == 'checked_in' %} force-checkout-row{% endif %}" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
+          <div>
             <h3>{{ person.name }}</h3>
             <p>
               {% if person.status == 'checked_in' %}Checked in {{ person.checkin[:5] }}
@@ -191,10 +191,10 @@
         if (dev === 'On time!') devHtml = '<span>On time</span>';
         else if (dev) devHtml = '<span>Late ' + dev + '</span>';
 
-        let nameAttr = status === 'checked_in' ? ' class="force-checkout-row"' : '';
+        let cardClass = status === 'checked_in' ? 'list-card force-checkout-row' : 'list-card';
 
-        return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
-          + '<div' + nameAttr + '><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
+        return '<article class="' + cardClass + '" data-team-status="' + status + '" data-deviation="' + dev + '">'
+          + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
           + '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>'
           + devHtml
@@ -277,11 +277,9 @@
     if (forceDialog && confirmBtn && forceNote && forceTarget) {
     try {
       teamList.addEventListener('click', (event) => {
-        const row = event.target.closest('.force-checkout-row');
-        if (!row) return;
-        const card = row.closest('[data-team-status]');
-        if (!card || card.dataset.teamStatus !== 'checked_in') return;
-        const h3 = row.querySelector('h3');
+        const card = event.target.closest('article.force-checkout-row');
+        if (!card) return;
+        const h3 = card.querySelector('h3');
         pendingForceName = h3 ? h3.textContent.trim() : '';
         forceTarget.textContent = pendingForceName;
         forceNote.value = '';
