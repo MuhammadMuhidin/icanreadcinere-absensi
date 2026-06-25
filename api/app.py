@@ -674,6 +674,59 @@ def manager_page():
 def team_api(): return jsonify(team_today()) if manager(session.get("userid")) else (jsonify(message="Forbidden"),403)
 
 
+@app.route("/api/manager/force-checkout", methods=["POST"])
+def force_checkout():
+    uid = session.get("userid")
+    if not manager(uid):
+        return jsonify(message="Forbidden"), 403
+    body = request.get_json(silent=True) or {}
+    target_name = (body.get("name") or "").strip()
+    note = (body.get("note") or "").strip()
+    if not target_name:
+        return jsonify(message="Employee name is required"), 400
+    if not note:
+        return jsonify(message="Mandatory note is required"), 400
+    day = today()
+    # Verify target exists in team
+    try:
+        all_names = set(USERS.all().keys())
+    except Exception:
+        all_names = set()
+    if target_name not in all_names:
+        return jsonify(message="Team member not found"), 404
+    # Verify target is checked_in (has checked in but not checked out)
+    try:
+        rows = sb().table(T("log_absen")).select("aksi,tanggal,waktu").eq("nama", target_name).eq("tanggal", day).execute().data or []
+    except Exception as exc:
+        return jsonify(message=f"Attendance data error: {exc}"), 500
+    has_checkin = any(r.get("aksi", "").lower() == "check in" for r in rows)
+    has_checkout = any(r.get("aksi", "").lower() == "check out" for r in rows)
+    if not has_checkin:
+        return jsonify(message="Employee has not checked in today"), 400
+    if has_checkout:
+        return jsonify(message="Employee has already checked out today"), 400
+    # Insert check-out with manager note
+    stamp = now()
+    manager_label = current_user(uid)
+    manager_name = manager_label.get("title") or uid
+    manager_role = manager_label.get("role") or ""
+    role_suffix = " (" + manager_role + ")" if manager_role else ""
+    combined_note = "[Force Checkout by " + manager_name + role_suffix + "] " + note
+    try:
+        sb().table(T("log_absen")).insert(dict(
+            nama=target_name,
+            aksi="Check Out",
+            tanggal=stamp.strftime("%Y-%m-%d"),
+            waktu=stamp.strftime("%H:%M:%S"),
+            deviation="",
+            mood="",
+            notes=combined_note,
+        )).execute()
+    except Exception as exc:
+        return jsonify(message=f"Force checkout failed: {exc}"), 500
+    return jsonify(message=f"Force checkout recorded for {target_name}", time=stamp.strftime("%H:%M"))
+
+
 @app.route("/upload",methods=["GET","POST"])
 def upload():
     uid=session.get("userid")
