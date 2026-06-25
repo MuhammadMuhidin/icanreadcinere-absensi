@@ -6,6 +6,7 @@ import api.app as core_app
 from api.app import (
     T,
     USERS,
+    _sanitize_notes_in_row,
     app,
     attendance_rows,
     balance,
@@ -122,10 +123,12 @@ def dashboard_details():
         return jsonify(error="unauthorized"), 401
 
     directory_user = USERS.get(user_id) or current_user(user_id) or {}
-    period, days, summary = grouped(user_id, now().strftime("%Y-%m"))
-    today_data = today_session(user_id)
+    period, days, summary = grouped(user_id, now().strftime("%Y-%m"), sanitize=True)
+    today_data = today_session(user_id, sanitize=True)
     tomorrow = (now().date() + timedelta(days=1)).isoformat()
-    events = attendance_rows(user_id, today(), tomorrow)
+    events = [
+        {**_sanitize_notes_in_row(row)} for row in attendance_rows(user_id, today(), tomorrow)
+    ]
     leave_rows = _own_leave_rows(user_id)
     announcements = _recent_news()
     complete_days = [item for item in days if item.get("state") == "completed"]

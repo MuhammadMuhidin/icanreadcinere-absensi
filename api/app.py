@@ -232,6 +232,16 @@ def _sanitize_notes(raw_notes):
     return raw_notes
 
 
+def _sanitize_notes_in_row(row):
+    """Return a copy of the attendance row with force-checkout notes stripped."""
+    if not row:
+        return row
+    cleaned = dict(row)
+    if cleaned.get("notes") and isinstance(cleaned["notes"], str) and cleaned["notes"].startswith(FORCE_CHECKOUT_PREFIX):
+        cleaned["notes"] = ""
+    return cleaned
+
+
 def today_session(uid, rows=None, sanitize=False):
     day = today()
     if rows is None:
