@@ -201,7 +201,7 @@ def attendance_rows(uid, start, end):
     except Exception as exc: print("ATTENDANCE ERROR", exc); return []
 
 
-def day_session(rows, day=None):
+def day_session(rows, day=None, sanitize=False):
     checkin = checkout = None; deviation = mood = notes = ""
     for row in rows:
         action = str(row.get("aksi", "")).lower()
@@ -210,6 +210,8 @@ def day_session(rows, day=None):
             mood, notes = row.get("mood") or mood, row.get("notes") or notes
         elif action == "check out":
             checkout, mood, notes = row.get("waktu"), row.get("mood") or mood, row.get("notes") or notes
+    if sanitize:
+        notes = _sanitize_notes(notes)
     state = "not_started" if not checkin else "checked_in" if not checkout else "completed"
     duration = None
     if checkin and checkout:
@@ -220,14 +222,24 @@ def day_session(rows, day=None):
                 is_late=bool(deviation and deviation != "On time!"))
 
 
-def today_session(uid, rows=None):
+FORCE_CHECKOUT_PREFIX = "[Force Checkout by "
+
+
+def _sanitize_notes(raw_notes):
+    """Return empty string for force-checkout notes — only managers may see these."""
+    if raw_notes and isinstance(raw_notes, str) and raw_notes.startswith(FORCE_CHECKOUT_PREFIX):
+        return ""
+    return raw_notes
+
+
+def today_session(uid, rows=None, sanitize=False):
     day = today()
     if rows is None:
         tomorrow = (now().date()+timedelta(days=1)).isoformat()
         rows = attendance_rows(uid, day, tomorrow)
     else:
         rows = [row for row in rows if row.get("tanggal") == day]
-    return day_session(rows, day)
+    return day_session(rows, day, sanitize=sanitize)
 
 
 def bounds(period=None):
@@ -237,7 +249,7 @@ def bounds(period=None):
     return start, end
 
 
-def grouped_from_rows(rows, period=None):
+def grouped_from_rows(rows, period=None, sanitize=False):
     start, end = bounds(period)
     start_value, end_value = start.isoformat(), end.isoformat()
     bucket = defaultdict(list)
@@ -245,7 +257,7 @@ def grouped_from_rows(rows, period=None):
         day = row.get("tanggal")
         if day and start_value <= day < end_value:
             bucket[day].append(row)
-    days = sorted((day_session(day_rows, day) for day, day_rows in bucket.items()), key=lambda x:x["date"], reverse=True)
+    days = sorted((day_session(day_rows, day, sanitize=sanitize) for day, day_rows in bucket.items()), key=lambda x:x["date"], reverse=True)
     completed = [x for x in days if x["state"] == "completed"]; late = [x for x in days if x["is_late"]]
     late_minutes = sum(parse_deviation_minutes(item["deviation"]) for item in late)
     durations = [x["duration_minutes"] for x in completed if x["duration_minutes"] is not None]
@@ -258,7 +270,7 @@ def grouped_from_rows(rows, period=None):
 def grouped(uid, period=None):
     start, end = bounds(period)
     rows = attendance_rows(uid, start.isoformat(), end.isoformat())
-    return grouped_from_rows(rows, period)
+    return grouped_from_rows(rows, period, sanitize=not manager(uid))
 
 
 def last_incomplete(uid, rows=None):
@@ -448,7 +460,7 @@ def absence():
     attendance_start = current_date-timedelta(days=45)
     attendance_end = current_date+timedelta(days=1)
     attendance_data = attendance_rows(uid, attendance_start.isoformat(), attendance_end.isoformat())
-    period,days,summary = grouped_from_rows(attendance_data, current_date.strftime("%Y-%m"))
+    period,days,summary = grouped_from_rows(attendance_data, current_date.strftime("%Y-%m"), sanitize=not manager(uid))
     current_balance = balance(uid)
     # Only fetch user's own leaves for the home page card (not all leaves)
     personal_leave_data = _own_leave_rows(uid)
@@ -457,7 +469,7 @@ def absence():
     data.update(
         nama=uid,
         title=session.get("title","Team Member"),
-        today_session=today_session(uid, attendance_data),
+        today_session=today_session(uid, attendance_data, sanitize=not manager(uid)),
         month_period=period,
         month_summary=summary,
         news=news(),
