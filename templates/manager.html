@@ -192,15 +192,13 @@
         if (dev === 'On time!') devHtml = '<span>On time</span>';
         else if (dev) devHtml = '<span>Late ' + dev + '</span>';
 
-        let forceBtn = '';
-        if (status === 'checked_in') forceBtn = '<button type="button" class="btn-force-checkout" data-name="' + (p.name || '') + '" title="Force check-out">Force Out</button>';
+        let nameAttr = status === 'checked_in' ? ' class="force-checkout-name"' : '';
 
         return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
-          + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
+          + '<div><h3' + nameAttr + '>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
           + '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>'
           + devHtml
-          + forceBtn
           + '</div></article>';
       }).join('');
 
@@ -276,9 +274,11 @@
     let pendingForceName = null;
 
     teamList.addEventListener('click', (event) => {
-      const btn = event.target.closest('.btn-force-checkout');
-      if (!btn) return;
-      pendingForceName = btn.dataset.name;
+      const nameEl = event.target.closest('.force-checkout-name');
+      if (!nameEl) return;
+      const card = nameEl.closest('.list-card');
+      if (!card || card.dataset.teamStatus !== 'checked_in') return;
+      pendingForceName = nameEl.textContent.trim();
       forceTarget.textContent = pendingForceName;
       forceNote.value = '';
       forceDialog.showModal();
