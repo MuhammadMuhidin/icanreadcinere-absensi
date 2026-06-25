@@ -222,7 +222,7 @@ def day_session(rows, day=None, sanitize=False):
                 is_late=bool(deviation and deviation != "On time!"))
 
 
-FORCE_CHECKOUT_PREFIX = "[Force Checkout by "
+FORCE_CHECKOUT_PREFIX = "[Force Checkout by Manager] "
 
 
 def _sanitize_notes(raw_notes):
@@ -729,11 +729,7 @@ def force_checkout():
         return jsonify(message="Employee has already checked out today"), 400
     # Insert check-out with manager note
     stamp = now()
-    manager_label = current_user(uid)
-    manager_name = manager_label.get("title") or uid
-    manager_role = manager_label.get("role") or ""
-    role_suffix = " (" + manager_role + ")" if manager_role else ""
-    combined_note = "[Force Checkout by " + manager_name + role_suffix + "] " + note
+    combined_note = FORCE_CHECKOUT_PREFIX + note
     try:
         sb().table(T("log_absen")).insert(dict(
             nama=target_name,
