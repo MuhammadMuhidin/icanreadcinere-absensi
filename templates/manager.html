@@ -38,7 +38,7 @@
   <div class="list team-list" id="teamList">
     {% if dashboard.people %}
       {% for person in dashboard.people %}
-        <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
+        <article class="list-card{% if person.status == 'checked_in' %} force-checkout-row{% endif %}" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
           <div>
             <h3>{{ person.name }}</h3>
             <p>
@@ -74,6 +74,23 @@
     <div class="metric"><span class="metric-value" id="metricLate">{{ dashboard.counts.late }}</span><span class="metric-label">Late</span></div>
   </div>
 </section>
+
+<dialog class="dialog" id="forceCheckoutDialog">
+  <form method="dialog" id="forceCheckoutForm" novalidate>
+    <div class="dialog-body">
+      <h2 id="forceCheckoutTitle">Force Check-out</h2>
+      <p class="dialog-description">Record a mandatory check-out for <strong id="forceCheckoutTarget"></strong>. This action will be logged with your name and role.</p>
+      <div class="form-group">
+        <label for="forceCheckoutNote" class="form-label">Mandatory note</label>
+        <textarea class="form-control" id="forceCheckoutNote" name="note" maxlength="500" placeholder="Reason for force check-out (required)"></textarea>
+      </div>
+      <div class="dialog-actions">
+        <button type="button" class="btn btn-ghost" id="cancelForceCheckout">Cancel</button>
+        <button type="button" class="btn btn-danger-text" id="confirmForceCheckout">Confirm Check-out</button>
+      </div>
+    </div>
+  </form>
+</dialog>
 {% endblock %}
 
 {% block scripts %}
@@ -174,7 +191,9 @@
         if (dev === 'On time!') devHtml = '<span>On time</span>';
         else if (dev) devHtml = '<span>Late ' + dev + '</span>';
 
-        return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
+        let cardClass = status === 'checked_in' ? 'list-card force-checkout-row' : 'list-card';
+
+        return '<article class="' + cardClass + '" data-team-status="' + status + '" data-deviation="' + dev + '">'
           + '<div><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
           + '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>'
@@ -244,6 +263,88 @@
 
     // Refresh every 60 seconds
     refreshTimer = setInterval(refreshData, 60000);
+
+    // ── Force Checkout ─────────────────────────────────────────────
+    const forceDialog = document.getElementById('forceCheckoutDialog');
+    const forceTarget = document.getElementById('forceCheckoutTarget');
+    const forceNote = document.getElementById('forceCheckoutNote');
+    const confirmBtn = document.getElementById('confirmForceCheckout');
+    const cancelBtn = document.getElementById('cancelForceCheckout');
+    let pendingForceName = null;
+
+    console.log('Force checkout init:', { forceDialog: !!forceDialog, teamList: !!teamList, confirmBtn: !!confirmBtn });
+
+    if (forceDialog && confirmBtn && forceNote && forceTarget) {
+    try {
+      teamList.addEventListener('click', (event) => {
+        const card = event.target.closest('article.force-checkout-row');
+        if (!card) return;
+        const h3 = card.querySelector('h3');
+        pendingForceName = h3 ? h3.textContent.trim() : '';
+        forceTarget.textContent = pendingForceName;
+        forceNote.value = '';
+        forceDialog.showModal();
+        setTimeout(() => forceNote.focus(), 50);
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        forceDialog.close();
+        pendingForceName = null;
+      });
+
+      forceDialog.addEventListener('close', () => {
+        pendingForceName = null;
+        forceNote.value = '';
+      });
+
+      confirmBtn.addEventListener('click', async () => {
+        if (!pendingForceName) return;
+        const note = forceNote.value.trim();
+        if (!note) {
+          await window.appDialog.error({
+            title: 'Note required',
+            message: 'A mandatory note is required to force check-out.',
+          });
+          forceNote.focus();
+          return;
+        }
+        const targetName = pendingForceName;
+        confirmBtn.disabled = true;
+        confirmBtn.textContent = 'Processing…';
+        try {
+          const resp = await fetch('/api/manager/force-checkout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'application/json',
+            },
+            cache: 'no-store',
+            body: JSON.stringify({ name: targetName, note }),
+          });
+          const data = await resp.json();
+          if (!resp.ok) throw new Error(data.message || 'Force checkout failed');
+          await window.appDialog.success({
+            title: 'Force Check-out',
+            message: data.message || `Check-out recorded for ${targetName}.`,
+          });
+          forceDialog.close();
+          if (typeof refreshData === 'function') refreshData();
+        } catch (err) {
+          await window.appDialog.error({
+            title: 'Force Check-out Failed',
+            message: err.message || 'An error occurred while recording force check-out.',
+          });
+        } finally {
+          confirmBtn.disabled = false;
+          confirmBtn.textContent = 'Confirm Check-out';
+        }
+      });
+    } catch (err) {
+      console.error('Force checkout init error', err);
+    }
+    } else {
+      console.warn('Force checkout elements missing:', { forceDialog: !!forceDialog, confirmBtn: !!confirmBtn, forceNote: !!forceNote, forceTarget: !!forceTarget });
+    }
   })();
 </script>
 {% endblock %}
