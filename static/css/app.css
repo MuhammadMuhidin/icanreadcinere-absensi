@@ -417,14 +417,24 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .dialog-description { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
 .dialog-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 18px; }
 
-.force-checkout-name {
+.force-checkout-row {
   cursor: pointer;
-  transition: color .15s ease;
-  border-bottom: 1px dashed transparent;
+  transition: background-color .15s ease;
+  border-radius: 8px;
+  padding: 2px 4px;
+  margin: -2px -4px;
 }
-.force-checkout-name:hover {
-  color: var(--warning);
-  border-bottom-color: var(--warning);
+.force-checkout-row:hover {
+  background-color: color-mix(in srgb, var(--warning) 8%, transparent);
+}
+.btn-danger-text {
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
+  color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+}
+.btn-danger-text:hover {
+  background: color-mix(in srgb, var(--danger) 18%, transparent);
+  color: var(--danger);
 }
 .form-label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
 .form-group { margin-bottom: 14px; }

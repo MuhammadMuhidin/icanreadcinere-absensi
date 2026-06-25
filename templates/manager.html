@@ -38,9 +38,9 @@
   <div class="list team-list" id="teamList">
     {% if dashboard.people %}
       {% for person in dashboard.people %}
-        <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
-          <div>
-            <h3{% if person.status == 'checked_in' %} class="force-checkout-name"{% endif %}>{{ person.name }}</h3>
+        <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}"{% if person.status == 'checked_in' %} data-force-checkout="1"{% endif %}>
+          <div{% if person.status == 'checked_in' %} class="force-checkout-row"{% endif %}>
+            <h3>{{ person.name }}</h3>
             <p>
               {% if person.status == 'checked_in' %}Checked in {{ person.checkin[:5] }}
               {% elif person.status == 'completed' %}{{ person.checkin[:5] }}–{{ person.checkout[:5] }}
@@ -86,7 +86,7 @@
       </div>
       <div class="dialog-actions">
         <button type="button" class="btn btn-ghost" id="cancelForceCheckout">Cancel</button>
-        <button type="button" class="btn btn-warning" id="confirmForceCheckout">Confirm Check-out</button>
+        <button type="button" class="btn btn-danger-text" id="confirmForceCheckout">Confirm Check-out</button>
       </div>
     </div>
   </form>
@@ -191,10 +191,10 @@
         if (dev === 'On time!') devHtml = '<span>On time</span>';
         else if (dev) devHtml = '<span>Late ' + dev + '</span>';
 
-        let nameAttr = status === 'checked_in' ? ' class="force-checkout-name"' : '';
+        let nameAttr = status === 'checked_in' ? ' class="force-checkout-row"' : '';
 
         return '<article class="list-card" data-team-status="' + status + '" data-deviation="' + dev + '">'
-          + '<div><h3' + nameAttr + '>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
+          + '<div' + nameAttr + '><h3>' + (p.name || '') + '</h3><p>' + desc + '</p></div>'
           + '<div class="team-status">'
           + '<span class="badge ' + badgeClass + '">' + badgeLabel + '</span>'
           + devHtml
@@ -277,11 +277,12 @@
     if (forceDialog && confirmBtn && forceNote && forceTarget) {
     try {
       teamList.addEventListener('click', (event) => {
-        const target = event.target;
-        if (!target.classList || !target.classList.contains('force-checkout-name')) return;
-        const card = target.closest('[data-team-status]');
+        const row = event.target.closest('.force-checkout-row');
+        if (!row) return;
+        const card = row.closest('[data-team-status]');
         if (!card || card.dataset.teamStatus !== 'checked_in') return;
-        pendingForceName = target.textContent.trim();
+        const h3 = row.querySelector('h3');
+        pendingForceName = h3 ? h3.textContent.trim() : '';
         forceTarget.textContent = pendingForceName;
         forceNote.value = '';
         forceDialog.showModal();
