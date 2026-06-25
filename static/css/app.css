@@ -419,21 +419,14 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 
 .force-checkout-name {
   cursor: pointer;
+  display: inline-block;
   position: relative;
   transition: color .15s ease;
+  border-bottom: 1px dashed transparent;
 }
 .force-checkout-name:hover {
   color: var(--warning);
-}
-.force-checkout-name::after {
-  content: "⎋";
-  margin-left: 6px;
-  font-size: 12px;
-  opacity: 0;
-  transition: opacity .15s ease;
-}
-.force-checkout-name:hover::after {
-  opacity: .7;
+  border-bottom-color: var(--warning);
 }
 .form-label { display: block; font-weight: 700; font-size: 13px; margin-bottom: 8px; }
 .form-group { margin-bottom: 14px; }

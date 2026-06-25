@@ -54,7 +54,6 @@
             {% elif person.status == 'on_leave' %}<span class="badge badge-muted">Leave</span>
             {% else %}<span class="badge badge-warning">Not started</span>{% endif %}
             {% if person.deviation == 'On time!' %}<span>On time</span>{% elif person.deviation %}<span>Late {{ person.deviation }}</span>{% endif %}
-            {% if person.status == 'checked_in' %}<button type="button" class="btn-force-checkout" data-name="{{ person.name }}" title="Force check-out">Force Out</button>{% endif %}
           </div>
         </article>
       {% endfor %}
@@ -274,11 +273,11 @@
     let pendingForceName = null;
 
     teamList.addEventListener('click', (event) => {
-      const nameEl = event.target.closest('.force-checkout-name');
-      if (!nameEl) return;
-      const card = nameEl.closest('.list-card');
+      const target = event.target;
+      if (!target.classList || !target.classList.contains('force-checkout-name')) return;
+      const card = target.closest('[data-team-status]');
       if (!card || card.dataset.teamStatus !== 'checked_in') return;
-      pendingForceName = nameEl.textContent.trim();
+      pendingForceName = target.textContent.trim();
       forceTarget.textContent = pendingForceName;
       forceNote.value = '';
       forceDialog.showModal();
