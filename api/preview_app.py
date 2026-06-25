@@ -123,7 +123,7 @@ def dashboard_details():
         return jsonify(error="unauthorized"), 401
 
     directory_user = USERS.get(user_id) or current_user(user_id) or {}
-    period, days, summary = grouped(user_id, now().strftime("%Y-%m"), sanitize=True)
+    period, days, summary = grouped(user_id, now().strftime("%Y-%m"))
     today_data = today_session(user_id, sanitize=True)
     tomorrow = (now().date() + timedelta(days=1)).isoformat()
     events = [
