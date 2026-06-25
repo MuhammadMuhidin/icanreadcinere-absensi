@@ -40,7 +40,7 @@
       {% for person in dashboard.people %}
         <article class="list-card" data-team-status="{{ person.status }}" data-deviation="{{ person.deviation }}">
           <div>
-            <h3>{{ person.name }}</h3>
+            <h3{% if person.status == 'checked_in' %} class="force-checkout-name"{% endif %}>{{ person.name }}</h3>
             <p>
               {% if person.status == 'checked_in' %}Checked in {{ person.checkin[:5] }}
               {% elif person.status == 'completed' %}{{ person.checkin[:5] }}–{{ person.checkout[:5] }}
@@ -272,22 +272,33 @@
     const cancelBtn = document.getElementById('cancelForceCheckout');
     let pendingForceName = null;
 
-    teamList.addEventListener('click', (event) => {
-      const target = event.target;
-      if (!target.classList || !target.classList.contains('force-checkout-name')) return;
-      const card = target.closest('[data-team-status]');
-      if (!card || card.dataset.teamStatus !== 'checked_in') return;
-      pendingForceName = target.textContent.trim();
-      forceTarget.textContent = pendingForceName;
-      forceNote.value = '';
-      forceDialog.showModal();
-      setTimeout(() => forceNote.focus(), 50);
-    });
+    console.log('Force checkout init:', { forceDialog: !!forceDialog, teamList: !!teamList, confirmBtn: !!confirmBtn });
 
-    cancelBtn.addEventListener('click', () => {
-      forceDialog.close();
-      pendingForceName = null;
-    });
+    try {
+      teamList.addEventListener('click', (event) => {
+        console.log('Team list click:', event.target.tagName, event.target.className, event.target.classList?.contains('force-checkout-name'));
+        const target = event.target;
+        if (!target.classList || !target.classList.contains('force-checkout-name')) return;
+        const card = target.closest('[data-team-status]');
+        if (!card || card.dataset.teamStatus !== 'checked_in') return;
+        pendingForceName = target.textContent.trim();
+        forceTarget.textContent = pendingForceName;
+        forceNote.value = '';
+        if (forceDialog && typeof forceDialog.showModal === 'function') {
+          forceDialog.showModal();
+          setTimeout(() => forceNote.focus(), 50);
+        }
+      });
+
+      cancelBtn.addEventListener('click', () => {
+        if (forceDialog && typeof forceDialog.close === 'function') {
+          forceDialog.close();
+        }
+        pendingForceName = null;
+      });
+    } catch (err) {
+      console.error('Force checkout init error', err);
+    }
 
     forceDialog.addEventListener('close', () => {
       pendingForceName = null;
