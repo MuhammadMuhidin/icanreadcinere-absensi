@@ -530,14 +530,23 @@ def absence():
     week_days = []
     for offset in range(6, -1, -1):
         day = (current_date - timedelta(days=offset)).isoformat()
+        is_weekend = (current_date - timedelta(days=offset)).weekday() >= 5
         day_rows = [row for row in attendance_data if row.get("tanggal") == day]
         session_day = day_session(day_rows, day, sanitize=not manager(uid))
-        week_days.append({
-            "date": day,
-            "label": (current_date - timedelta(days=offset)).strftime("%a"),
-            "state": session_day.get("state", "not_started"),
-            "is_late": bool(session_day.get("deviation") and session_day.get("deviation") != "On time!"),
-        })
+        if is_weekend:
+            week_days.append({
+                "date": day,
+                "label": (current_date - timedelta(days=offset)).strftime("%a"),
+                "state": "weekend",
+                "is_late": False,
+            })
+        else:
+            week_days.append({
+                "date": day,
+                "label": (current_date - timedelta(days=offset)).strftime("%a"),
+                "state": session_day.get("state", "not_started"),
+                "is_late": bool(session_day.get("deviation") and session_day.get("deviation") != "On time!"),
+            })
 
     data=ctx("home","Attendance")
     data.update(
