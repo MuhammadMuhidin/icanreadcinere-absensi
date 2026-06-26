@@ -125,11 +125,12 @@ def dashboard_details():
     directory_user = USERS.get(user_id) or current_user(user_id) or {}
     period, days, summary = grouped(user_id, now().strftime("%Y-%m"))
     today_data = today_session(user_id, sanitize=True)
+    leave_balance = balance(user_id)
     tomorrow = (now().date() + timedelta(days=1)).isoformat()
     events = [
         {**_sanitize_notes_in_row(row)} for row in attendance_rows(user_id, today(), tomorrow)
     ]
-    leave_rows = _own_leave_rows(user_id)
+    leave_data = _own_leave_rows(user_id)
     announcements = _recent_news()
     complete_days = [item for item in days if item.get("state") == "completed"]
     late_days = [item for item in days if item.get("is_late")]
@@ -143,7 +144,7 @@ def dashboard_details():
             "auth_source": directory_user.get("source") or session.get("auth_source") or "unknown",
             "auth_table": USERS.table_name,
             "last_login_at": directory_user.get("last_login_at"),
-            "leave_balance": balance(user_id),
+            "leave_balance": leave_balance,
         },
         today={
             **today_data,
@@ -160,12 +161,12 @@ def dashboard_details():
             "latest_late": late_days[0] if late_days else None,
         },
         leave={
-            "balance": balance(user_id),
-            "counts": _leave_counts(leave_rows),
-            "recent_requests": leave_rows[:5],
+            "balance": leave_balance,
+            "counts": _leave_counts(leave_data),
+            "recent_requests": leave_data[:5],
             "next_approved": next(
                 (
-                    row for row in leave_rows
+                    row for row in leave_data
                     if row.get("status") == "APPROVED"
                     and str(row.get("leave_date") or "") >= date.today().isoformat()
                 ),
