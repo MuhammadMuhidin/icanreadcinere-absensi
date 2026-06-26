@@ -30,8 +30,8 @@
 <section class="card card-pad" aria-labelledby="weekHeading">
   <div class="section-heading">
     <div>
-      <h2 id="weekHeading">This week</h2>
-      <p>Last 7 days</p>
+      <h2 id="weekHeading">Weekly attendance streak</h2>
+      <p>Your attendance status for the last 7 days.</p>
     </div>
   </div>
   <div class="dotline" aria-hidden="true">
@@ -42,6 +42,11 @@
       </span>
     {% endfor %}
   </div>
+  <p class="dotline-legend">
+    <span><span class="dotline-key dotline-key--completed"></span> Completed</span>
+    <span><span class="dotline-key dotline-key--checked_in"></span> Incomplete</span>
+    <span><span class="dotline-key dotline-key--not_started"></span> Not recorded</span>
+  </p>
 </section>
 
 {% if latest_incomplete %}
