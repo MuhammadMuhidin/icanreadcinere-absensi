@@ -528,7 +528,7 @@ def absence():
     personal_leave_data = _own_leave_rows(uid)
 
     week_days = []
-    for offset in range(6, -1, -1):
+    for offset in range(5, -1, -1):
         day = (current_date - timedelta(days=offset)).isoformat()
         is_weekend = (current_date - timedelta(days=offset)).weekday() >= 5
         day_rows = [row for row in attendance_data if row.get("tanggal") == day]
