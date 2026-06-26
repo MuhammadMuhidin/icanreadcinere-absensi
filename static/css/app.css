@@ -515,7 +515,9 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .dotline-item { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; position: relative; flex: 1 1 0; }
 .dotline-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; position: relative; z-index: 1; }
 .dotline-dot--completed { color: var(--success); }
-.dotline-dot--checked_in { color: var(--info); }
+.dotline-dot--checked_in { color: #102850; }
+.dotline-dot--checked_in.dotline-dot--today { animation: dotline-pulse 1.2s ease-in-out infinite; }
+.dotline-dot--checked_in:not(.dotline-dot--today) { color: #b76a00; }
 .dotline-dot--not_started { color: var(--muted); }
 .dotline-dot--missed { color: #b76a00; }
 .dotline-dot--weekend { color: var(--border); }

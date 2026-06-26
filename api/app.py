@@ -543,8 +543,16 @@ def absence():
             })
         else:
             state = session_day.get("state", "not_started")
-            if state == "not_started" and day != current_date.isoformat():
+            has_checkin = bool(session_day.get("checkin"))
+            has_checkout = bool(session_day.get("checkout"))
+            if has_checkin and has_checkout:
+                state = "completed"
+            elif has_checkin and not has_checkout:
+                state = "checked_in"
+            elif not has_checkin and has_checkout:
                 state = "missed"
+            else:
+                state = "not_started"
             week_days.append({
                 "date": day,
                 "label": (current_date - timedelta(days=offset)).strftime("%a"),
