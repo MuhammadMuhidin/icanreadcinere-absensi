@@ -1,24 +1,4 @@
-:root {
-  color-scheme: light;
-  --brand: #193773;
-  --brand-strong: #102650;
-  --accent: #ed384d;
-  --success: #16834a;
-  --warning: #b76a00;
-  --danger: #c62828;
-  --info: #2563eb;
-  --bg: #f4f6fb;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --text: #172033;
-  --muted: #667085;
-  --border: #e3e8ef;
-  --shadow-sm: 0 4px 14px rgba(16, 38, 80, .07);
-  --shadow-md: 0 16px 40px rgba(16, 38, 80, .12);
-  --radius: 18px;
-  --radius-sm: 12px;
-  --nav-height: 72px;
-}
+:root { color-scheme: light; --brand: #193773; --brand-strong: #102650; --accent: #ed384d; --success: #16834a; --warning: #b76a00; --danger: #c62828; --info: #2563eb; --bg: #f4f6fb; --surface: #ffffff; --surface-soft: #f8fafc; --text: #172033; --muted: #667085; --border: #e3e8ef; --shadow-sm: 0 4px 14px rgba(16, 38, 80, .07); --shadow-md: 0 16px 40px rgba(16, 38, 80, .12); --radius: 18px; --radius-sm: 12px; --nav-height: 72px; }
 
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -519,6 +499,14 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .metric-notstarted .metric-value { color: var(--warning); }
 .metric-leave     .metric-value { color: var(--muted); }
 .metric.metric-active .metric-value { color: var(--info); }
+
+.dotline { display: flex; justify-content: space-between; gap: 6px; }
+.dotline-item { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.dotline-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; }
+.dotline-dot--completed { color: var(--success); }
+.dotline-dot--checked_in { color: var(--warning); }
+.dotline-dot--not_started { color: var(--muted); }
+.dotline-label { font-size: 11px; color: var(--muted); line-height: 1; }
 
 .team-status {
   text-align: right;

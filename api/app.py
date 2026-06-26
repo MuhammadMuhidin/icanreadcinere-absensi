@@ -525,8 +525,19 @@ def absence():
     attendance_data = attendance_rows(uid, attendance_start.isoformat(), attendance_end.isoformat())
     period,days,summary = grouped_from_rows(attendance_data, current_date.strftime("%Y-%m"), sanitize=not manager(uid))
     current_balance = balance(uid)
-    # Only fetch user's own leaves for the home page card (not all leaves)
     personal_leave_data = _own_leave_rows(uid)
+
+    week_days = []
+    for offset in range(6, -1, -1):
+        day = (current_date - timedelta(days=offset)).isoformat()
+        day_rows = [row for row in attendance_data if row.get("tanggal") == day]
+        session_day = day_session(day_rows, day, sanitize=not manager(uid))
+        week_days.append({
+            "date": day,
+            "label": (current_date - timedelta(days=offset)).strftime("%a"),
+            "state": session_day.get("state", "not_started"),
+            "is_late": bool(session_day.get("deviation") and session_day.get("deviation") != "On time!"),
+        })
 
     data=ctx("home","Attendance")
     data.update(
@@ -540,6 +551,7 @@ def absence():
         leave_summary=leave_summary(uid, personal_leave_data, current_balance),
         latest_incomplete=last_incomplete(uid, attendance_data),
         photo_ts=session.get("photo_ts", 0),
+        week_days=week_days,
     )
     return render_template("absence.html",**data)
 
