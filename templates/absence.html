@@ -37,7 +37,7 @@
   <div class="dotline" aria-hidden="true">
     {% for item in week_days %}
       <span class="dotline-item">
-        <span class="dotline-dot dotline-dot--{{ item.state }} {% if item.is_today and item.state == 'checked_in' %}dotline-dot--today{% endif %}" data-state="{{ item.state }}"></span>
+        <span class="dotline-dot dotline-dot--{{ item.state }} {% if item.is_today and item.state == 'checked_in' %}dotline-dot--today{% endif %}{% if item.is_weekend %}dotline-dot--weekend{% endif %}" data-state="{{ item.state }}"></span>
         <span class="dotline-label">{{ item.label }}</span>
       </span>
     {% endfor %}
