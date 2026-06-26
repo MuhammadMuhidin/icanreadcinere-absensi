@@ -1,24 +1,4 @@
-:root {
-  color-scheme: light;
-  --brand: #193773;
-  --brand-strong: #102650;
-  --accent: #ed384d;
-  --success: #16834a;
-  --warning: #b76a00;
-  --danger: #c62828;
-  --info: #2563eb;
-  --bg: #f4f6fb;
-  --surface: #ffffff;
-  --surface-soft: #f8fafc;
-  --text: #172033;
-  --muted: #667085;
-  --border: #e3e8ef;
-  --shadow-sm: 0 4px 14px rgba(16, 38, 80, .07);
-  --shadow-md: 0 16px 40px rgba(16, 38, 80, .12);
-  --radius: 18px;
-  --radius-sm: 12px;
-  --nav-height: 72px;
-}
+:root { color-scheme: light; --brand: #193773; --brand-strong: #102650; --accent: #ed384d; --success: #16834a; --warning: #b76a00; --danger: #c62828; --info: #2563eb; --bg: #f4f6fb; --surface: #ffffff; --surface-soft: #f8fafc; --text: #172033; --muted: #667085; --border: #e3e8ef; --shadow-sm: 0 4px 14px rgba(16, 38, 80, .07); --shadow-md: 0 16px 40px rgba(16, 38, 80, .12); --radius: 18px; --radius-sm: 12px; --nav-height: 72px; }
 
 html[data-theme="dark"] {
   color-scheme: dark;
@@ -519,6 +499,35 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .metric-notstarted .metric-value { color: var(--warning); }
 .metric-leave     .metric-value { color: var(--muted); }
 .metric.metric-active .metric-value { color: var(--info); }
+
+.dotline { position: relative; display: flex; justify-content: space-between; gap: 0; }
+.dotline::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  left: 4px;
+  right: 4px;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+  transform: translateY(-50%);
+}
+.dotline-item { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; position: relative; flex: 1 1 0; }
+.dotline-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; position: relative; z-index: 1; }
+.dotline-dot--completed { color: var(--success); }
+.dotline-dot--checked_in { color: #007bff; }
+.dotline-dot--checked_in.dotline-dot--today { animation: dotline-pulse 1.2s ease-in-out infinite; }
+.dotline-dot--checked_in:not(.dotline-dot--today) { color: #007bff; }
+.dotline-dot--not_started { color: var(--muted); }
+.dotline-dot--missed { color: var(--muted); }
+.dotline-dot--weekend { color: var(--border); }
+.dotline-dot--today { animation: dotline-pulse 1.2s ease-in-out infinite; }
+
+@keyframes dotline-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: .5; }
+}
+.dotline-label { font-size: 11px; color: var(--muted); line-height: 1; text-transform: uppercase; }
 
 .team-status {
   text-align: right;

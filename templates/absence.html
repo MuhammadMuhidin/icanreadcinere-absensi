@@ -27,6 +27,23 @@
   <input class="sr-only" type="file" id="profileUpload" accept="image/jpeg,image/png,image/webp">
 </section>
 
+<section class="card card-pad" aria-labelledby="weekHeading">
+  <div class="section-heading">
+    <div>
+      <h2 id="weekHeading">Weekly attendance streak</h2>
+      <p>Attendance status for this week.</p>
+    </div>
+  </div>
+  <div class="dotline" aria-hidden="true">
+    {% for item in week_days %}
+      <span class="dotline-item">
+        <span class="dotline-dot dotline-dot--{{ item.state }} {% if item.is_today and item.state == 'checked_in' %}dotline-dot--today{% endif %}{% if item.is_weekend %}dotline-dot--weekend{% endif %}" data-state="{{ item.state }}"></span>
+        <span class="dotline-label">{{ item.label }}</span>
+      </span>
+    {% endfor %}
+  </div>
+</section>
+
 {% if latest_incomplete %}
   <div class="notice notice-warning">
     <div class="notice-icon" aria-hidden="true">⚠</div>
