@@ -528,32 +528,25 @@ def absence():
     personal_leave_data = _own_leave_rows(uid)
 
     week_days = []
+    today_str = current_date.isoformat()
     for offset in range(5, -1, -1):
         day = (current_date - timedelta(days=offset)).isoformat()
-        is_weekend = (current_date - timedelta(days=offset)).weekday() >= 5
         day_rows = [row for row in attendance_data if row.get("tanggal") == day]
         session_day = day_session(day_rows, day, sanitize=not manager(uid))
-        if is_weekend:
-            week_days.append({
-                "date": day,
-                "label": (current_date - timedelta(days=offset)).strftime("%a"),
-                "state": "weekend",
-                "is_late": False,
-                "is_today": day == current_date.isoformat(),
-            })
+        state = session_day.get("state", "not_started")
+        has_checkin = bool(session_day.get("checkin"))
+        has_checkout = bool(session_day.get("checkout"))
+        if has_checkin and has_checkout:
+            state = "completed"
+        elif has_checkin and not has_checkout:
+            state = "checked_in"
+        elif not has_checkin and has_checkout:
+            state = "missed"
         else:
-            state = session_day.get("state", "not_started")
-            has_checkin = bool(session_day.get("checkin"))
-            has_checkout = bool(session_day.get("checkout"))
-            if has_checkin and has_checkout:
-                state = "completed"
-            elif has_checkin and not has_checkout:
-                state = "checked_in"
-            elif not has_checkin and has_checkout:
-                state = "missed"
-            else:
-                state = "not_started"
-            week_days.append({
+            state = "not_started"
+        if day != today_str and state == "not_started":
+            state = "missed"
+        week_days.append({
                 "date": day,
                 "label": (current_date - timedelta(days=offset)).strftime("%a"),
                 "state": state,
