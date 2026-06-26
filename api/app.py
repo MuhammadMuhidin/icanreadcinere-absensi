@@ -539,6 +539,7 @@ def absence():
                 "label": (current_date - timedelta(days=offset)).strftime("%a"),
                 "state": "weekend",
                 "is_late": False,
+                "is_today": day == current_date.isoformat(),
             })
         else:
             week_days.append({
@@ -546,6 +547,7 @@ def absence():
                 "label": (current_date - timedelta(days=offset)).strftime("%a"),
                 "state": session_day.get("state", "not_started"),
                 "is_late": bool(session_day.get("deviation") and session_day.get("deviation") != "On time!"),
+                "is_today": day == current_date.isoformat(),
             })
 
     data=ctx("home","Attendance")

@@ -500,25 +500,30 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .metric-leave     .metric-value { color: var(--muted); }
 .metric.metric-active .metric-value { color: var(--info); }
 
-.dotline { display: flex; justify-content: space-between; gap: 0; }
-.dotline-item { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; position: relative; flex: 1 1 0; }
-.dotline-item::before {
+.dotline { position: relative; display: flex; justify-content: space-between; gap: 0; }
+.dotline::before {
   content: "";
   position: absolute;
   top: 3px;
-  left: 50%;
-  width: 100%;
+  left: 4px;
+  right: 4px;
   height: 2px;
   background: var(--border);
   z-index: 0;
+  transform: translateY(-50%);
 }
-.dotline-item:first-child::before,
-.dotline-item:last-child::before { display: none; }
+.dotline-item { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; position: relative; flex: 1 1 0; }
 .dotline-dot { width: 8px; height: 8px; border-radius: 50%; background: currentColor; position: relative; z-index: 1; }
 .dotline-dot--completed { color: var(--success); }
-.dotline-dot--checked_in { color: var(--warning); }
+.dotline-dot--checked_in { color: var(--info); }
 .dotline-dot--not_started { color: var(--muted); }
 .dotline-dot--weekend { color: var(--border); }
+.dotline-dot--today { animation: dotline-pulse 1.2s ease-in-out infinite; }
+
+@keyframes dotline-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.4); opacity: .5; }
+}
 .dotline-label { font-size: 11px; color: var(--muted); line-height: 1; text-transform: uppercase; }
 
 .team-status {
