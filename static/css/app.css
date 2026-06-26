@@ -517,6 +517,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .dotline-dot--completed { color: var(--success); }
 .dotline-dot--checked_in { color: var(--info); }
 .dotline-dot--not_started { color: var(--muted); }
+.dotline-dot--missed { color: #b76a00; }
 .dotline-dot--weekend { color: var(--border); }
 .dotline-dot--today { animation: dotline-pulse 1.2s ease-in-out infinite; }
 

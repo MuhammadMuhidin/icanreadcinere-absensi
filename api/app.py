@@ -542,10 +542,13 @@ def absence():
                 "is_today": day == current_date.isoformat(),
             })
         else:
+            state = session_day.get("state", "not_started")
+            if state == "not_started" and day != current_date.isoformat():
+                state = "missed"
             week_days.append({
                 "date": day,
                 "label": (current_date - timedelta(days=offset)).strftime("%a"),
-                "state": session_day.get("state", "not_started"),
+                "state": state,
                 "is_late": bool(session_day.get("deviation") and session_day.get("deviation") != "On time!"),
                 "is_today": day == current_date.isoformat(),
             })
