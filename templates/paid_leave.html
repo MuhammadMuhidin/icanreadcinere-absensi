@@ -382,13 +382,33 @@
         lastSnapshot = snapshot;
         populateYears();
         renderList();
-        refreshSummary();
+        if (payload.summary) applyLeaveSummary(payload.summary);
       }
     } catch (_) {}
   }
 
+  function applyLeaveSummary(summary) {
+    const setText = (id, value) => {
+      const el = document.getElementById(id);
+      if (el) el.textContent = value ?? '—';
+    };
+    setText('balanceMetric', summary.balance);
+    setText('waitingMetric', summary.waiting ?? 0);
+    setText('approvedMetric', summary.approved ?? 0);
+    setText('rejectedMetric', summary.rejected ?? 0);
+  }
+
   loadData();
-  // Poll less frequently to save data
-  setInterval(pollChanges, 60000);
+  function visibilityAwareInterval(fn, ms) {
+    let id = null;
+    const start = () => { clearInterval(id); id = setInterval(fn, ms); };
+    const stop = () => { clearInterval(id); id = null; };
+    start();
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) stop(); else start();
+    });
+    return { start, stop };
+  }
+  visibilityAwareInterval(pollChanges, 180000);
 </script>
 {% endblock %}

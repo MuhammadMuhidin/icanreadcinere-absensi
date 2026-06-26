@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import date, datetime, timedelta
 from io import StringIO
 from math import atan2, cos, radians, sin, sqrt
-import boto3, csv, json, os, pytz, re, requests
+import boto3, csv, json, os, pytz, re, requests, time
 from dateutil.parser import isoparse
 from flask import Flask, Response, flash, jsonify, redirect, render_template, request, session
 from supabase import create_client
@@ -32,6 +32,18 @@ except Exception as exc:
     FALLBACK_USERS = {}
 
 _sb = _r2 = None
+_CACHE = {}
+
+
+def cache_get(key, ttl):
+    hit = _CACHE.get(key)
+    if hit and time.time() - hit[0] < ttl:
+        return hit[1]
+    return None
+
+
+def cache_set(key, value, ttl):
+    _CACHE[key] = (time.time(), value)
 
 
 def T(name): return f"{name}{PREFIX}"
@@ -49,6 +61,19 @@ def sb():
 
 
 USERS = UserDirectory(sb, FALLBACK_USERS, AUTH_TABLE)
+
+
+def users_all():
+    try:
+        cached = cache_get("users:all", 300)
+        if cached is not None:
+            return cached
+        value = USERS.all()
+        cache_set("users:all", value, 300)
+        return value
+    except Exception as exc:
+        print("USERS ALL CACHE ERROR", exc)
+        return USERS.all()
 
 
 def current_user(uid=None):
@@ -103,8 +128,13 @@ def news():
 
 def balance(uid):
     try:
+        cached = cache_get(f"balance:{uid}", 120)
+        if cached is not None:
+            return cached
         rows = sb().table(T("balance")).select("sisa").eq("nama", uid).limit(1).execute().data
-        return int(rows[0]["sisa"]) if rows else None
+        value = int(rows[0]["sisa"]) if rows else None
+        cache_set(f"balance:{uid}", value, 120)
+        return value
     except Exception as exc: print("BALANCE ERROR", exc); return None
 
 
@@ -300,17 +330,33 @@ def last_incomplete(uid, rows=None):
 
 
 def leave_rows(uid):
-    query = sb().table(T("paid_leave")).select("*").order("created_at", desc=True)
-    if not manager(uid): query = query.eq("name", uid)
+    query = sb().table(T("paid_leave")).select("id,name,leave_date,status,reason,created_at").order("created_at", desc=True)
+    if not manager(uid):
+        query = query.eq("name", uid)
     return query.execute().data or []
 
 def _own_leave_rows(uid):
     """Fetch only the current user's own leave rows (used for home page card)."""
     try:
-        return sb().table(T("paid_leave")).select("id,name,leave_date,status,reason,created_at").eq("name", uid).order("created_at", desc=True).execute().data or []
+        cached = cache_get(f"own_leave:{uid}", 60)
+        if cached is not None:
+            return cached
+        rows = (
+            sb()
+            .table(T("paid_leave"))
+            .select("id,name,leave_date,status,reason,created_at")
+            .eq("name", uid)
+            .order("created_at", desc=True)
+            .execute()
+            .data
+            or []
+        )
+        cache_set(f"own_leave:{uid}", rows, 60)
+        return rows
     except Exception as exc:
         print("OWN LEAVE ROWS ERROR", exc)
         return []
+
 
 def leave_summary(uid, data=None, balance_value=_UNSET):
     data = leave_rows(uid) if data is None else data
@@ -323,12 +369,22 @@ def leave_summary(uid, data=None, balance_value=_UNSET):
 
 
 def periods():
-    try: return [x["period"] for x in (sb().rpc("get_last_periods").execute().data or []) if x.get("period")]
+    try:
+        cached = cache_get("periods:list", 120)
+        if cached is not None:
+            return cached
+        value = [x["period"] for x in (sb().rpc("get_last_periods").execute().data or []) if x.get("period")]
+        cache_set("periods:list", value, 120)
+        return value
     except Exception as exc: print("PERIOD ERROR", exc); return []
 
 
 # ── Leave conflict guard ────────────────────────────────────────
 NON_TEACHERS = {"Hanny", "Dini", "Lintang"}
+
+
+def non_teacher_filter_expr():
+    return "(" + ",".join([f'"{n}"' for n in NON_TEACHERS]) + ")"
 
 
 def has_leave_conflict(leave_date_raw: str, exclude_id: int | None = None) -> dict | None:
@@ -338,7 +394,7 @@ def has_leave_conflict(leave_date_raw: str, exclude_id: int | None = None) -> di
         .select("id, name, leave_date")
         .eq("leave_date", leave_date_raw)
         .in_("status", ["WAITING APPROVAL", "APPROVED"])
-        .filter("name", "not.in", f"({','.join(f'\"{n}\"' for n in NON_TEACHERS)})")
+        .filter("name", "not.in", non_teacher_filter_expr())
     )
     if exclude_id is not None:
         q = q.neq("id", exclude_id)
@@ -347,44 +403,39 @@ def has_leave_conflict(leave_date_raw: str, exclude_id: int | None = None) -> di
 
 
 def team_today():
-    names_dict = USERS.all()
-    names = list(names_dict.keys())
     day = today()
+    cached = cache_get(f"team_today:{day}", 30)
+    if cached is not None:
+        return cached
+    names_dict = users_all()
+    names = list(names_dict.keys())
     by_name = defaultdict(list)
 
-    # Retry up to 2 times for log_absen query
-    rows = []
-    log_error = None
-    for attempt in range(2):
-        try:
-            rows = sb().table(T("log_absen")).select("nama,aksi,tanggal,waktu,deviation,mood,notes").eq("tanggal", day).order("waktu", desc=False).execute().data or []
-            log_error = None
-            break
-        except Exception as exc:
-            log_error = str(exc)
-            print(f"TEAM LOG_ABSEN ERROR (attempt {attempt+1})", exc)
-    if log_error:
-        flash("Could not load attendance records. Some statuses may be inaccurate.", "error")
+    try:
+        rows = sb().table(T("log_absen")).select("nama,aksi,tanggal,waktu,deviation").eq("tanggal", day).order("waktu", desc=False).execute().data or []
+        log_error = False
+    except Exception as exc:
+        print(f"TEAM LOG_ABSEN ERROR", exc)
+        rows = []
+        log_error = True
 
     for row in rows:
         by_name[row.get("nama")].append(row)
 
-    # Retry up to 2 times for paid_leave query
-    leave_names = set()
-    leave_error = None
-    for attempt in range(2):
-        try:
-            leave_rows = sb().table(T("paid_leave")).select("name").eq("leave_date", day).eq("status", "APPROVED").execute().data or []
-            leave_names = {x.get("name") for x in leave_rows}
-            leave_error = None
-            break
-        except Exception as exc:
-            leave_error = str(exc)
-            print(f"TEAM PAID_LEAVE ERROR (attempt {attempt+1})", exc)
+    try:
+        leave_rows_today = sb().table(T("paid_leave")).select("name").eq("leave_date", day).eq("status", "APPROVED").execute().data or []
+        leave_names = {x.get("name") for x in leave_rows_today}
+        leave_error = False
+    except Exception as exc:
+        print(f"TEAM PAID_LEAVE ERROR", exc)
+        leave_names = set()
+        leave_error = True
+
+    if log_error:
+        flash("Could not load attendance records. Some statuses may be inaccurate.", "error")
     if leave_error:
         flash("Could not load leave records. Leave statuses may be inaccurate.", "error")
 
-    # Only count leaves for users that actually exist in the directory
     leave_names = leave_names & set(names)
 
     counts = dict(checked_in=0, completed=0, on_time=0, late=0, not_started=0, on_leave=len(leave_names))
@@ -401,7 +452,9 @@ def team_today():
 
     order = {"checked_in": 0, "not_started": 1, "on_leave": 2, "completed": 3}
     people.sort(key=lambda x: (order.get(x["status"], 9), x["name"]))
-    return {"date": day, "counts": counts, "people": people, "log_error": bool(log_error), "leave_error": bool(leave_error)}
+    payload = {"date": day, "counts": counts, "people": people, "log_error": bool(log_error), "leave_error": bool(leave_error)}
+    cache_set(f"team_today:{day}", payload, 30)
+    return payload
 
 
 @app.before_request
@@ -585,10 +638,13 @@ def paid_leave():
     return render_template("paid_leave.html",**data)
 
 
-@app.route("/leave",methods=["GET"])
+@app.route("/leave", methods=["GET"])
 def get_leave():
-    uid=session.get("userid")
-    return (jsonify(data=leave_rows(uid)),200) if uid else (jsonify(error="unauthorized"),401)
+    uid = session.get("userid")
+    if not uid:
+        return jsonify(error="unauthorized"), 401
+    rows = leave_rows(uid)
+    return jsonify(data=rows, summary=leave_summary(uid, rows)), 200
 
 
 @app.route("/api/me/leave-summary")

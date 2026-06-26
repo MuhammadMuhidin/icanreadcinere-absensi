@@ -261,8 +261,12 @@
       }
     }
 
-    // Refresh every 60 seconds
-    refreshTimer = setInterval(refreshData, 60000);
+    // Refresh every 180 seconds
+    refreshTimer = setInterval(refreshData, 180000);
+    if ('onvisibilitychange' in document) document.addEventListener('visibilitychange', () => {
+      if (document.hidden) clearInterval(refreshTimer);
+      else refreshTimer = setInterval(refreshData, 180000);
+    });
 
     // ── Force Checkout ─────────────────────────────────────────────
     const forceDialog = document.getElementById('forceCheckoutDialog');
