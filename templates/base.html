@@ -273,7 +273,7 @@
 <script src="{{ url_for('static', filename='js/inbox-badge.js') }}" defer></script>
 <script>
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/static/sw.js', { scope: '/' });
+    navigator.serviceWorker.register('/static/sw.js', { scope: '/static/' });
   }
 </script>
 </body>

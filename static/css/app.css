@@ -573,11 +573,139 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   .list-actions .btn { flex: 1; }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    scroll-behavior: auto !important;
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-  }
+/* ─── Weekly streak timeline — Compact ─── */
+.streak-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
+
+.streak-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -.02em;
+}
+
+.streak-badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #f59f3d, #dd3d1f);
+}
+
+/* Row-based timeline (same approach as .step-line in paid_leave) */
+.streak-timeline {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+/* Each item: dot + label stacked vertically */
+.streak-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.streak-item--today .streak-label {
+  color: var(--info);
+}
+
+/* Dot wrapper for tooltip positioning */
+.streak-dot-wrap {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Dot */
+.streak-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 800;
+  background: var(--surface-soft);
+  color: var(--muted);
+  position: relative;
+  z-index: 1;
+}
+
+.streak-dot--completed { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
+.streak-dot--checked_in { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: var(--warning); }
+.streak-dot--missed { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
+
+.streak-dot--today {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 40%, transparent);
+}
+
+/* Label directly under dot */
+.streak-label {
+  margin-top: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Connector bar — fills gap between items */
+.streak-bar {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  min-width: 4px;
+  margin-bottom: 14px;
+}
+
+.streak-bar--success {
+  background: var(--success);
+}
+
+/* Tooltip on dot hover */
+.streak-tooltip {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: color-mix(in srgb, var(--text) 92%, var(--surface));
+  color: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--surface) 25%, transparent);
+  box-shadow: var(--shadow-md);
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .16s ease, transform .16s ease;
+}
+.streak-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: color-mix(in srgb, var(--text) 92%, var(--surface));
+}
+.streak-dot:hover .streak-tooltip,
+.streak-dot:focus-within .streak-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Compact streak card */
+.streak-card { padding: 12px 14px; user-select: none; -webkit-user-select: none; }
