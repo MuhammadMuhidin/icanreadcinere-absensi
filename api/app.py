@@ -553,6 +553,11 @@ def absence():
                 "is_late": bool(session_day.get("deviation") and session_day.get("deviation") != "On time!"),
                 "is_today": day == current_date.isoformat(),
                 "is_weekend": (current_date - timedelta(days=offset)).weekday() == 6,
+                "window": {
+                    "checkin": session_day.get("checkin") or "",
+                    "checkout": session_day.get("checkout") or "",
+                    "deviation": session_day.get("deviation") or "",
+                },
             })
 
     data=ctx("home","Attendance")

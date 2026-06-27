@@ -27,18 +27,42 @@
   <input class="sr-only" type="file" id="profileUpload" accept="image/jpeg,image/png,image/webp">
 </section>
 
-<section class="card card-pad" aria-labelledby="weekHeading">
-  <div class="section-heading">
+<section class="card card-pad" aria-labelledby="streakCardHeading">
+  <div class="streak-header">
     <div>
-      <h2 id="weekHeading">Weekly attendance streak</h2>
+      <h2 id="streakCardHeading">Weekly attendance streak</h2>
       <p>Attendance status for this week.</p>
     </div>
+    <span class="streak-badge">🔥 4 Days Streak!</span>
   </div>
-  <div class="dotline" aria-hidden="true">
+  <div class="streak-dotline" aria-label="This week timeline">
     {% for item in week_days %}
-      <span class="dotline-item">
-        <span class="dotline-dot dotline-dot--{{ item.state }} {% if item.is_today and item.state == 'checked_in' %}dotline-dot--today{% endif %}" data-state="{{ item.state }}"></span>
-        <span class="dotline-label">{{ item.label }}</span>
+      {% set tooltip_core = [] %}
+      {% if item.state in ('completed','checked_in') %}
+        {% set _ = tooltip_core.append("In: " ~ (item.window.checkin or '--:--') ~ " | Out: " ~ (item.window.checkout or '--:--')) %}
+        {% if item.is_late %}
+          {% set _ = tooltip_core.append(item.window.deviation | string) %}
+        {% else %}
+          {% set _ = tooltip_core.append("On time") %}
+        {% endif %}
+      {% else %}
+        {% set _ = tooltip_core.append("No record") %}
+      {% endif %}
+      {% set tooltip = tooltip_core | join(' — ') %}
+      {% set success = item.state == 'completed' and not item.is_late %}
+      <span class="streak-dotline-item {% if success %}streak-success{% endif %}">
+        <span class="streak-circle-wrap">
+          <span class="streak-circle streak-circle--{{ item.state }} {% if item.is_today %}streak-circle--today{% endif %}"
+                aria-hidden="true">
+            {% if item.state == 'completed' %}✓
+            {% elif item.state == 'checked_in' %}{% if item.is_late %}⏰{% else %}✓{% endif %}
+            {% elif item.state == 'missed' %}!
+            {% endif %}
+          </span>
+          <span class="streak-tooltip" aria-hidden="true">{{ tooltip }}</span>
+          <span class="streak-connector" aria-hidden="true"></span>
+        </span>
+        <span class="streak-label {% if item.is_today %}streak-label--today{% endif %}">{{ item.label }}</span>
       </span>
     {% endfor %}
   </div>
