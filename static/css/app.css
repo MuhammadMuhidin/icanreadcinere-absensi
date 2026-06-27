@@ -638,6 +638,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   color: var(--muted);
   position: relative;
   z-index: 1;
+  cursor: pointer;
 }
 
 .streak-dot--completed { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
@@ -702,9 +703,11 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   border-top-color: color-mix(in srgb, var(--text) 92%, var(--surface));
 }
 .streak-dot:hover .streak-tooltip,
-.streak-dot:focus-within .streak-tooltip {
+.streak-dot:focus-within .streak-tooltip,
+.streak-tooltip--show {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
 }
 
 /* Compact streak card */
