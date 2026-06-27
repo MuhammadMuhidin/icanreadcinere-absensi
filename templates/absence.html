@@ -51,12 +51,13 @@
       {% set checked_in_late = item.state == 'checked_in' and item.is_late %}
       {% set is_late = item.state == 'completed' and item.is_late %}
       {% set is_past = not item.is_today and not item.is_weekend %}
+      {% set past_incomplete = is_past and item.state == 'checked_in' %}
       <div class="streak-item {% if item.is_today %}streak-item--today{% endif %}">
         <div class="streak-dot-wrap">
           {% if is_past %}
-          <span class="streak-dot {% if success %}streak-dot--completed{% elif is_late %}streak-dot--late{% elif item.state == 'missed' %}streak-dot--incomplete{% endif %} {% if item.is_today %}streak-dot--today{% endif %}" aria-hidden="true">
-            {% if item.state == 'completed' %}✓
-            {% elif item.state == 'missed' %}!
+          <span class="streak-dot {% if past_incomplete %}streak-dot--incomplete{% elif success %}streak-dot--completed{% elif is_late %}streak-dot--late{% elif item.state == 'missed' %}streak-dot--incomplete{% endif %} {% if item.is_today %}streak-dot--today{% endif %}" aria-hidden="true">
+            {% if past_incomplete or item.state == 'missed' %}!
+            {% elif item.state == 'completed' %}✓
             {% else %}·{% endif %}
           </span>
           {% else %}
