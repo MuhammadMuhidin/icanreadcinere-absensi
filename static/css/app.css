@@ -640,11 +640,8 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   z-index: 1;
 }
 
-.streak-dot--completed { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
-.streak-dot--checked_in { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
-.streak-dot--checked_in-late { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: var(--warning); }
-.streak-dot--late { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: var(--warning); }
-.streak-dot--missed { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
+.streak-dot--done { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
+.streak-dot--working { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
 .streak-dot--incomplete { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
 
 .streak-dot--today {
