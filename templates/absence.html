@@ -46,7 +46,7 @@
         {% set _ = tooltip_core.append("No record") %}
       {% endif %}
       {% set tooltip = tooltip_core | join(' — ') %}
-      {% set success = item.state == 'completed' and not item.is_late %}
+      {% set success = item.state in ('completed', 'checked_in') and not item.is_late %}
       <div class="streak-item {% if item.is_today %}streak-item--today{% endif %}">
         <div class="streak-dot-wrap">
           <span class="streak-dot {% if success %}streak-dot--completed{% elif item.state == 'checked_in' %}streak-dot--checked_in{% elif item.state == 'missed' %}streak-dot--missed{% endif %} {% if item.is_today %}streak-dot--today{% endif %}" aria-hidden="true">
@@ -240,6 +240,26 @@
   }
   updateDuration();
   setInterval(updateDuration, 30000);
+
+  // Streak tooltip toggle on click
+  document.querySelectorAll('.streak-dot').forEach(dot => {
+    dot.addEventListener('click', (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      const tip = dot.querySelector('.streak-tooltip');
+      if (!tip) return;
+      const isOpen = tip.classList.contains('streak-tooltip--show');
+      document.querySelectorAll('.streak-tooltip--show').forEach(t => t.classList.remove('streak-tooltip--show'));
+      if (!isOpen) {
+        tip.classList.add('streak-tooltip--show');
+      }
+    });
+  });
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.streak-dot')) {
+      document.querySelectorAll('.streak-tooltip--show').forEach(t => t.classList.remove('streak-tooltip--show'));
+    }
+  });
 
   const dialog = document.getElementById('attendanceDialog');
   const actionButton = document.getElementById('attendanceAction');
