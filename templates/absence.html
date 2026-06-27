@@ -31,7 +31,9 @@
   <div class="streak-header">
     <h2 id="streakCardHeading">Weekly streak</h2>
     {% set streak_count = week_days | selectattr('state', 'in', ['completed', 'checked_in']) | list | length %}
-    <span class="streak-badge">🔥 {{ streak_count }} Days</span>
+    <span class="streak-badge">
+      🔥 {{ streak_count }} {{ 'Day' if streak_count == 1 else 'Days' }}
+    </span>
   </div>
   <div class="streak-timeline" aria-label="This week timeline">
     {% for item in week_days %}
