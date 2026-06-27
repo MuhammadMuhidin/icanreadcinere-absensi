@@ -631,7 +631,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 
 /* Item sukses: garis hijau dari titik ini ke titik berikutnya */
 .streak-dotline-item.streak-success .streak-connector {
-  width: calc(100% + 2px);
+  width: 100%;
   opacity: 1;
 }
 
@@ -660,18 +660,17 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
+  color: var(--muted);
   font-size: 11px;
   font-weight: 800;
-  background: var(--muted);
-  border: 2px solid var(--surface);
+  background: var(--surface-soft);
   position: relative;
   transition: transform .15s ease;
 }
 
-.streak-circle--completed { background: linear-gradient(135deg, #16a34a, #15803e); }
-.streak-circle--checked_in { background: linear-gradient(135deg, #e5a200, #8B4513); }
-.streak-circle--missed { background: linear-gradient(135deg, #b76a00, #7c3600); }
+.streak-circle--completed { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
+.streak-circle--checked_in { background: color-mix(in srgb, var(--warning) 12%, transparent); color: var(--warning); }
+.streak-circle--missed { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
 
 .streak-icon { line-height: 1; margin-top: -1px; }
 
