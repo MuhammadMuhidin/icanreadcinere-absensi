@@ -602,27 +602,41 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   align-items: flex-start;
   width: 100%;
   position: relative;
+  padding: 0 12px;
 }
 
-/* Garis penghubung per-item — menengah dari titik ini ke titik berikutnya */
-.streak-connector {
+/* Garis latar belakang — satu garis penuh di belakang semua dot */
+.streak-dotline::before {
+  content: "";
   position: absolute;
   top: 14px;
-  left: 50%;
-  width: 100%;
+  left: 12px;
+  right: 12px;
   height: 2px;
   background: var(--border);
   z-index: 0;
 }
 
-/* Item terakhir tidak punya garis penghubung */
-.streak-dotline-item:last-child .streak-connector { display: none; }
-
-/* Item sukses: garis hijau overlay di atas garis border */
-.streak-dotline-item.streak-success .streak-connector {
+/* Garis penghubung per-item — overlay hijau di atas garis latar */
+.streak-connector {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 0;
+  height: 2px;
   background: #16a34a;
-  z-index: 1;
+  z-index: 0;
+  opacity: 0;
 }
+
+/* Item sukses: garis hijau dari titik ini ke titik berikutnya */
+.streak-dotline-item.streak-success .streak-connector {
+  width: calc(100% + 2px);
+  opacity: 1;
+}
+
+/* Item terakhir tidak perlu garis */
+.streak-dotline-item:last-child .streak-connector { opacity: 0; }
 
 .streak-dotline-item {
   display: flex;
@@ -630,6 +644,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   align-items: center;
   position: relative;
   flex: 1;
+  min-width: 0;
 }
 
 .streak-circle-wrap {
