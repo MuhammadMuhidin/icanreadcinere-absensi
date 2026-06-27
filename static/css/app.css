@@ -668,9 +668,9 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   transition: transform .15s ease;
 }
 
-.streak-circle--completed { background: color-mix(in srgb, var(--success) 12%, transparent); color: var(--success); }
-.streak-circle--checked_in { background: color-mix(in srgb, var(--warning) 12%, transparent); color: var(--warning); }
-.streak-circle--missed { background: color-mix(in srgb, var(--danger) 12%, transparent); color: var(--danger); }
+.streak-circle--completed { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
+.streak-circle--checked_in { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: var(--warning); }
+.streak-circle--missed { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
 
 .streak-icon { line-height: 1; margin-top: -1px; }
 
