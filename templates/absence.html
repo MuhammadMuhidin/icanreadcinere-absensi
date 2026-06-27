@@ -54,10 +54,12 @@
         <span class="streak-circle-wrap">
           <span class="streak-circle streak-circle--{{ item.state }} {% if item.is_today %}streak-circle--today{% endif %}"
                 aria-hidden="true">
+            <span class="streak-icon">
             {% if item.state == 'completed' %}✓
             {% elif item.state == 'checked_in' %}{% if item.is_late %}⏰{% else %}✓{% endif %}
             {% elif item.state == 'missed' %}!
             {% endif %}
+            </span>
           </span>
           <span class="streak-tooltip" aria-hidden="true">{{ tooltip }}</span>
           <span class="streak-connector" aria-hidden="true"></span>
