@@ -32,7 +32,7 @@
     <h2 id="streakCardHeading">Weekly streak</h2>
     <span class="streak-badge">🔥 4 Days</span>
   </div>
-  <div class="streak-dotline" aria-label="This week timeline">
+  <div class="streak-timeline" aria-label="This week timeline">
     {% for item in week_days %}
       {% set tooltip_core = [] %}
       {% if item.state in ('completed','checked_in') %}
@@ -47,26 +47,26 @@
       {% endif %}
       {% set tooltip = tooltip_core | join(' — ') %}
       {% set success = item.state == 'completed' and not item.is_late %}
-      <span class="streak-dotline-item {% if success %}streak-success{% endif %}">
-        <span class="streak-circle-wrap">
-          <span class="streak-circle streak-circle--{{ item.state }} {% if item.is_today %}streak-circle--today{% endif %}"
-                aria-hidden="true">
-            <span class="streak-icon">
-            {% if item.state == 'completed' %}✓
-            {% elif item.state == 'checked_in' %}{% if item.is_late %}⏰{% else %}✓{% endif %}
-            {% elif item.state == 'missed' %}!
-            {% endif %}
-            </span>
-          </span>
-          <span class="streak-tooltip" aria-hidden="true">{{ tooltip }}</span>
-          <span class="streak-connector" aria-hidden="true"></span>
+      <div class="streak-dot-wrap">
+        <span class="streak-dot {% if success %}streak-dot--completed{% elif item.state == 'checked_in' %}streak-dot--checked_in{% elif item.state == 'missed' %}streak-dot--missed{% endif %} {% if item.is_today %}streak-dot--today{% endif %}" aria-hidden="true">
+          {% if item.state == 'completed' %}✓
+          {% elif item.state == 'checked_in' %}{% if item.is_late %}⏰{% else %}✓{% endif %}
+          {% elif item.state == 'missed' %}!
+          {% else %}·{% endif %}
         </span>
-        <span class="streak-label {% if item.is_today %}streak-label--today{% endif %}">{{ item.label }}</span>
-      </span>
+        <span class="streak-tooltip" aria-hidden="true">{{ tooltip }}</span>
+      </div>
+      {% if not loop.last %}
+        <span class="streak-bar {% if success %}streak-bar--success{% endif %}" aria-hidden="true"></span>
+      {% endif %}
+    {% endfor %}
+  </div>
+  <div class="streak-labels">
+    {% for item in week_days %}
+      <span class="{% if item.is_today %}streak-label--today{% endif %}">{{ item.label }}</span>
     {% endfor %}
   </div>
 </section>
-
 {% if latest_incomplete %}
   <div class="notice notice-warning">
     <div class="notice-icon" aria-hidden="true">⚠</div>

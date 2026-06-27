@@ -573,7 +573,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   .list-actions .btn { flex: 1; }
 }
 
-/* ─── Gamified streak timeline — Compact ─── */
+/* ─── Weekly streak timeline — Compact ─── */
 .streak-header {
   display: flex;
   justify-content: space-between;
@@ -596,97 +596,78 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   background: linear-gradient(135deg, #f59f3d, #dd3d1f);
 }
 
-.streak-dotline {
+/* Row-based timeline (same approach as .step-line in paid_leave) */
+.streak-timeline {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  width: 100%;
-  position: relative;
-  padding: 0 12px;
-}
-
-/* Garis latar belakang — satu garis penuh di belakang semua dot */
-.streak-dotline::before {
-  content: "";
-  position: absolute;
-  top: 14px;
-  left: 12px;
-  right: 12px;
-  height: 2px;
-  background: var(--border);
-  z-index: 0;
-}
-
-/* Garis penghubung per-item — overlay hijau di atas garis latar */
-.streak-connector {
-  position: absolute;
-  top: 14px;
-  left: 50%;
-  width: 0;
-  height: 2px;
-  background: #16a34a;
-  z-index: 0;
-  opacity: 0;
-}
-
-/* Item sukses: garis hijau dari titik ini ke titik berikutnya */
-.streak-dotline-item.streak-success .streak-connector {
-  width: 100%;
-  opacity: 1;
-}
-
-/* Item terakhir tidak perlu garis */
-.streak-dotline-item:last-child .streak-connector { opacity: 0; }
-
-.streak-dotline-item {
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  position: relative;
-  flex: 1;
-  min-width: 0;
+  gap: 0;
 }
 
-.streak-circle-wrap {
-  position: relative;
-  z-index: 1;
-  margin-bottom: 5px;
-}
-
-.streak-circle {
+.streak-dot {
   width: 28px;
   height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--muted);
+  flex-shrink: 0;
   font-size: 11px;
   font-weight: 800;
   background: var(--surface-soft);
+  color: var(--muted);
   position: relative;
-  transition: transform .15s ease;
+  z-index: 1;
 }
 
-.streak-circle--completed { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
-.streak-circle--checked_in { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: var(--warning); }
-.streak-circle--missed { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
+.streak-dot--completed { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
+.streak-dot--checked_in { background: color-mix(in srgb, var(--warning) 12%, var(--surface)); color: var(--warning); }
+.streak-dot--missed { background: color-mix(in srgb, var(--danger) 12%, var(--surface)); color: var(--danger); }
 
-.streak-icon { line-height: 1; margin-top: -1px; }
+.streak-dot--today {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 40%, transparent);
+}
 
-.streak-label {
+/* Connector bar — fills gap between dots */
+.streak-bar {
+  flex: 1;
+  height: 2px;
+  background: var(--border);
+  border-radius: 2px;
+  min-width: 4px;
+}
+
+.streak-bar--success {
+  background: var(--success);
+}
+
+/* Labels row */
+.streak-labels {
+  display: flex;
+  margin-top: 5px;
   font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
+}
+
+.streak-labels span {
+  flex: 1;
+  text-align: center;
   color: var(--muted);
   white-space: nowrap;
 }
-.streak-label--today { color: var(--info); }
 
-/* Compact streak card */
-.streak-card { padding: 12px 14px; }
+.streak-labels span.streak-label--today {
+  color: var(--info);
+}
 
-/* Tooltip — smart positioning to avoid edge clipping */
+/* Tooltip on dot hover */
+.streak-dot-wrap {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
 .streak-tooltip {
   position: absolute;
   bottom: calc(100% + 8px);
@@ -715,37 +696,11 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   border: 4px solid transparent;
   border-top-color: color-mix(in srgb, var(--text) 92%, var(--surface));
 }
-.streak-circle-wrap:hover .streak-tooltip,
-.streak-circle-wrap:focus-within .streak-tooltip {
+.streak-dot:hover .streak-tooltip,
+.streak-dot:focus-within .streak-tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
 
-/* Edge clipping prevention: first item aligns left, last item aligns right */
-.streak-dotline-item:first-child .streak-tooltip {
-  left: 0;
-  transform: translateY(4px);
-}
-.streak-dotline-item:first-child .streak-tooltip::after {
-  left: 16px;
-  transform: none;
-}
-.streak-dotline-item:first-child:hover .streak-tooltip,
-.streak-dotline-item:first-child:focus-within .streak-tooltip {
-  transform: translateY(0);
-}
-
-.streak-dotline-item:last-child .streak-tooltip {
-  left: auto;
-  right: 0;
-  transform: translateY(4px);
-}
-.streak-dotline-item:last-child .streak-tooltip::after {
-  left: auto;
-  right: 16px;
-  transform: none;
-}
-.streak-dotline-item:last-child:hover .streak-tooltip,
-.streak-dotline-item:last-child:focus-within .streak-tooltip {
-  transform: translateY(0);
-}
+/* Compact streak card */
+.streak-card { padding: 12px 14px; user-select: none; -webkit-user-select: none; }
