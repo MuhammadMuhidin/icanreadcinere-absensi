@@ -603,6 +603,27 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   gap: 0;
 }
 
+/* Each item: dot + label stacked vertically */
+.streak-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.streak-item--today .streak-label {
+  color: var(--info);
+}
+
+/* Dot wrapper for tooltip positioning */
+.streak-dot-wrap {
+  position: relative;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+/* Dot */
 .streak-dot {
   width: 28px;
   height: 28px;
@@ -627,47 +648,31 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   box-shadow: 0 0 0 2px color-mix(in srgb, var(--info) 40%, transparent);
 }
 
-/* Connector bar — fills gap between dots */
+/* Label directly under dot */
+.streak-label {
+  margin-top: 5px;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+/* Connector bar — fills gap between items */
 .streak-bar {
   flex: 1;
   height: 2px;
   background: var(--border);
   border-radius: 2px;
   min-width: 4px;
+  margin-bottom: 14px;
 }
 
 .streak-bar--success {
   background: var(--success);
 }
 
-/* Labels row */
-.streak-labels {
-  display: flex;
-  margin-top: 5px;
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-}
-
-.streak-labels span {
-  flex: 1;
-  text-align: center;
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.streak-labels span.streak-label--today {
-  color: var(--info);
-}
-
 /* Tooltip on dot hover */
-.streak-dot-wrap {
-  position: relative;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-}
-
 .streak-tooltip {
   position: absolute;
   bottom: calc(100% + 8px);
