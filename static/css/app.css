@@ -639,6 +639,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   position: relative;
   z-index: 1;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .streak-dot--completed { background: color-mix(in srgb, var(--success) 12%, var(--surface)); color: var(--success); }
@@ -676,19 +677,19 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 /* Tooltip on dot hover */
 .streak-tooltip {
   position: absolute;
-  bottom: calc(100% + 8px);
+  bottom: calc(100% + 10px);
   left: 50%;
   transform: translateX(-50%) translateY(4px);
   background: color-mix(in srgb, var(--text) 92%, var(--surface));
   color: var(--surface);
   border: 1px solid color-mix(in srgb, var(--surface) 25%, transparent);
   box-shadow: var(--shadow-md);
-  padding: 5px 8px;
+  padding: 6px 10px;
   border-radius: 8px;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   white-space: nowrap;
-  z-index: 20;
+  z-index: 100;
   pointer-events: none;
   opacity: 0;
   transition: opacity .16s ease, transform .16s ease;
@@ -699,7 +700,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 4px solid transparent;
+  border: 5px solid transparent;
   border-top-color: color-mix(in srgb, var(--text) 92%, var(--surface));
 }
 .streak-dot:hover .streak-tooltip,

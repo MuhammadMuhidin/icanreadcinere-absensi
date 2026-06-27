@@ -245,15 +245,20 @@
   document.querySelectorAll('.streak-dot').forEach(dot => {
     dot.addEventListener('click', (e) => {
       e.stopPropagation();
+      e.preventDefault();
       const tip = dot.querySelector('.streak-tooltip');
       if (!tip) return;
       const isOpen = tip.classList.contains('streak-tooltip--show');
       document.querySelectorAll('.streak-tooltip--show').forEach(t => t.classList.remove('streak-tooltip--show'));
-      if (!isOpen) tip.classList.add('streak-tooltip--show');
+      if (!isOpen) {
+        tip.classList.add('streak-tooltip--show');
+      }
     });
   });
-  document.addEventListener('click', () => {
-    document.querySelectorAll('.streak-tooltip--show').forEach(t => t.classList.remove('streak-tooltip--show'));
+  document.addEventListener('click', (e) => {
+    if (!e.target.closest('.streak-dot')) {
+      document.querySelectorAll('.streak-tooltip--show').forEach(t => t.classList.remove('streak-tooltip--show'));
+    }
   });
 
   const dialog = document.getElementById('attendanceDialog');
