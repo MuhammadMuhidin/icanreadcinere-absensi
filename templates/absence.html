@@ -27,13 +27,10 @@
   <input class="sr-only" type="file" id="profileUpload" accept="image/jpeg,image/png,image/webp">
 </section>
 
-<section class="card card-pad" aria-labelledby="streakCardHeading">
+<section class="card card-pad streak-card" aria-labelledby="streakCardHeading">
   <div class="streak-header">
-    <div>
-      <h2 id="streakCardHeading">Weekly attendance streak</h2>
-      <p>Attendance status for this week.</p>
-    </div>
-    <span class="streak-badge">🔥 4 Days Streak!</span>
+    <h2 id="streakCardHeading">Weekly streak</h2>
+    <span class="streak-badge">🔥 4 Days</span>
   </div>
   <div class="streak-dotline" aria-label="This week timeline">
     {% for item in week_days %}

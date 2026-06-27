@@ -573,18 +573,24 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   .list-actions .btn { flex: 1; }
 }
 
-/* ─── Gamified streak timeline replacement - Fixed ─── */
+/* ─── Gamified streak timeline — Compact ─── */
 .streak-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.streak-header h2 {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -.02em;
 }
 
 .streak-badge {
-  padding: 6px 12px;
+  padding: 3px 9px;
   border-radius: 999px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
   color: #fff;
   background: linear-gradient(135deg, #f59f3d, #dd3d1f);
@@ -593,55 +599,57 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .streak-dotline {
   display: flex;
   justify-content: space-between;
+  align-items: flex-start;
   width: 100%;
-  padding: 0 10px;
+  position: relative;
+}
+
+/* Garis penghubung per-item — menengah dari titik ini ke titik berikutnya */
+.streak-connector {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  width: 100%;
+  height: 2px;
+  background: var(--border);
+  z-index: 0;
+}
+
+/* Item terakhir tidak punya garis penghubung */
+.streak-dotline-item:last-child .streak-connector { display: none; }
+
+/* Item sukses: garis hijau overlay di atas garis border */
+.streak-dotline-item.streak-success .streak-connector {
+  background: #16a34a;
+  z-index: 1;
 }
 
 .streak-dotline-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  flex: 1;
   position: relative;
-}
-
-/* Garis penghubung dipindah ke dalam item agar presisi */
-.streak-connector {
-  position: absolute;
-  top: 17px; /* Tepat di tengah lingkaran 34px */
-  left: 50%;
-  width: 100%;
-  height: 3px;
-  background: #cbd5e1;
-  z-index: 0;
-}
-
-/* Hilangkan garis di item terakhir */
-.streak-dotline-item:last-child .streak-connector { display: none; }
-
-/* Jika sukses, ganti warna garis */
-.streak-dotline-item.streak-success .streak-connector {
-  background: #16a34a;
+  flex: 1;
 }
 
 .streak-circle-wrap {
   position: relative;
   z-index: 1;
-  margin-bottom: 8px;
+  margin-bottom: 5px;
 }
 
 .streak-circle {
-  width: 34px;
-  height: 34px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 800;
   background: var(--muted);
-  border: 3px solid var(--surface);
+  border: 2px solid var(--surface);
   position: relative;
   transition: transform .15s ease;
 }
@@ -653,26 +661,30 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 .streak-icon { line-height: 1; margin-top: -1px; }
 
 .streak-label {
-  font-size: 11px;
-  font-weight: 750;
+  font-size: 9px;
+  font-weight: 700;
   text-transform: uppercase;
-  color: var(--text);
+  color: var(--muted);
   white-space: nowrap;
 }
+.streak-label--today { color: var(--info); }
 
-/* Tooltip */
+/* Compact streak card */
+.streak-card { padding: 12px 14px; }
+
+/* Tooltip — smart positioning to avoid edge clipping */
 .streak-tooltip {
   position: absolute;
-  bottom: calc(100% + 10px);
+  bottom: calc(100% + 8px);
   left: 50%;
-  transform: translateX(-50%) translateY(6px);
+  transform: translateX(-50%) translateY(4px);
   background: color-mix(in srgb, var(--text) 92%, var(--surface));
   color: var(--surface);
   border: 1px solid color-mix(in srgb, var(--surface) 25%, transparent);
   box-shadow: var(--shadow-md);
-  padding: 8px 12px;
-  border-radius: 10px;
-  font-size: 11px;
+  padding: 5px 8px;
+  border-radius: 8px;
+  font-size: 10px;
   font-weight: 700;
   white-space: nowrap;
   z-index: 20;
@@ -686,11 +698,40 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   top: 100%;
   left: 50%;
   transform: translateX(-50%);
-  border: 5px solid transparent;
+  border: 4px solid transparent;
   border-top-color: color-mix(in srgb, var(--text) 92%, var(--surface));
 }
 .streak-circle-wrap:hover .streak-tooltip,
 .streak-circle-wrap:focus-within .streak-tooltip {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
+}
+
+/* Edge clipping prevention: first item aligns left, last item aligns right */
+.streak-dotline-item:first-child .streak-tooltip {
+  left: 0;
+  transform: translateY(4px);
+}
+.streak-dotline-item:first-child .streak-tooltip::after {
+  left: 16px;
+  transform: none;
+}
+.streak-dotline-item:first-child:hover .streak-tooltip,
+.streak-dotline-item:first-child:focus-within .streak-tooltip {
+  transform: translateY(0);
+}
+
+.streak-dotline-item:last-child .streak-tooltip {
+  left: auto;
+  right: 0;
+  transform: translateY(4px);
+}
+.streak-dotline-item:last-child .streak-tooltip::after {
+  left: auto;
+  right: 16px;
+  transform: none;
+}
+.streak-dotline-item:last-child:hover .streak-tooltip,
+.streak-dotline-item:last-child:focus-within .streak-tooltip {
+  transform: translateY(0);
 }
