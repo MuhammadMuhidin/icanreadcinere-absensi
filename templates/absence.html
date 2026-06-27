@@ -47,13 +47,13 @@
       {% endif %}
       {% set tooltip = tooltip_core | join(' — ') %}
       {% set success = item.state == 'completed' and not item.is_late %}
-      {% set is_late = item.state == 'completed' and item.is_late %}
+      {% set checked_in_ok = item.state == 'checked_in' and not item.is_late %}
       <div class="streak-item {% if item.is_today %}streak-item--today{% endif %}">
         <div class="streak-dot-wrap">
-          <span class="streak-dot {% if is_late %}streak-dot--completed-late{% elif success %}streak-dot--completed{% elif item.state == 'checked_in' %}streak-dot--checked_in{% elif item.state == 'missed' %}streak-dot--missed{% endif %} {% if item.is_today %}streak-dot--today{% endif %}" aria-hidden="true">
+          <span class="streak-dot {% if success %}streak-dot--completed{% elif checked_in_ok %}streak-dot--checked_in{% elif item.state == 'completed' %}streak-dot--incomplete{% elif item.state == 'missed' %}streak-dot--incomplete{% endif %} {% if item.is_today %}streak-dot--today{% endif %}" aria-hidden="true">
             {% if item.state == 'completed' %}✓
             {% elif item.state == 'checked_in' %}{% if item.is_late %}⏰{% else %}🧑‍💻{% endif %}
-            {% elif item.state == 'missed' %}!
+            {% elif item.state == 'missed' %}✓
             {% else %}·{% endif %}
           </span>
           <span class="streak-tooltip" aria-hidden="true">{{ tooltip }}</span>
