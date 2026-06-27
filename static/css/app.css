@@ -659,3 +659,38 @@ textarea.form-control { min-height: 100px; resize: vertical; }
   color: var(--text);
   white-space: nowrap;
 }
+
+/* Tooltip */
+.streak-tooltip {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%) translateY(6px);
+  background: color-mix(in srgb, var(--text) 92%, var(--surface));
+  color: var(--surface);
+  border: 1px solid color-mix(in srgb, var(--surface) 25%, transparent);
+  box-shadow: var(--shadow-md);
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .16s ease, transform .16s ease;
+}
+.streak-tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: color-mix(in srgb, var(--text) 92%, var(--surface));
+}
+.streak-circle-wrap:hover .streak-tooltip,
+.streak-circle-wrap:focus-within .streak-tooltip {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
