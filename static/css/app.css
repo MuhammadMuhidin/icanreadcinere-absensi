@@ -588,12 +588,16 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 }
 
 .streak-badge {
-  padding: 3px 9px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 9px;
   border-radius: 999px;
-  font-size: 10px;
-  font-weight: 800;
-  color: #fff;
-  background: linear-gradient(135deg, #f59f3d, #dd3d1f);
+  font-size: 11px;
+  font-weight: 750;
+  line-height: 1;
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 12%, transparent);
 }
 
 /* Row-based timeline (same approach as .step-line in paid_leave) */
@@ -613,6 +617,7 @@ textarea.form-control { min-height: 100px; resize: vertical; }
 
 .streak-item--today .streak-label {
   color: var(--info);
+  font-weight: 800;
 }
 
 /* Dot wrapper for tooltip positioning */
