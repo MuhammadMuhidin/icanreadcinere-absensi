@@ -529,8 +529,12 @@ def absence():
 
     week_days = []
     today_str = current_date.isoformat()
-    for offset in range(5, -1, -1):
-        day = (current_date - timedelta(days=offset)).isoformat()
+    # Cari Senin di minggu yang sama (label statis Mon-Sat)
+    monday = current_date - timedelta(days=current_date.weekday())
+    day_labels = ["MON", "TUE", "WED", "THU", "FRI", "SAT"]
+    for i in range(6):
+        day_date = monday + timedelta(days=i)
+        day = day_date.isoformat()
         day_rows = [row for row in attendance_data if row.get("tanggal") == day]
         session_day = day_session(day_rows, day, sanitize=not manager(uid))
         state = session_day.get("state", "not_started")
@@ -548,11 +552,11 @@ def absence():
             state = "not_started" if not day_rows else "missed"
         week_days.append({
                 "date": day,
-                "label": (current_date - timedelta(days=offset)).strftime("%a"),
+                "label": day_labels[i],
                 "state": state,
                 "is_late": bool(session_day.get("deviation") and session_day.get("deviation") != "On time!"),
-                "is_today": day == current_date.isoformat(),
-                "is_weekend": (current_date - timedelta(days=offset)).weekday() == 6,
+                "is_today": day == today_str,
+                "is_weekend": False,
                 "window": {
                     "checkin": session_day.get("checkin") or "",
                     "checkout": session_day.get("checkout") or "",
